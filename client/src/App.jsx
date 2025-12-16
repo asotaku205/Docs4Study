@@ -16,9 +16,9 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
+      <h1>1 tỷ thì làm</h1>
       <h1 class="text-3xl font-bold underline">
-        Quá đẳng cấp Tailwind CSS!
+        HDPE thì ngon luôn
       </h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>

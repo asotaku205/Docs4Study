@@ -8,3 +8,6 @@ const app = express();
 app.listen(5001, () => {
     console.log('Server đang chạy trên cổng 5001');
 });
+app.get("/api", (req, res) => {
+    res.send("API hoạt động, đẳng cấp ");
+});
