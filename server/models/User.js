@@ -1,59 +1,100 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: true,
-    select: false
-  },
-  fullName: {
-    type: String,
-    required: true
-  },
-  avatar: String,
-  phone: String,
-  role: {
-    type: String,
-    enum: ['student', 'instructor', 'admin'],
-    default: 'student'
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  subscription: {
-    plan: {
+const userSchema = new mongoose.Schema(
+  {
+    email: {
       type: String,
-      enum: ['free', 'basic', 'premium'],
-      default: 'free'
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    startDate: Date,
-    endDate: Date
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+    fullName: {
+      type: String,
+      required: true,
+    },
+    phone: String,
+    role: {
+      type: String,
+      enum: ["student", "admin"],
+      default: "student",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    enrolledCourses: [
+      {
+        course: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Course",
+        },
+        enrolledAt: {
+          type: Date,
+          default: Date.now,
+        },
+        progress: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
+    comments: [
+      {
+        blogPost: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "BlogPost",
+          required: true,
+        },
+        content: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
-  lastLogin: Date
-}, { 
-  timestamps: true 
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Hash password trước khi save
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
 // So sánh password
-userSchema.methods.comparePassword = async function(password) {
+userSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+// Virtual field: Tổng số bài đăng
+userSchema.virtual("totalPosts", {
+  ref: "BlogPost",
+  localField: "_id",
+  foreignField: "author",
+  count: true,
+});
 
+// Virtual field: Tổng số khóa học đã đăng ký
+userSchema.virtual("totalCoursesEnrolled").get(function () {
+  return this.enrolledCourses ? this.enrolledCourses.length : 0;
+});
+
+// Để virtual fields được serialize khi convert to JSON
+userSchema.set("toJSON", { virtuals: true });
+userSchema.set("toObject", { virtuals: true });
+
+module.exports = mongoose.model("User", userSchema);
