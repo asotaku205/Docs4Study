@@ -2,11 +2,15 @@ import mongoose from "mongoose";
 
 export const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URL);
-        console.log('Kết nối đến cơ sở dữ liệu Wibu thành công');
-}
+        const MONGO_URL = process.env.MONGO_URL;
+        if (!MONGO_URL) {
+            throw new Error("Connection string is invalid");
+        };
+        await mongoose.connect(MONGO_URL);
+        console.log('Connect database success');
+    }
     catch (error) {
-        console.error('Lỗi kết nối đến cơ sở dữ liệu:', error);
+        console.error('Connect database error"', error);
         process.exit(1);
     }
 };

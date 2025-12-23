@@ -1,13 +1,33 @@
 import express from 'express';
-import {connectDB} from './config/db.js';
+import { connectDB } from './config/db.js';
 import dotenv from 'dotenv';
-
+import routerAuth from './routes/auth.route.js';
+//Tai bien moi truong
 dotenv.config();
-connectDB();
+
 const app = express();
-app.listen(5001, () => {
-    console.log('Server đang chạy trên cổng 5001');
-});
-app.get("/api", (req, res) => {
-    res.send("API hoạt động, đẳng cấp ");
-});
+
+//Cong ket noi
+const port = process.env.SERVER_PORT;
+
+
+app.use(express.json());
+
+//Cac route
+app.use("/api/auth",routerAuth);
+
+const runServer = async () => {
+    try {
+        //Ket noi toi database
+        await connectDB();
+        //Mo cong ket noi toi server
+        app.listen(port, () => {
+
+            console.log(`Start running server on port ${port}`);
+
+        })
+    } catch (error) {
+        console.log("Failed to start server", error);
+    }
+}
+runServer();
