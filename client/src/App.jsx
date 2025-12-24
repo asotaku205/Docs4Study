@@ -1,6 +1,7 @@
 import { Route, Switch, Link } from "wouter";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
+import Auth from "./pages/Auth";
 import "./App.css";
 
 function HomePage() {
@@ -26,6 +27,7 @@ function App() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/auth" component={Auth} />
       <Route component={NotFound} />
     </Switch>
   );

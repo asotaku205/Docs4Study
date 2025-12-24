@@ -10,6 +10,18 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   /* Modern Blue Palette */
+  /* Primary Colors
+  background màu nền
+  foreground màu chữ chính
+  primary màu chính (nút, liên kết)
+  secondary màu phụ (nền phụ, thẻ)
+  muted màu mờ (nền mờ, chữ mờ)
+  accent màu nhấn (nút nhấn, liên kết nhấn)
+  destructive màu nguy hiểm (xóa, cảnh báo)
+  border màu viền
+  input màu nhập liệu
+  ring màu vòng viền tập trung
+  */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   
