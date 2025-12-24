@@ -1,4 +1,5 @@
 import { Route, Switch, Link } from "wouter";
+import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import "./App.css";
 
@@ -25,7 +26,7 @@ function App() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/admin" component={AdminDashboard} />
-      <Route>404 Page Not Found</Route>
+      <Route component={NotFound} />
     </Switch>
   );
 }
