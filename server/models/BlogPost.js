@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const blogPostSchema = new mongoose.Schema({
   title: {
@@ -20,10 +20,10 @@ const blogPostSchema = new mongoose.Schema({
     enum: ['draft', 'published'],
     default: 'draft'
   },
-  publishedAt: Date
+    publishedAt: Date
 }, { 
   timestamps: true 
 });
 
-module.exports = mongoose.model('BlogPost', blogPostSchema);
+export default mongoose.model('BlogPost', blogPostSchema);
 
