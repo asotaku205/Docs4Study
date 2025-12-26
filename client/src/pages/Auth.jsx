@@ -1,8 +1,87 @@
 import React from "react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { is } from "zod/v4/locales";
+import authService from '../services/authService';
+
+
+const registerSchema = z
+  .object({
+    fullName: z.string().min(2, "Full name must be at least 2 characters"),
+    email: z.email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z
+      .string()
+      .min(6, "Confirm Password must be at least 6 characters"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+  const loginSchema = z.object({
+    email: z.email("Invalid email address"),
+    password: z.string().min(1, "Wrong password"),
+  });
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
+
+  const {
+    register,
+    handleSubmit: handleRegisterSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+  resolver: zodResolver(registerSchema),
+});
+  
+  const onSubmitRegister = async(data) => {
+    try{
+      const response = await authService.signup(
+        data.email,
+        data.password,
+        data.fullName
+      );
+          if(response.success){
+            localStorage.setItem("accessToken",response.data.accessToken);
+            localStorage.setItem("user",JSON.stringify(response.data.user));
+            alert(response.message);
+            window.location.href = "/home";
+          }
+    }catch(error){
+          const errorMessage = error.response?.data?.message || "An error occurred during registration.";
+          alert(errorMessage);
+    }
+  };
+  
+
+const {
+  register: loginRegister,
+  handleSubmit: handleLoginSubmit,
+  formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
+} = useForm({
+  resolver: zodResolver(loginSchema),
+});
+const onSubmitLogin = async(data) => {
+  try{
+    const response =await authService.signin(
+      data.email,
+      data.password
+    ) ;
+    if(response.success){
+      localStorage.setItem("accessToken",response.data.accessToken);
+      localStorage.setItem("user",JSON.stringify(response.data.user));
+      alert(response.message);
+      window.location.href = "/home";
+    }
+  }catch(error){
+      const errorMessage = error.response?.data?.message || "An error occurred during login.";
+      alert(errorMessage);
+  }
+};
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex flex-col justify-center text-center bg-muted/30 pt-5">
@@ -51,7 +130,7 @@ const Auth = () => {
                     Log in to continue your learning journey with Docs4Study.
                   </p>
                 </div>
-                <form className="flex flex-col space-y-4 p-6 pt-0">
+                <form className="flex flex-col space-y-4 p-6 pt-0 " onSubmit={handleLoginSubmit(onSubmitLogin)}>
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Email
@@ -60,7 +139,13 @@ const Auth = () => {
                       type="email"
                       placeholder="m@example.com"
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      {...loginRegister("email")}
                     />
+                    {loginErrors.email && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {loginErrors.email.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -71,7 +156,13 @@ const Auth = () => {
                       type="password"
                       placeholder=""
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      {...loginRegister("password")}
                     />
+                    {loginErrors.password && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {loginErrors.password.message}
+                      </p>
+                    )}
                   </div>
 
                   <a
@@ -89,11 +180,11 @@ const Auth = () => {
                   </button>
 
                   <div className="flex items-center">
-                    <hr className="flex-grow border-t border-border" />
+                    <hr className="grow border-t border-border" />
                     <span className="px-3 text-sm text-muted-foreground">
                       Or continue with
                     </span>
-                    <hr className="flex-grow border-t border-border" />
+                    <hr className="grow border-t border-border" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -106,6 +197,7 @@ const Auth = () => {
                     <button
                       type="button"
                       className="px-4 py-2 border border-var(--input) rounded-md hover:bg-accent transition-colors"
+                      disabled = {isLoginSubmitting}
                     >
                       Facebook
                     </button>
@@ -120,7 +212,7 @@ const Auth = () => {
                     Start your journey with Docs4Study.
                   </p>
                 </div>
-                <form className="flex flex-col space-y-4 p-6 pt-0">
+                <form className="flex flex-col space-y-4 p-6 pt-0" onSubmit={handleRegisterSubmit(onSubmitRegister)}>
                   <div className=" gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">
@@ -130,9 +222,14 @@ const Auth = () => {
                         type="text"
                         placeholder="Peter Parker"
                         className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        {...register("fullName")}
                       />
+                      {errors.fullName && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {errors.fullName.message}
+                        </p>
+                      )}
                     </div>
-                    
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
@@ -142,7 +239,13 @@ const Auth = () => {
                       type="email"
                       placeholder="m@example.com"
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      {...register("email")}
                     />
+                    {errors.email && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.email.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -153,22 +256,35 @@ const Auth = () => {
                       type="password"
                       placeholder=""
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      {...register("password")}
                     />
+                    {errors.password && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.password.message}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Comfirm Password
+                      Confirm Password
                     </label>
                     <input
                       type="password"
                       placeholder=""
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                      {...register("confirmPassword")}
                     />
+                    {errors.confirmPassword && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.confirmPassword.message}
+                      </p>
+                    )}
                   </div>
 
                   <button
                     type="submit"
                     className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
+                    disabled={isSubmitting}
                   >
                     Register
                   </button>

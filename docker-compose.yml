@@ -44,10 +44,14 @@ services:
     build:
       context: ./client
       dockerfile: dockerfile
+      args:
+        - CODESPACE_NAME=${CODESPACE_NAME}
     container_name: docs4study-client
     restart: unless-stopped
     ports:
       - "${CLIENT_PORT:-80}:80"
+    environment:
+      - CODESPACE_NAME=${CODESPACE_NAME}
     volumes:
       - ./client:/app
       - /app/node_modules
