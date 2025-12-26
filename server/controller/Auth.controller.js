@@ -1,39 +1,32 @@
-import User from "../models/User.js";
+import { REFRESH_TOKEN_TTL } from "../config/token.js";
+import Session from "../models/Session.js";
 import AuthService from "../Service/Auth.service.js";
 class AuthController {
-    async login(req, res) {
+    async signin(req, res) {
         try {
             const { email, password } = req.body;
-
-            console.log(email),
-                console.log(password);
             if (!email || !password) {
                 return res.status(400).json({
                     success: false,
                     message: "Missing required fields"
                 })
             };
-            const checkUserLogin = await User.findOne({ email }).select("+password");
-            if (!checkUserLogin) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Invalid email or password"
-                });
-            };
-            const checkPassword = await checkUserLogin.comparePassword(password);
-            if (!checkPassword) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Invalid password or email"
-                })
-            }
+            const { accessToken,refreshToken, user } = await AuthService.signin(email, password);
+            // trả refresh token về trong cookie
+            res.cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none", 
+                maxAge: REFRESH_TOKEN_TTL,
+            });
             return res.status(200).json({
                 success: true,
-                message: "Login success",
-                user: {
-                    email: checkUserLogin.email,
+                message: "Signin success",
+                data: {
+                    user: user,
+                    token: accessToken
                 }
-            })
+            });
         } catch (error) {
             return res.status(500).json({
                 success: false,
@@ -51,39 +44,21 @@ class AuthController {
                     message: "Missing required fields"
                 });
             };
-            //Check user co ton tai ko
-            const checkUserSginUp = await User.findOne({ email });
-            //Neu ton tai 
-            if (checkUserSginUp) {
-                return res.status(409).json({
-                    success: false,
-                    message: "User already exists",
-                });
-            };
-            //Tao user luu vao database
-            const user = new User({
-                email,
-                password,
-                fullName
+            const { user, accessToken, refreshToken } = await AuthService.signup(email, password, fullName);
+            // trả refresh token về trong cookie
+            res.cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none", 
+                maxAge: REFRESH_TOKEN_TTL,
             });
-            //Luu user
-            await user.save();
-            const token = AuthService.generateToken({
-                user: user._id,
-                email: user.email,
-                role: user.role,
-            });
-
             return res.status(201).json({
                 success: true,
                 message: "User registered successfully",
                 data: {
-                    id: user._id,
-                    email: user.email,
-                    password: user.password,
-                    fullName: user.fullName,
-                    role: user.role,
-                    token: token
+
+                    user: user,
+                    token: accessToken
                 }
             });
         } catch (error) {
@@ -93,5 +68,20 @@ class AuthController {
             })
         };
     };
+    async signout(req,res){
+        try {
+            //lay resfresh token tu cookie
+            const token = req.cookie?.refreshToken;
+            if(token){
+                //xoa resfresh token trong database
+                await Session.deleteOne({refreshToken : token});
+                //xoa resfresh token tu cookie
+                res.clearCookie("refreshToken");
+            };
+            return res.sendStatus(204);
+        } catch (error) {
+            
+        }
+    }
 };
 export default new AuthController();

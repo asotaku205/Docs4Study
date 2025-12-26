@@ -1,18 +1,71 @@
 import jwt from 'jsonwebtoken';
-
+import User from "../models/User.js";
+import crypto from "crypto";
+import Session from "../models/Session.js";
+import { REFRESH_TOKEN_TTL } from '../config/token.js';
 class AuthService {
-  generateToken(payload) {
-    return jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
+  createAccessToken(payload) {
+    return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: process.env.ACCESS_TOKEN_TTL,
     });
   }
 
-  verifyToken(token) {
-    try {
-      return jwt.verify(token, process.env.JWT_SECRET);
-    } catch (error) {
-      throw new Error('Invalid or expired token');
+  async createRefreshTokenSession(userId) {
+    // Tạo refresh token
+    const refreshToken = crypto.randomBytes(64).toString("hex");
+
+    // Lưu session vào DB
+    await Session.create({
+      userId,
+      refreshToken,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+    });
+
+    //Trả refresh token để controller set cookie
+    return refreshToken;
+  };
+
+  async signin(email, password) {
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+      throw new Error("Invalid email or password");
     }
+    const checkPassword = await user.comparePassword(password);
+    if (!checkPassword) {
+      throw new Error("Invalid email or password");
+    };
+    const accessToken = this.createAccessToken({
+      user: user._id,
+      email: user.email,
+      role: user.role
+
+    })
+    const refreshToken = await this.createRefreshTokenSession(user._id);
+    return { accessToken, user ,refreshToken};
+  }
+  async signup(email, password, fullName) {
+    //Check user co ton tai ko
+    const checkUserSginUp = await User.findOne({ email });
+    //Neu ton tai 
+    if (checkUserSginUp) {
+      throw new Error("User already exists");
+    };
+
+    //Tao user luu vao database
+    const user = new User({
+      email,
+      password,
+      fullName
+    });
+    //Luu user
+    await user.save();
+    const accessToken = this.createAccessToken({
+      user: user._id,
+      email: user.email,
+      role: user.role,
+    });
+    const refreshToken = await this.createRefreshTokenSession(user._id);
+    return { user, accessToken,refreshToken};
   }
 }
 
