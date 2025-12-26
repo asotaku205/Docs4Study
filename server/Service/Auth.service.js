@@ -28,14 +28,18 @@ class AuthService {
   async signin(email, password) {
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      throw new Error("Invalid email or password");
+      const error = new Error("Invalid email or password");
+      error.statusCode = 401;
+      throw error;
     }
     const checkPassword = await user.comparePassword(password);
     if (!checkPassword) {
-      throw new Error("Invalid email or password");
+      const error = new Error("Invalid email or password");
+      error.statusCode = 401;
+      throw error;
     };
     const accessToken = this.createAccessToken({
-      user: user._id,
+      userId: user._id,
       email: user.email,
       role: user.role
 
@@ -48,7 +52,9 @@ class AuthService {
     const checkUserSginUp = await User.findOne({ email });
     //Neu ton tai 
     if (checkUserSginUp) {
-      throw new Error("User already exists");
+      const error = new Error("User already exists");
+      error.statusCode = 409;
+      throw error;
     };
 
     //Tao user luu vao database
@@ -60,7 +66,7 @@ class AuthService {
     //Luu user
     await user.save();
     const accessToken = this.createAccessToken({
-      user: user._id,
+      userId: user._id,
       email: user.email,
       role: user.role,
     });

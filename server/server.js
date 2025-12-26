@@ -19,7 +19,9 @@ app.use(cookieParser());
 //Cac route
 app.use("/api/auth",routerAuth);
 
-app.use("api/user",routerUser);
+
+app.use("/api/user",routerUser);
+
 const runServer = async () => {
     try {
         //Ket noi toi database

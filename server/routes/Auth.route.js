@@ -6,5 +6,6 @@ const routerAuth = Router();
 routerAuth.post("/signin",AuthController.signin);
 routerAuth.post("/signup",AuthController.signup);
 routerAuth.post("/signout",AuthController.signout);
+routerAuth.post("/refresh",AuthController.refreshToken)
 
 export default routerAuth;
