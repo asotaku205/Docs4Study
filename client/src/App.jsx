@@ -1,8 +1,11 @@
 import { Route, Switch, Link } from "wouter";
+import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
-import "./App.css";
+import Auth from "./pages/Auth";
+import HomePage from "./pages/HomePage";
+import Layout from "./components/Layout";
 
-function HomePage() {
+function Demo() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700">
       <div className="text-center text-white">
@@ -15,6 +18,11 @@ function HomePage() {
             Go to Admin Dashboard
           </a>
         </Link>
+        <Link href="/home" className="ml-4">
+          <a className="inline-block px-8 py-3 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+            Go to Home
+          </a>
+        </Link>
       </div>
     </div>
   );
@@ -22,11 +30,20 @@ function HomePage() {
 
 function App() {
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/admin" component={AdminDashboard} />
-      <Route>404 Page Not Found</Route>
-    </Switch>
+    <>
+      <Switch>
+        <Route path="/home">
+          <Layout>
+            <HomePage />
+          </Layout>
+        </Route>
+
+        <Route path="/" component={Demo} />
+        <Route path="/admin" component={AdminDashboard} />
+        <Route path="/auth" component={Auth} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 
