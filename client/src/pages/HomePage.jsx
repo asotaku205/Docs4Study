@@ -4,13 +4,33 @@ import { useState } from "react";
 const HomePage = () => {
   return (
     <div className="flex flex-col">
-      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700">
-        <div className="text-center text-white">
-          <h1 className="text-5xl font-bold mb-4">Welcome to Docs4Study</h1>
-          <p className="text-xl text-slate-300 mb-8">
-            Your gateway to quality educational resources and community-driven
-            knowledge sharing.
-          </p>
+      <section className="min-h-screen relative overflow-hidden bg-primary ">
+        <div className="absolute inset-0 z-0 opacity-20 mix-blend-overlay bg-[url('/herobg.png')] bg-cover">
+        </div>
+        <div className="text-left text-white grid grid-cols-2 gap-12 ">
+          <div className="">
+            <div className="rounded-md bg-white p-4 inline-block text-primary font-semibold  ">
+              Welcome to Docs4Study
+            </div> 
+            <div className="">
+            <h1 className="text-5xl font-bold mt-8 mb-4">Unlock Your Potential with <span className="font-semibold text-blue-200"> Quality Knowledge</span></h1>
+            <p>
+              Access thousands of study documents, expert-led courses, and insightful articles to accelerate your learning journey.
+            </p>
+            <div className=" ">
+              <button className="mt-6 bg-secondary text-white px-6 py-3 rounded-lg font-semibold hover:bg-secondary/80 transition-colors cursor-pointer select-none">
+              Start Reading
+              </button>
+              <button>
+                Explore Courses
+              </button>
+            </div>
+          </div>
+          </div>
+          
+          <div>
+              <img src="/library.jpg" alt="library" />
+          </div>
         </div>
       </section>
       <section>

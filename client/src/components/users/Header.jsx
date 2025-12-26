@@ -2,7 +2,8 @@ import React from 'react';
 import { Link } from 'wouter';
 
 export function Header() {
-    return(<header className=" flex sticky top-0 backdrop-blur bg-background/30 w-full ">
+    return(
+    <header className=" flex sticky top-0 backdrop-blur bg-background/30 w-full z-50 ">
         <div className="flex-grow p-4 px-4 justify-between flex items-center">
           <Link href="/">
             <a className="text-2xl font-bold cursor-pointer gap-2 flex items-center select-none">
