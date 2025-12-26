@@ -6,9 +6,11 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex flex-col justify-center text-center bg-muted/30 pt-5">
-        <h1 className="text-3xl font-bold mb-2 font-heading text-primary">Docs4Study</h1>
+        <h1 className="text-3xl font-bold mb-2 font-heading text-primary">
+          Docs4Study
+        </h1>
         <p className="text-muted-foreground">
-          Chào mừng bạn đến với Docs4Study
+          Your gateway to unlimited learning.
         </p>
       </div>
 
@@ -17,28 +19,36 @@ const Auth = () => {
           <div className="shadow-lg rounded-b-lg bg-card border border-border  w-full rounded-t-lg ">
             <div className="bg-muted grid grid-cols-2 text-center rounded-t-lg p-2">
               <button
-                className={activeTab === "login" ? " rounded-lg text-primary p-2 bg-white" : "text-muted-foreground p-2"}
+                className={
+                  activeTab === "login"
+                    ? " rounded-lg text-primary p-2 bg-white"
+                    : "text-muted-foreground p-2"
+                }
                 onClick={() => {
                   setActiveTab("login");
                 }}
               >
-                Đăng nhập
+                Login
               </button>
               <button
-                className={activeTab === "register" ? " rounded-lg text-primary p-2 bg-white" : "text-muted-foreground p-2"}
+                className={
+                  activeTab === "register"
+                    ? " rounded-lg text-primary p-2 bg-white"
+                    : "text-muted-foreground p-2"
+                }
                 onClick={() => {
                   setActiveTab("register");
                 }}
               >
-                Đăng ký
+                Register
               </button>
             </div>
             {activeTab === "login" ? (
               <div>
                 <div className="p-6">
-                  <p className="font-bold ">Chào mừng bạn!</p>
+                  <p className="font-bold ">Welcome back!</p>
                   <p className="text-muted-foreground text-sm">
-                    Đăng nhập để tiếp tục
+                    Log in to continue your learning journey with Docs4Study.
                   </p>
                 </div>
                 <form className="flex flex-col space-y-4 p-6 pt-0">
@@ -55,7 +65,7 @@ const Auth = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Mật khẩu
+                      Password
                     </label>
                     <input
                       type="password"
@@ -68,20 +78,20 @@ const Auth = () => {
                     href="#"
                     className="text-sm text-primary hover:underline self-end"
                   >
-                    Quên mật khẩu?
+                    Forgot password?
                   </a>
 
                   <button
                     type="submit"
                     className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
                   >
-                    Đăng nhập
+                    Login
                   </button>
 
                   <div className="flex items-center">
                     <hr className="flex-grow border-t border-border" />
                     <span className="px-3 text-sm text-muted-foreground">
-                      Hoặc đăng nhập với
+                      Or continue with
                     </span>
                     <hr className="flex-grow border-t border-border" />
                   </div>
@@ -105,33 +115,24 @@ const Auth = () => {
             ) : (
               <div>
                 <div className="p-6">
-                  <p className="font-bold ">Tạo tài khoản</p>
+                  <p className="font-bold ">Create an account</p>
                   <p className="text-muted-foreground text-sm">
-                    Bắt đầu hành trình của bạn với Docs4Study.
+                    Start your journey with Docs4Study.
                   </p>
                 </div>
                 <form className="flex flex-col space-y-4 p-6 pt-0">
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                  <div className=" gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">
-                        Họ
+                        Full Name
                       </label>
                       <input
                         type="text"
-                        placeholder="Nguyễn"
+                        placeholder="Peter Parker"
                         className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Tên
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
+                    
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
@@ -146,7 +147,7 @@ const Auth = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Mật khẩu
+                      Password
                     </label>
                     <input
                       type="password"
@@ -156,7 +157,7 @@ const Auth = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Xác nhận mật khẩu
+                      Comfirm Password
                     </label>
                     <input
                       type="password"
@@ -169,7 +170,7 @@ const Auth = () => {
                     type="submit"
                     className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
                   >
-                    Đăng ký
+                    Register
                   </button>
                 </form>
               </div>
@@ -180,7 +181,7 @@ const Auth = () => {
             href="/"
             className="text-center block mt-6 text-muted-foreground hover:text-foreground transition-colors"
           >
-            Trở về trang chủ
+            Back to Home
           </a>
         </div>
       </div>
