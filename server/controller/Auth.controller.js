@@ -30,6 +30,7 @@ class AuthController {
                     token: accessToken
                 }
             });
+            
         } catch (error) {
             return res.status(error.statusCode || 500).json({
                 success: false,

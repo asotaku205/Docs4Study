@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { is } from "zod/v4/locales";
-import authService from '../services/authService';
-
+import authService from "../services/authService";
 
 const registerSchema = z
   .object({
@@ -21,10 +20,10 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-  const loginSchema = z.object({
-    email: z.email("Invalid email address"),
-    password: z.string().min(1, "Wrong password"),
-  });
+const loginSchema = z.object({
+  email: z.email("Invalid email address"),
+  password: z.string().min(1, "Wrong password"),
+});
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
@@ -34,53 +33,50 @@ const Auth = () => {
     handleSubmit: handleRegisterSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
-  resolver: zodResolver(registerSchema),
-});
-  
-  const onSubmitRegister = async(data) => {
-    try{
+    resolver: zodResolver(registerSchema),
+  });
+
+  const onSubmitRegister = async (data) => {
+    try {
       const response = await authService.signup(
         data.email,
         data.password,
         data.fullName
       );
-          if(response.success){
-            localStorage.setItem("accessToken",response.data.accessToken);
-            localStorage.setItem("user",JSON.stringify(response.data.user));
-            alert(response.message);
-            window.location.href = "/home";
-          }
-    }catch(error){
-          const errorMessage = error.response?.data?.message || "An error occurred during registration.";
-          alert(errorMessage);
+      if (response.success) {
+        localStorage.setItem("accessToken", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        window.location.replace("/home");
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "An error occurred during registration.";
+      alert(errorMessage);
     }
   };
-  
 
-const {
-  register: loginRegister,
-  handleSubmit: handleLoginSubmit,
-  formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
-} = useForm({
-  resolver: zodResolver(loginSchema),
-});
-const onSubmitLogin = async(data) => {
-  try{
-    const response =await authService.signin(
-      data.email,
-      data.password
-    ) ;
-    if(response.success){
-      localStorage.setItem("accessToken",response.data.accessToken);
-      localStorage.setItem("user",JSON.stringify(response.data.user));
-      alert(response.message);
-      window.location.href = "/home";
-    }
-  }catch(error){
-      const errorMessage = error.response?.data?.message || "An error occurred during login.";
+  const {
+    register: loginRegister,
+    handleSubmit: handleLoginSubmit,
+    formState: { errors: loginErrors, isSubmitting: isLoginSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
+  const onSubmitLogin = async (data) => {
+    try {
+      const response = await authService.signin(data.email, data.password);
+      if (response.success) {
+        localStorage.setItem("accessToken", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        window.location.replace("/home");
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "An error occurred during login.";
       alert(errorMessage);
-  }
-};
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -130,7 +126,10 @@ const onSubmitLogin = async(data) => {
                     Log in to continue your learning journey with Docs4Study.
                   </p>
                 </div>
-                <form className="flex flex-col space-y-4 p-6 pt-0 " onSubmit={handleLoginSubmit(onSubmitLogin)}>
+                <form
+                  className="flex flex-col space-y-4 p-6 pt-0 "
+                  onSubmit={handleLoginSubmit(onSubmitLogin)}
+                >
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Email
@@ -199,7 +198,7 @@ const onSubmitLogin = async(data) => {
                     <button
                       type="button"
                       className="px-4 py-2 border border-var(--input) rounded-md hover:bg-accent transition-colors"
-                      disabled = {isLoginSubmitting}
+                      disabled={isLoginSubmitting}
                     >
                       Facebook
                     </button>
@@ -214,7 +213,10 @@ const onSubmitLogin = async(data) => {
                     Start your journey with Docs4Study.
                   </p>
                 </div>
-                <form className="flex flex-col space-y-4 p-6 pt-0" onSubmit={handleRegisterSubmit(onSubmitRegister)}>
+                <form
+                  className="flex flex-col space-y-4 p-6 pt-0"
+                  onSubmit={handleRegisterSubmit(onSubmitRegister)}
+                >
                   <div className=" gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">

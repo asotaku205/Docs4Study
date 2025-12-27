@@ -3,33 +3,47 @@ import { useState } from "react";
 
 const HomePage = () => {
   return (
-    <div className="flex flex-col">
-      <section className="min-h-screen relative overflow-hidden bg-primary ">
-        <div className="absolute inset-0 z-0 opacity-20 mix-blend-overlay bg-[url('/herobg.png')] bg-cover">
-        </div>
-        <div className="text-left text-white grid grid-cols-2 gap-12 ">
-          <div className="">
-            <div className="rounded-md bg-white p-4 inline-block text-primary font-semibold  ">
+    <>
+      <section className="relative overflow-hidden bg-primary py-20 lg:py-32">
+        <div className="absolute inset-0 z-0 opacity-20 mix-blend-overlay bg-[url('/herobg.png')] bg-cover"></div>
+        <div className="container relative z-10 mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6 text-center lg:text-left">
+            <div className="whitespace-nowrap inline-flex items-center rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-secondary text-secondary-foreground px-4 py-1 text-sm font-medium tracking-wide  ">
               Welcome to Docs4Study
-            </div> 
-            <div className="">
-            <h1 className="text-5xl font-bold mt-8 mb-4">Unlock Your Potential with <span className="font-semibold text-blue-200"> Quality Knowledge</span></h1>
-            <p>
-              Access thousands of study documents, expert-led courses, and insightful articles to accelerate your learning journey.
+            </div>
+
+            <h1 className="text-4xl lg:text-6xl font-heading font-bold text-white leading-tight">
+              Unlock Your Potential with{" "}
+              <span className="font-semibold text-blue-200">
+                {" "}
+                Quality Knowledge
+              </span>
+            </h1>
+            <p className="text-lg text-blue-100 max-w-2xl mx-auto lg:mx-0">
+              Access thousands of study documents, expert-led courses, and
+              insightful articles to accelerate your learning journey.
             </p>
-            <div className=" ">
-              <button className="mt-6 bg-secondary text-white px-6 py-3 rounded-lg font-semibold hover:bg-secondary/80 transition-colors cursor-pointer select-none">
-              Start Reading
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4 ">
+              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap hover-elevate active-elevate-2 border border-primary-border min-h-10 rounded-md bg-white text-primary hover:bg-blue-50 text-base font-semibold px-8">
+                Start Reading
               </button>
-              <button>
+              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-10 rounded-md px-8 border-white/30 text-white hover:bg-white/10 hover:text-white text-base">
                 Explore Courses
               </button>
             </div>
           </div>
-          </div>
-          
-          <div>
-              <img src="/library.jpg" alt="library" />
+
+          <div className="hidden lg:block relative">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl border-8 border-white/10 transform rotate-2 hover:rotate-0 transition-transform duration-500">
+              <img
+                src="/library.jpg"
+                alt="library"
+                className="w-full h-auto object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 text-white bg-gradient-to-t from-black/80 to-transparent p-8">
+                "The best investment you can make is in yourself."
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -66,7 +80,7 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-    </div>
+    </>
   );
 };
 export default HomePage;
