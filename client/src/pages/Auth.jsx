@@ -138,6 +138,7 @@ const onSubmitLogin = async(data) => {
                     <input
                       type="email"
                       placeholder="m@example.com"
+                      autoComplete="email"
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       {...loginRegister("email")}
                     />
@@ -155,6 +156,7 @@ const onSubmitLogin = async(data) => {
                     <input
                       type="password"
                       placeholder=""
+                      autoComplete="current-password"
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       {...loginRegister("password")}
                     />
@@ -238,6 +240,7 @@ const onSubmitLogin = async(data) => {
                     <input
                       type="email"
                       placeholder="m@example.com"
+                      autoComplete="email"
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       {...register("email")}
                     />
@@ -255,6 +258,7 @@ const onSubmitLogin = async(data) => {
                     <input
                       type="password"
                       placeholder=""
+                      autoComplete="new-password"
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       {...register("password")}
                     />
@@ -271,6 +275,7 @@ const onSubmitLogin = async(data) => {
                     <input
                       type="password"
                       placeholder=""
+                      autoComplete="new-password"
                       className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                       {...register("confirmPassword")}
                     />
