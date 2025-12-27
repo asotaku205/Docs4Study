@@ -19,7 +19,7 @@ class AuthController {
                     message: "Missing required fields"
                 })
             };
-            const { accessToken,refreshToken, user } = await AuthService.signin(email, password);
+            const { accessToken, refreshToken, user } = await AuthService.signin(email, password);
             // trả refresh token về trong cookie
             res.cookie("refreshToken", refreshToken, getRefreshCookieOptions());
             return res.status(200).json({
@@ -66,13 +66,13 @@ class AuthController {
             })
         };
     };
-    async signout(req,res){
+    async signout(req, res) {
         try {
             //lay resfresh token tu cookie
             const token = req.cookies?.refreshToken;
-            if(token){
+            if (token) {
                 //xoa resfresh token trong database
-                await Session.deleteOne({refreshToken : token});
+                await Session.deleteOne({ refreshToken: token });
                 //xoa resfresh token tu cookie
                 res.clearCookie("refreshToken", getRefreshCookieOptions());
             };
@@ -84,19 +84,19 @@ class AuthController {
             })
         }
     }
-    async refreshToken(req,res){
+    async refreshToken(req, res) {
         try {
             //lay refresh token tu cookie
             const token = req.cookies?.refreshToken;
-            if(!token){
+            if (!token) {
                 return res.status(401).json({
                     success: false,
                     message: "Refresh token not found in cookies"
                 });
             };
             //so sang voi db
-            const session = await Session.findOne({refreshToken : token});
-            if(!session){
+            const session = await Session.findOne({ refreshToken: token });
+            if (!session) {
                 res.clearCookie("refreshToken", getRefreshCookieOptions());
                 return res.status(403).json({
                     success: false,
@@ -104,7 +104,7 @@ class AuthController {
                 });
             };
             //kiem tra refresh token het han
-            if(session.expiresAt < new Date()){
+            if (session.expiresAt < new Date()) {
                 res.clearCookie("refreshToken", getRefreshCookieOptions());
                 await Session.deleteOne({ _id: session._id });
                 return res.status(403).json({
@@ -113,7 +113,7 @@ class AuthController {
                 });
             }
             const user = await User.findById(session.userId).select("-password");
-            if(!user){
+            if (!user) {
                 await Session.deleteOne({ _id: session._id });
                 res.clearCookie("refreshToken", getRefreshCookieOptions());
                 return res.status(404).json({
@@ -123,7 +123,7 @@ class AuthController {
             }
             //tao access token moi
             const accessToken = AuthService.createAccessToken({
-                userId : session.userId,
+                userId: session.userId,
 
             });
             // xoa refresh token cu va tao refresh token moi
@@ -134,7 +134,7 @@ class AuthController {
                 success: true,
                 message: "Access token refreshed successfully",
                 data: {
-                    token : accessToken
+                    token: accessToken
                 }
             });
         } catch (error) {
@@ -143,6 +143,83 @@ class AuthController {
                 message: error.message || "Server error",
             })
         }
-    }
+    };
+    async forgotPassword(req, res) {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email is required"
+                });
+            };
+            const resetToken = await AuthService.forgotPassword(email);
+            const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+            //Gửi email cho user
+            await AuthService.sendEmailService(email, resetUrl);
+            return res.status(200).json({
+                success: true,
+                message: "If a user with that email exists, a password reset link has been sent"
+            });
+        } catch (error) {
+            return res.status(error.statusCode || 500).json({
+                success: false,
+                message: error.message || "Server error",
+            })
+        }
+    };
+    async validateResetToken(req, res) {
+        //lay reset token tu query param
+        const { resetToken } = req.query;
+        try {
+            if (!resetToken) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Reset token is required"
+                });
+            };
+            //kiem tra reset token co hep le hay ko
+            const isValid = await AuthService.validateResetToken(resetToken);
+            if (!isValid) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid or expired reset token"
+                });
+            };
+            //hop le thi thong bao ra
+            return res.status(200).json({
+                success: true,
+                message: "Reset token is valid"
+            });
+        } catch (error) {
+            return res.status(error.statusCode || 500).json({
+                success: false,
+                message: error.message || "Server error",
+            })
+        }
+
+    };
+    async resetPassword(req, res) {
+        try {
+            const { password } = req.body;
+            const { token } = req.query;
+            if (!token || !password) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Missing required fields"
+                });
+            };
+            await AuthService.resetPassword(token, password);
+            return res.status(200).json({
+                success: true,
+                message: "Password has been reset successfully"
+            });
+        } catch (error) {
+            return res.status(error.statusCode || 500).json({
+                success: false,
+                message: error.message || "Server error",
+            })
+        }
+    };
 };
 export default new AuthController();
