@@ -14,14 +14,14 @@ function Demo() {
           Educational platform for students and instructors
         </p>
         <Link href="/admin">
-          <a className="inline-block px-8 py-3 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+          <span className="inline-block px-8 py-3 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
             Go to Admin Dashboard
-          </a>
+          </span>
         </Link>
         <Link href="/home" className="ml-4">
-          <a className="inline-block px-8 py-3 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+          <span className="inline-block px-8 py-3 bg-white text-slate-900 font-semibold rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
             Go to Home
-          </a>
+          </span>
         </Link>
       </div>
     </div>

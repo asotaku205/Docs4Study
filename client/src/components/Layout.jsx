@@ -8,7 +8,7 @@ const Layout = ({ children }) => {
   return(
   <>
     <Header />
-    <main className="min-h-screen ">
+    <main className="flex flex-col flex-1 ">
 
       {children}
     
