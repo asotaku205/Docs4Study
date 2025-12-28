@@ -6,7 +6,7 @@ import Footer from "./users/Footer.jsx";
 
 const Layout = ({ children }) => {
   return(
-  <>
+  <div className="min-h-screen bg-background font-sans text-foreground flex flex-col">
     <Header />
     <main className="flex flex-col flex-1 ">
 
@@ -14,7 +14,7 @@ const Layout = ({ children }) => {
     
     </main>
     <Footer />
-  </>
+  </div>
 
   );
 

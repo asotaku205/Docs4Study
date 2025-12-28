@@ -4,20 +4,11 @@ import dotenv from 'dotenv';
 import routerAuth from './routes/Auth.route.js';
 import cookieParser from 'cookie-parser';
 import routerUser from './routes/User.route.js';
-import cors from 'cors';
 //Tai bien moi truong
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5001;
-
-// CORS configuration
-app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
 
 app.use(express.json());
 app.use(cookieParser());

@@ -61,7 +61,7 @@ export function Header() {
 
   return (
     <header className=" flex sticky top-0 backdrop-blur bg-background/30 w-full z-50 ">
-      <div className="flex-grow p-4 px-4 justify-between flex items-center">
+      <div className="flex-grow p-4 px-4 justify-between flex items-center mx-auto container">
         <Link href="/">
           <a className="text-2xl font-bold cursor-pointer gap-2 flex items-center select-none">
             <span className="bg-primary text-white px-2 py-1 rounded font-heading">
