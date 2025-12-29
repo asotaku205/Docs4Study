@@ -1,6 +1,8 @@
 import React from "react";
 import { useState } from "react";
 import Layout from "../components/Layout";
+import BlogCard from "../components/users/blogCard";
+import HeroPost from "../components/users/heroPost";
 
 const HomePage = () => {
   return (
@@ -64,45 +66,14 @@ const HomePage = () => {
               <icon></icon>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-8 border rounded-lg p-6 hover-elevate bg-card">
-            <img
-              src="library.png"
-              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-            ></img>
-            <div className="p-8 lg:p-12 flex flex-col justify-center text-left">
-              <div className="flex items-center mb-4 gap-2">
-                <div className="border rounded-md bg-card text-primary boder-primary/20 px-2 py-1 text-sm font-medium">
-                  Development
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  Dev 15,2025
-                </span>
-              </div>
-
-              <h3 className="font-bold text-2xl mb-4 font-leading">
-                Mastering React in 2025: A Comprehensive Guide
-              </h3>
-
-              <p className="text-muted-foreground mb-6">
-                Everything you need to know about the latest features in React
-                ecosystem.
-              </p>
-              <div className="flex items-center justify-between mt-auto">
-                <div className="flex item-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    S
-                  </div>
-                  <div className="">
-                    <p className="font-sm font-semibold">Anh Son</p>
-                    <p className="text-xs text-muted-foreground">Author</p>
-                  </div>
-                </div>
-                <button className="bg-primary text-secondary px-3 py-2 rounded">
-                  Read Article
-                </button>
-              </div>
-            </div>
-          </div>
+          <HeroPost 
+            image="/library.png"
+            category="Development"
+            date="Dec 25, 2025"
+            title="Mastering React in 2025: A Comprehensive Guide"
+            description="Everything you need to know about the latest features in React ecosystem."
+            author="Anh Son"
+          />
         </div>
       </section>
       <section className="bg-muted/30 py-16">
@@ -111,105 +82,31 @@ const HomePage = () => {
             Latest Update
           </h2>
           <div className="grid grid-cols-3 gap-8">
-            <div className="rounded-xl border bg-card text-card-foreground shadow overflow-hidden border-border hover:shadow-lg transition-all duration-300 group cursor-pointer">
-              <div className="overflow-hidden">
-                <img
-                  src="/library.png"
-                  alt="Article Image"
-                  className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center mb-4 gap-2 justify-between">
-                  <div className="text-sm text-secondary-foreground font-medium border rounded-md bg-card bg-secondary px-2 py-1 border-primary/20">
-                    Developement
-                  </div>
-                  <span className="text-sm text-muted-foreground ">
-                    Dec 25, 2025
-                  </span>
-                </div>
-                <div className="text-leading text-primary font-bold">
-                  Mastering React in 2025: A Comprehensive Guide
-                </div>
-              </div>
-              <div className="p-6 pt-0">
-                <p className="text-sm text-muted-foreground">
-                  Everything you need to know about the latest features in React
-                  ecosystem.
-                </p>
-              </div>
-              <div className="flex items-center p-6 border-t border-border pt-4 mt-auto">
-                <span className="text-xs text-muted-foreground font-semibold">
-                  By Anh Son
-                </span>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-card text-card-foreground shadow overflow-hidden border-border hover:shadow-lg transition-all duration-300 group cursor-pointer">
-              <div className="overflow-hidden">
-                <img
-                  src="/library.png"
-                  alt="Article Image"
-                  className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center mb-4 gap-2 justify-between">
-                  <div className="text-sm text-secondary-foreground font-medium border rounded-md bg-card bg-secondary px-2 py-1 border-primary/20">
-                    Developement
-                  </div>
-                  <span className="text-sm text-muted-foreground ">
-                    Dec 25, 2025
-                  </span>
-                </div>
-                <div className="text-leading text-primary font-bold">
-                  Mastering React in 2025: A Comprehensive Guide
-                </div>
-              </div>
-              <div className="p-6 pt-0">
-                <p className="text-sm text-muted-foreground">
-                  Everything you need to know about the latest features in React
-                  ecosystem.
-                </p>
-              </div>
-              <div className="flex items-center p-6 border-t border-border pt-4 mt-auto">
-                <span className="text-xs text-muted-foreground font-semibold">
-                  By Anh Son
-                </span>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-card text-card-foreground shadow overflow-hidden border-border hover:shadow-lg transition-all duration-300 group cursor-pointer">
-              <div className="overflow-hidden">
-                <img
-                  src="/library.png"
-                  alt="Article Image"
-                  className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center mb-4 gap-2 justify-between">
-                  <div className="text-sm text-secondary-foreground font-medium border rounded-md bg-card bg-secondary px-2 py-1 border-primary/20">
-                    Developement
-                  </div>
-                  <span className="text-sm text-muted-foreground ">
-                    Dec 25, 2025
-                  </span>
-                </div>
-                <div className="text-leading text-primary font-bold">
-                  Mastering React in 2025: A Comprehensive Guide
-                </div>
-              </div>
-              <div className="p-6 pt-0">
-                <p className="text-sm text-muted-foreground">
-                  Everything you need to know about the latest features in React
-                  ecosystem.
-                </p>
-              </div>
-              <div className="flex items-center p-6 border-t border-border pt-4 mt-auto">
-                <span className="text-xs text-muted-foreground font-semibold">
-                  By Anh Son
-                </span>
-              </div>
-            </div>
+            <BlogCard
+              image="/library.png"
+              category="Development"
+              date="Dec 25, 2025"
+              title="Mastering React in 2025: A Comprehensive Guide"
+              description="Everything you need to know about the latest features in React ecosystem."
+              author="Anh Son"
+            />
+            
+            <BlogCard
+              image="/library.png"
+              category="Development"
+              date="Dec 25, 2025"
+              title="Mastering React in 2025: A Comprehensive Guide"
+              description="Everything you need to know about the latest features in React ecosystem."
+              author="Anh Son"
+            />
+            <BlogCard
+              image="/library.png"
+              category="Development"
+              date="Dec 25, 2025"
+              title="Mastering React in 2025: A Comprehensive Guide"
+              description="Everything you need to know about the latest features in React ecosystem."
+              author="Anh Son"
+            />
           </div>
         </div>
       </section>
