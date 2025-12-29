@@ -9,7 +9,10 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const parsePagination = (req) => {
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), MAX_LIMIT);
+  const limit = Math.min(
+    Math.max(parseInt(req.query.limit, 10) || 10, 1),
+    MAX_LIMIT
+  );
   const skip = (page - 1) * limit;
   return { page, limit, skip };
 };
@@ -83,7 +86,9 @@ const getUserById = async (req) => {
 
   const user = await User.findOne(filter);
   if (!user) {
-    throw createServiceError("User not found", 404, { message: "User not found" });
+    throw createServiceError("User not found", 404, {
+      message: "User not found",
+    });
   }
   return user;
 };
@@ -106,7 +111,9 @@ const createUser = async (req) => {
 const updateUser = async (req) => {
   const user = await User.findById(req.params.id).select("+password");
   if (!user) {
-    throw createServiceError("User not found", 404, { message: "User not found" });
+    throw createServiceError("User not found", 404, {
+      message: "User not found",
+    });
   }
 
   Object.keys(req.body || {}).forEach((key) => {
@@ -124,7 +131,9 @@ const deleteUser = async (req) => {
     { new: true, strict: false }
   );
   if (!deletedUser) {
-    throw createServiceError("User not found", 404, { message: "User not found" });
+    throw createServiceError("User not found", 404, {
+      message: "User not found",
+    });
   }
   return { message: "User deleted" };
 };
@@ -136,7 +145,9 @@ const restoreUser = async (req) => {
     { new: true, strict: false }
   );
   if (!restoredUser) {
-    throw createServiceError("User not found", 404, { message: "User not found" });
+    throw createServiceError("User not found", 404, {
+      message: "User not found",
+    });
   }
   return { message: "User restored" };
 };
@@ -150,7 +161,8 @@ const getAllCourses = async (req) => {
   }
 
   if (req.query.isPublished !== undefined) {
-    const isPublished = req.query.isPublished === "true" || req.query.isPublished === "1";
+    const isPublished =
+      req.query.isPublished === "true" || req.query.isPublished === "1";
     filter.isPublished = isPublished;
   }
 
@@ -178,7 +190,9 @@ const getCourseById = async (req) => {
 
   const course = await Course.findOne(filter);
   if (!course) {
-    throw createServiceError("Course not found", 404, { message: "Course not found" });
+    throw createServiceError("Course not found", 404, {
+      message: "Course not found",
+    });
   }
   return course;
 };
@@ -193,7 +207,50 @@ const createCourse = async (req) => {
     });
   }
 
-  const course = new Course(req.body);
+  // If instructor is a string (name), try to find admin by name or use first admin
+  let instructorId = req.body.instructor;
+  if (
+    typeof req.body.instructor === "string" &&
+    !req.body.instructor.match(/^[0-9a-fA-F]{24}$/)
+  ) {
+    // Not an ObjectId, try to find admin by fullName or use first admin
+    const admin = await User.findOne({
+      $or: [
+        { fullName: req.body.instructor, role: "admin" },
+        { email: req.body.instructor, role: "admin" },
+      ],
+    }).limit(1);
+
+    if (admin) {
+      instructorId = admin._id;
+    } else {
+      // If no admin found, use first admin or first user
+      const firstAdmin = await User.findOne({ role: "admin" }).limit(1);
+      if (firstAdmin) {
+        instructorId = firstAdmin._id;
+      } else {
+        const firstUser = await User.findOne().limit(1);
+        if (firstUser) {
+          instructorId = firstUser._id;
+        } else {
+          throw createServiceError(
+            "No admin found to assign as instructor",
+            400,
+            {
+              message: "No admin found to assign as instructor",
+            }
+          );
+        }
+      }
+    }
+  }
+
+  const courseData = {
+    ...req.body,
+    instructor: instructorId,
+  };
+
+  const course = new Course(courseData);
   await course.save();
   return course;
 };
@@ -204,7 +261,9 @@ const updateCourse = async (req) => {
     runValidators: true,
   });
   if (!course) {
-    throw createServiceError("Course not found", 404, { message: "Course not found" });
+    throw createServiceError("Course not found", 404, {
+      message: "Course not found",
+    });
   }
   return course;
 };
@@ -216,7 +275,9 @@ const deleteCourse = async (req) => {
     { new: true, strict: false }
   );
   if (!deletedCourse) {
-    throw createServiceError("Course not found", 404, { message: "Course not found" });
+    throw createServiceError("Course not found", 404, {
+      message: "Course not found",
+    });
   }
   return { message: "Course deleted" };
 };
@@ -228,7 +289,9 @@ const restoreCourse = async (req) => {
     { new: true, strict: false }
   );
   if (!restoredCourse) {
-    throw createServiceError("Course not found", 404, { message: "Course not found" });
+    throw createServiceError("Course not found", 404, {
+      message: "Course not found",
+    });
   }
   return { message: "Course restored" };
 };
@@ -268,7 +331,9 @@ const getDocumentById = async (req) => {
 
   const document = await Document.findOne(filter);
   if (!document) {
-    throw createServiceError("Document not found", 404, { message: "Document not found" });
+    throw createServiceError("Document not found", 404, {
+      message: "Document not found",
+    });
   }
   return document;
 };
@@ -294,7 +359,9 @@ const updateDocument = async (req) => {
     runValidators: true,
   });
   if (!document) {
-    throw createServiceError("Document not found", 404, { message: "Document not found" });
+    throw createServiceError("Document not found", 404, {
+      message: "Document not found",
+    });
   }
   return document;
 };
@@ -306,7 +373,9 @@ const deleteDocument = async (req) => {
     { new: true, strict: false }
   );
   if (!deletedDocument) {
-    throw createServiceError("Document not found", 404, { message: "Document not found" });
+    throw createServiceError("Document not found", 404, {
+      message: "Document not found",
+    });
   }
   return { message: "Document deleted" };
 };
@@ -318,7 +387,9 @@ const restoreDocument = async (req) => {
     { new: true, strict: false }
   );
   if (!restoredDocument) {
-    throw createServiceError("Document not found", 404, { message: "Document not found" });
+    throw createServiceError("Document not found", 404, {
+      message: "Document not found",
+    });
   }
   return { message: "Document restored" };
 };
@@ -357,7 +428,9 @@ const getOrderById = async (req) => {
 
   const order = await Order.findOne(filter);
   if (!order) {
-    throw createServiceError("Order not found", 404, { message: "Order not found" });
+    throw createServiceError("Order not found", 404, {
+      message: "Order not found",
+    });
   }
   return order;
 };
@@ -383,7 +456,9 @@ const updateOrder = async (req) => {
     runValidators: true,
   });
   if (!order) {
-    throw createServiceError("Order not found", 404, { message: "Order not found" });
+    throw createServiceError("Order not found", 404, {
+      message: "Order not found",
+    });
   }
   return order;
 };
@@ -395,7 +470,9 @@ const deleteOrder = async (req) => {
     { new: true, strict: false }
   );
   if (!deletedOrder) {
-    throw createServiceError("Order not found", 404, { message: "Order not found" });
+    throw createServiceError("Order not found", 404, {
+      message: "Order not found",
+    });
   }
   return { message: "Order deleted" };
 };
@@ -407,7 +484,9 @@ const restoreOrder = async (req) => {
     { new: true, strict: false }
   );
   if (!restoredOrder) {
-    throw createServiceError("Order not found", 404, { message: "Order not found" });
+    throw createServiceError("Order not found", 404, {
+      message: "Order not found",
+    });
   }
   return { message: "Order restored" };
 };
@@ -463,7 +542,38 @@ const createBlogPost = async (req) => {
     });
   }
 
-  const post = new BlogPost(req.body);
+  // If author is a string (name), try to find user by name or email
+  let authorId = req.body.author;
+  if (
+    typeof req.body.author === "string" &&
+    !req.body.author.match(/^[0-9a-fA-F]{24}$/)
+  ) {
+    // Not an ObjectId, try to find user by fullName or email
+    const user = await User.findOne({
+      $or: [{ fullName: req.body.author }, { email: req.body.author }],
+    }).limit(1);
+
+    if (user) {
+      authorId = user._id;
+    } else {
+      // If no user found, create a new user or use first user
+      const firstUser = await User.findOne().limit(1);
+      if (firstUser) {
+        authorId = firstUser._id;
+      } else {
+        throw createServiceError("No user found to assign as author", 400, {
+          message: "No user found to assign as author",
+        });
+      }
+    }
+  }
+
+  const postData = {
+    ...req.body,
+    author: authorId,
+  };
+
+  const post = new BlogPost(postData);
   await post.save();
   return post;
 };

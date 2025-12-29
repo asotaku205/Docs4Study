@@ -14,7 +14,7 @@ const courseSchema = new mongoose.Schema({
   thumbnail: String,
   instructor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin',
+    ref: 'User',
     required: true
   },
   category: String,

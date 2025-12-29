@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { usersAPI, coursesAPI, documentsAPI, blogPostsAPI } from "@/services/api";
+import { usersAPI, coursesAPI, documentsAPI, blogPostsAPI, ordersAPI } from "@/services/api";
 
 const chartData = [
   { name: "Jan", revenue: 4000, users: 120 },
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
   const [submissions, setSubmissions] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [loading, setLoading] = useState({ users: false, blogs: false, documents: false, courses: false });
-  const [stats, setStats] = useState({ users: 0, activeUsers: 0, courses: 0, documents: 0 });
+  const [stats, setStats] = useState({ users: 0, activeUsers: 0, courses: 0, documents: 0, revenue: 0 });
   
   const [editUser, setEditUser] = useState(null);
   const [editBlog, setEditBlog] = useState(null);
@@ -69,12 +69,13 @@ export default function AdminDashboard() {
     try {
       setLoading({ users: true, blogs: true, documents: true, courses: true });
       
-      const [usersRes, blogsRes, docsRes, coursesRes, activeUsersRes] = await Promise.all([
+      const [usersRes, blogsRes, docsRes, coursesRes, activeUsersRes, ordersRes] = await Promise.all([
         usersAPI.getAll({ limit: 100 }),
         blogPostsAPI.getAll({ limit: 100 }),
         documentsAPI.getAll({ limit: 100 }),
         coursesAPI.getAll({ limit: 100 }),
         usersAPI.getAll({ limit: 1, isActive: true }),
+        ordersAPI.getAll({ limit: 100 }),
       ]);
 
       setUsers(usersRes.data.data || []);
@@ -82,11 +83,20 @@ export default function AdminDashboard() {
       setDocuments(docsRes.data.data || []);
       setCourses(coursesRes.data.data || []);
       
+      // Calculate total revenue from orders
+      const totalRevenue = ordersRes.data.data?.reduce((sum, order) => {
+        const amount = typeof order.amount === 'string' 
+          ? parseFloat(order.amount.replace(/[^0-9.]/g, '')) 
+          : (order.amount || 0);
+        return sum + amount;
+      }, 0) || 0;
+      
       setStats({
         users: usersRes.data.pagination?.total || 0,
         activeUsers: activeUsersRes.data.pagination?.total || 0,
         courses: coursesRes.data.pagination?.total || 0,
         documents: docsRes.data.pagination?.total || 0,
+        revenue: totalRevenue,
       });
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -197,13 +207,21 @@ export default function AdminDashboard() {
   const handleAddDoc = async (title, category) => {
     if (!title.trim() || !category.trim()) return;
     try {
-      const response = await documentsAPI.create({ title, category, content: "" });
+      const response = await documentsAPI.create({ 
+        title, 
+        category, 
+        content: "No content yet" 
+      });
       setDocuments([response.data, ...documents]);
       setShowAddForm(null);
       document.getElementById("doc-title").value = "";
       document.getElementById("doc-category").value = "";
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add document");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to add document";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error adding document:", err.response?.data || err);
     }
   };
 
@@ -211,28 +229,46 @@ export default function AdminDashboard() {
     if (!title.trim() || !instructor.trim()) return;
     try {
       const slug = title.toLowerCase().replace(/\s+/g, "-");
-      const response = await coursesAPI.create({ title, instructor, level, slug });
+      const response = await coursesAPI.create({ 
+        title, 
+        instructor, // Backend sẽ xử lý string hoặc ObjectId
+        level: level.toLowerCase(), // Convert to lowercase for enum
+        slug 
+      });
       setCourses([response.data, ...courses]);
       setShowAddForm(null);
       document.getElementById("course-title").value = "";
       document.getElementById("course-instructor").value = "";
       document.getElementById("course-level").value = "Beginner";
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add course");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to add course";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error adding course:", err.response?.data || err);
     }
   };
 
   const handleAddBlog = async (title, author, status) => {
     if (!title.trim() || !author.trim()) return;
     try {
-      const response = await blogPostsAPI.create({ title, author, status, content: "" });
+      const response = await blogPostsAPI.create({ 
+        title, 
+        author, // Backend sẽ xử lý string hoặc ObjectId
+        status: status.toLowerCase(), // Convert to lowercase for enum
+        content: "No content yet" 
+      });
       setBlogs([response.data, ...blogs]);
       setShowAddForm(null);
       document.getElementById("blog-title").value = "";
       document.getElementById("blog-author").value = "";
       document.getElementById("blog-status").value = "Published";
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add blog post");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to add blog post";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error adding blog post:", err.response?.data || err);
     }
   };
 
@@ -354,7 +390,7 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                 {[
-                  { label: "Revenue", value: "$24,580", change: "+12.5%", icon: "📊" },
+                  { label: "Revenue", value: `$${stats.revenue.toLocaleString()}`, change: "+12.5%", icon: "📊" },
                   { label: "Users", value: stats.users.toString(), change: "+3.2%", icon: "👥" },
                   { label: "Documents", value: stats.documents.toString(), change: "+18%", icon: "📄" },
                   { label: "Courses", value: stats.courses.toString(), change: "+2%", icon: "📚" },
