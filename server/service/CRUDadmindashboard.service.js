@@ -256,7 +256,37 @@ const createCourse = async (req) => {
 };
 
 const updateCourse = async (req) => {
-  const course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+  const courseData = { ...req.body };
+
+  // If instructor is a string (name), try to find admin by name or use first admin
+  if (
+    courseData.instructor &&
+    typeof courseData.instructor === "string" &&
+    !courseData.instructor.match(/^[0-9a-fA-F]{24}$/)
+  ) {
+    const admin = await User.findOne({
+      $or: [
+        { fullName: courseData.instructor, role: "admin" },
+        { email: courseData.instructor, role: "admin" },
+      ],
+    }).limit(1);
+
+    if (admin) {
+      courseData.instructor = admin._id;
+    } else {
+      const firstAdmin = await User.findOne({ role: "admin" }).limit(1);
+      if (firstAdmin) {
+        courseData.instructor = firstAdmin._id;
+      }
+    }
+  }
+
+  // Convert level to lowercase if provided
+  if (courseData.level) {
+    courseData.level = courseData.level.toLowerCase();
+  }
+
+  const course = await Course.findByIdAndUpdate(req.params.id, courseData, {
     new: true,
     runValidators: true,
   });
@@ -579,7 +609,34 @@ const createBlogPost = async (req) => {
 };
 
 const updateBlogPost = async (req) => {
-  const post = await BlogPost.findByIdAndUpdate(req.params.id, req.body, {
+  const postData = { ...req.body };
+
+  // If author is a string (name), try to find user by name or email
+  if (
+    postData.author &&
+    typeof postData.author === "string" &&
+    !postData.author.match(/^[0-9a-fA-F]{24}$/)
+  ) {
+    const user = await User.findOne({
+      $or: [{ fullName: postData.author }, { email: postData.author }],
+    }).limit(1);
+
+    if (user) {
+      postData.author = user._id;
+    } else {
+      const firstUser = await User.findOne().limit(1);
+      if (firstUser) {
+        postData.author = firstUser._id;
+      }
+    }
+  }
+
+  // Convert status to lowercase if provided
+  if (postData.status) {
+    postData.status = postData.status.toLowerCase();
+  }
+
+  const post = await BlogPost.findByIdAndUpdate(req.params.id, postData, {
     new: true,
     runValidators: true,
   });
