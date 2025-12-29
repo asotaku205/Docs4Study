@@ -45,7 +45,7 @@ const Auth = () => {
       if (response.success) {
         localStorage.setItem("accessToken", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        window.location.replace("/home");
+        window.location.replace("/");
       }
     } catch (error) {
       const errorMessage =
@@ -68,7 +68,7 @@ const Auth = () => {
       if (response.success) {
         localStorage.setItem("accessToken", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        window.location.replace("/home");
+        window.location.replace("/");
       }
     } catch (error) {
       const errorMessage =

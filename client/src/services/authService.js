@@ -1,8 +1,8 @@
-import api from "./api.js";
+import apiUser from "./apiUser.js";
 const authService = {
     signup: async (email, password, fullName) => {
         try {
-        const response = await api.post("/auth/signup", {
+        const response = await apiUser.post("/auth/signup", {
             email,
             password,
             fullName
@@ -14,7 +14,7 @@ const authService = {
 }, 
     signin: async (email, password) => {
         try {
-        const response = await api.post("/auth/signin", {
+        const response = await apiUser.post("/auth/signin", {
             email,
             password
         });
@@ -25,7 +25,7 @@ const authService = {
  }, 
     signout: async () => {
         try {
-        const response = await api.post("/auth/signout");
+        const response = await apiUser.post("/auth/signout");
         return response.data;
     } catch (error) {
         throw error;
@@ -33,7 +33,7 @@ const authService = {
  },
  getCurrentUser: async () => {
     try {
-        const response = await api.get("/user/me");
+        const response = await apiUser.get("/user/me");
         return response.data.data.user;
     } catch (error) {
         throw error;

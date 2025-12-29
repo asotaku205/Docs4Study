@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import authService from "../../services/authService";
 
 export function Header() {
-  const [user, setUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(() =>{
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return !!(localStorage.getItem("accessToken") && localStorage.getItem("user"));
+  });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedData = JSON.parse(storedUser);
+      return parsedData.role && parsedData.role.toLowerCase() === "admin";
+    }
+    return false;
+  });
   const [searchOpen, setSearchOpen] = useState(false);
-
+  const [islocation] = useLocation();
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -62,6 +74,7 @@ export function Header() {
   return (
     <header className=" flex sticky top-0 backdrop-blur bg-background/30 w-full z-50 ">
       <div className="flex-grow p-4 px-4 justify-between flex items-center mx-auto container">
+        
         <Link href="/">
           <a className="text-2xl font-bold cursor-pointer gap-2 flex items-center select-none">
             <span className="bg-primary text-white px-2 py-1 rounded font-heading">
@@ -71,18 +84,26 @@ export function Header() {
           </a>
         </Link>
         <nav className=" gap-8 flex items-center text-white">
-          <a className="text-muted-foreground hover:text-primary cursor-pointer select-none">
+          <Link href="/">
+          <a className={`${ islocation === '/' ? 'text-primary font-bold' : 'text-muted-foreground'} hover:text-primary cursor-pointer select-none`}>
             Home
           </a>
-          <a className="text-muted-foreground hover:text-primary cursor-pointer select-none">
+          </Link>
+          <Link href="/blog">
+          <a className={`${ islocation === '/blog' ? 'text-primary font-bold' : 'text-muted-foreground'} hover:text-primary cursor-pointer select-none`}>
             Blogs
           </a>
-          <a className="text-muted-foreground hover:text-primary cursor-pointer select-none">
-            Cources
+          </Link>
+          <Link href="/courses">
+          <a className={`${ islocation === '/courses' ? 'text-primary font-bold' : 'text-muted-foreground'} hover:text-primary cursor-pointer select-none`}>
+            Courses
           </a>
-          <a className="text-muted-foreground hover:text-primary cursor-pointer select-none">
+          </Link>
+          <Link href="/documents">
+          <a className={`${ islocation === '/documents' ? 'text-primary font-bold' : 'text-muted-foreground'} hover:text-primary cursor-pointer select-none`}>
             Documents
           </a>
+          </Link>
         </nav>
         <div className="gap-4 flex items-center">
           <div className="relative">

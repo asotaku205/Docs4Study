@@ -55,4 +55,3 @@ export const blogPostsAPI = {
 };
 
 export default api;
-

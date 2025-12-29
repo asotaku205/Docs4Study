@@ -1,9 +1,10 @@
 import React from "react";
 import { useState } from "react";
+import Layout from "../components/Layout";
 
 const HomePage = () => {
   return (
-    <>
+    <Layout>
       <section className="relative overflow-hidden bg-primary py-20 lg:py-32">
         <div className="absolute inset-0 z-0 opacity-20 mix-blend-overlay bg-[url('/herobg.png')] bg-cover"></div>
         <div className="container relative z-10 mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
@@ -532,7 +533,7 @@ const HomePage = () => {
           
         </div>
       </section>
-    </>
+    </Layout>
   );
 };
 export default HomePage;
