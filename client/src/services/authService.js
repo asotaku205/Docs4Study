@@ -1,4 +1,3 @@
-import { get } from "react-hook-form";
 import api from "./api.js";
 const authService = {
     signup: async (email, password, fullName) => {

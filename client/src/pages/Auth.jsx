@@ -3,13 +3,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { is } from "zod/v4/locales";
 import authService from "../services/authService";
 
 const registerSchema = z
   .object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
-    email: z.email("Invalid email address"),
+    email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z
       .string()
@@ -21,7 +20,7 @@ const registerSchema = z
   });
 
 const loginSchema = z.object({
-  email: z.email("Invalid email address"),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Wrong password"),
 });
 
