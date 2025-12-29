@@ -17,23 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { usersAPI, coursesAPI, documentsAPI, blogPostsAPI } from "@/services/api";
-
-const chartData = [
-  { name: "Jan", revenue: 4000, users: 120 },
-  { name: "Feb", revenue: 3000, users: 100 },
-  { name: "Mar", revenue: 2000, users: 80 },
-  { name: "Apr", revenue: 2780, users: 110 },
-  { name: "May", revenue: 1890, users: 90 },
-  { name: "Jun", revenue: 2390, users: 130 },
-];
-
-const docChartData = [
-  { name: "Science", value: 240 },
-  { name: "Math", value: 290 },
-  { name: "History", value: 200 },
-  { name: "English", value: 150 }
-];
+import { usersAPI, coursesAPI, documentsAPI, blogPostsAPI, ordersAPI } from "@/services/api";
 
 const COLORS = ["#1f2937", "#374151", "#6b7280", "#9ca3af"];
 
@@ -53,7 +37,9 @@ export default function AdminDashboard() {
   const [submissions, setSubmissions] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [loading, setLoading] = useState({ users: false, blogs: false, documents: false, courses: false });
-  const [stats, setStats] = useState({ users: 0, activeUsers: 0, courses: 0, documents: 0 });
+  const [stats, setStats] = useState({ users: 0, activeUsers: 0, courses: 0, documents: 0, revenue: 0 });
+  const [chartData, setChartData] = useState([]);
+  const [docChartData, setDocChartData] = useState([]);
   
   const [editUser, setEditUser] = useState(null);
   const [editBlog, setEditBlog] = useState(null);
@@ -69,12 +55,13 @@ export default function AdminDashboard() {
     try {
       setLoading({ users: true, blogs: true, documents: true, courses: true });
       
-      const [usersRes, blogsRes, docsRes, coursesRes, activeUsersRes] = await Promise.all([
+      const [usersRes, blogsRes, docsRes, coursesRes, activeUsersRes, ordersRes] = await Promise.all([
         usersAPI.getAll({ limit: 100 }),
         blogPostsAPI.getAll({ limit: 100 }),
         documentsAPI.getAll({ limit: 100 }),
         coursesAPI.getAll({ limit: 100 }),
         usersAPI.getAll({ limit: 1, isActive: true }),
+        ordersAPI.getAll({ limit: 100 }),
       ]);
 
       setUsers(usersRes.data.data || []);
@@ -82,12 +69,67 @@ export default function AdminDashboard() {
       setDocuments(docsRes.data.data || []);
       setCourses(coursesRes.data.data || []);
       
+      // Calculate total revenue from orders
+      const totalRevenue = ordersRes.data.data?.reduce((sum, order) => {
+        const amount = typeof order.amount === 'string' 
+          ? parseFloat(order.amount.replace(/[^0-9.]/g, '')) 
+          : (order.amount || 0);
+        return sum + amount;
+      }, 0) || 0;
+      
       setStats({
         users: usersRes.data.pagination?.total || 0,
         activeUsers: activeUsersRes.data.pagination?.total || 0,
         courses: coursesRes.data.pagination?.total || 0,
         documents: docsRes.data.pagination?.total || 0,
+        revenue: totalRevenue,
       });
+
+      // Generate Revenue Trend Chart Data (last 6 months)
+      const now = new Date();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const revenueByMonth = [];
+      
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthName = monthNames[date.getMonth()];
+        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+        
+        const monthRevenue = ordersRes.data.data?.reduce((sum, order) => {
+          const orderDate = new Date(order.createdAt);
+          if (orderDate >= monthStart && orderDate <= monthEnd) {
+            const amount = typeof order.amount === 'string' 
+              ? parseFloat(order.amount.replace(/[^0-9.]/g, '')) 
+              : (order.amount || 0);
+            return sum + amount;
+          }
+          return sum;
+        }, 0) || 0;
+        
+        revenueByMonth.push({
+          name: monthName,
+          revenue: monthRevenue,
+        });
+      }
+      
+      setChartData(revenueByMonth);
+
+      // Generate Document Distribution Chart Data (by category)
+      const categoryCount = {};
+      docsRes.data.data?.forEach((doc) => {
+        const category = doc.category || "Uncategorized";
+        categoryCount[category] = (categoryCount[category] || 0) + 1;
+      });
+      
+      const docDistribution = Object.entries(categoryCount)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 4); // Top 4 categories
+      
+      setDocChartData(docDistribution.length > 0 ? docDistribution : [
+        { name: "No Data", value: 1 }
+      ]);
     } catch (err) {
       console.error("Error fetching data:", err);
     } finally {
@@ -163,12 +205,29 @@ export default function AdminDashboard() {
 
   const handleSaveBlog = async (updatedBlog) => {
     try {
-      const response = await blogPostsAPI.update(updatedBlog._id, updatedBlog);
+      // Prepare data for update - only send necessary fields
+      const updateData = {
+        title: updatedBlog.title,
+        author: updatedBlog.author, // Can be ObjectId string or name
+        status: updatedBlog.status?.toLowerCase() || updatedBlog.status,
+        views: updatedBlog.views || 0,
+      };
+      
+      // Include content if provided
+      if (updatedBlog.content !== undefined) {
+        updateData.content = updatedBlog.content;
+      }
+      
+      const response = await blogPostsAPI.update(updatedBlog._id, updateData);
       setBlogs(blogs.map(b => b._id === updatedBlog._id ? response.data : b));
       if (selectedBlog?._id === updatedBlog._id) setSelectedBlog(response.data);
       setEditBlog(null);
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update blog post");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to update blog post";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error updating blog post:", err.response?.data || err);
     }
   };
 
@@ -185,25 +244,49 @@ export default function AdminDashboard() {
 
   const handleSaveCourse = async (updatedCourse) => {
     try {
-      const response = await coursesAPI.update(updatedCourse._id, updatedCourse);
+      // Prepare data for update - only send necessary fields
+      const updateData = {
+        title: updatedCourse.title,
+        instructor: updatedCourse.instructor, // Can be ObjectId string or name
+        level: updatedCourse.level?.toLowerCase() || updatedCourse.level,
+      };
+      
+      // Only include slug if title changed
+      if (updatedCourse.title && updatedCourse.title !== selectedCourse?.title) {
+        updateData.slug = updatedCourse.title.toLowerCase().replace(/\s+/g, "-");
+      }
+      
+      const response = await coursesAPI.update(updatedCourse._id, updateData);
       setCourses(courses.map(c => c._id === updatedCourse._id ? response.data : c));
       if (selectedCourse?._id === updatedCourse._id) setSelectedCourse(response.data);
       setEditCourse(null);
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update course");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to update course";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error updating course:", err.response?.data || err);
     }
   };
 
   const handleAddDoc = async (title, category) => {
     if (!title.trim() || !category.trim()) return;
     try {
-      const response = await documentsAPI.create({ title, category, content: "" });
+      const response = await documentsAPI.create({ 
+        title, 
+        category, 
+        content: "No content yet" 
+      });
       setDocuments([response.data, ...documents]);
       setShowAddForm(null);
       document.getElementById("doc-title").value = "";
       document.getElementById("doc-category").value = "";
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add document");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to add document";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error adding document:", err.response?.data || err);
     }
   };
 
@@ -211,28 +294,46 @@ export default function AdminDashboard() {
     if (!title.trim() || !instructor.trim()) return;
     try {
       const slug = title.toLowerCase().replace(/\s+/g, "-");
-      const response = await coursesAPI.create({ title, instructor, level, slug });
+      const response = await coursesAPI.create({ 
+        title, 
+        instructor, // Backend sẽ xử lý string hoặc ObjectId
+        level: level.toLowerCase(), // Convert to lowercase for enum
+        slug 
+      });
       setCourses([response.data, ...courses]);
       setShowAddForm(null);
       document.getElementById("course-title").value = "";
       document.getElementById("course-instructor").value = "";
       document.getElementById("course-level").value = "Beginner";
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add course");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to add course";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error adding course:", err.response?.data || err);
     }
   };
 
   const handleAddBlog = async (title, author, status) => {
     if (!title.trim() || !author.trim()) return;
     try {
-      const response = await blogPostsAPI.create({ title, author, status, content: "" });
+      const response = await blogPostsAPI.create({ 
+        title, 
+        author, // Backend sẽ xử lý string hoặc ObjectId
+        status: status.toLowerCase(), // Convert to lowercase for enum
+        content: "No content yet" 
+      });
       setBlogs([response.data, ...blogs]);
       setShowAddForm(null);
       document.getElementById("blog-title").value = "";
       document.getElementById("blog-author").value = "";
       document.getElementById("blog-status").value = "Published";
+      fetchAllData(); // Refresh data
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add blog post");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to add blog post";
+      const missing = err.response?.data?.missing;
+      alert(missing ? `${errorMsg}\nMissing: ${missing.join(", ")}` : errorMsg);
+      console.error("Error adding blog post:", err.response?.data || err);
     }
   };
 
@@ -354,7 +455,7 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                 {[
-                  { label: "Revenue", value: "$24,580", change: "+12.5%", icon: "📊" },
+                  { label: "Revenue", value: `$${stats.revenue.toLocaleString()}`, change: "+12.5%", icon: "📊" },
                   { label: "Users", value: stats.users.toString(), change: "+3.2%", icon: "👥" },
                   { label: "Documents", value: stats.documents.toString(), change: "+18%", icon: "📄" },
                   { label: "Courses", value: stats.courses.toString(), change: "+2%", icon: "📚" },
@@ -392,12 +493,21 @@ export default function AdminDashboard() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Distribution</CardTitle>
+                    <CardTitle className="text-lg">Document Distribution by Category</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
-                        <Pie data={docChartData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
+                        <Pie 
+                          data={docChartData} 
+                          cx="50%" 
+                          cy="50%" 
+                          labelLine={false}
+                          label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                          outerRadius={80} 
+                          fill="#8884d8" 
+                          dataKey="value"
+                        >
                           {docChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
