@@ -63,7 +63,7 @@ export function Header() {
       const logOut = authService.signout();
       localStorage.removeItem("user");
       localStorage.removeItem("accessToken");
-      window.location.href = "/home";
+      window.location.href = "/";
       setIsLoggedIn(false);
       setUser(null);
     } catch (error) {
