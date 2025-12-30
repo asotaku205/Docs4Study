@@ -1,3 +1,8 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClock } from '@fortawesome/free-solid-svg-icons';
+import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
+
 const CardCourses = ({image, title, description, duration, students, price}) => {
   return (
     <div className="group bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
@@ -16,13 +21,13 @@ const CardCourses = ({image, title, description, duration, students, price}) => 
           {description}
         </p>
         <div className="mt-auto pt-4 flex items-center justify-between mb-4">
-          <span className="text-muted-foreground text-xs">{duration}</span>
-          <span className="text-muted-foreground text-xs">{students} students</span>
+          <span className="text-muted-foreground text-xs"><FontAwesomeIcon icon={faClock} /> {duration}</span>
+          <span className="text-muted-foreground text-xs"> <FontAwesomeIcon icon={faPeopleGroup} /> {students} </span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-primary text-xl font-bold">{price}$</span>
+          <span className="text-primary text-xl font-bold">{price} $</span>
           <button className="ml-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover-elevate">
-            Enroll Now
+            Enroll Now <FontAwesomeIcon icon={faCirclePlay} />
           </button>
         </div>
       </div>

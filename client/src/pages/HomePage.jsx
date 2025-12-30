@@ -5,8 +5,16 @@ import BlogCard from "../components/users/blogCard";
 import HeroPost from "../components/users/heroPost";
 import TopDocs from "../components/users/topDocs";
 import TopCourses from "../components/users/topCourses";
+import { Link } from "wouter";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 
 const HomePage = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return !!(
+      localStorage.getItem("accessToken") && localStorage.getItem("user")
+    );
+  });
   return (
     <Layout>
       <section className="relative overflow-hidden bg-primary py-20 lg:py-32">
@@ -18,10 +26,9 @@ const HomePage = () => {
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-heading font-bold text-white leading-tight">
-              Unlock Your Potential with{" "}
+              Unlock Your Potential with {" "}
               <span className="font-semibold text-blue-200">
-                {" "}
-                Quality Knowledge
+                Quality Knowledge {" "}
               </span>
             </h1>
             <p className="text-lg text-blue-100 max-w-2xl mx-auto lg:mx-0">
@@ -29,12 +36,16 @@ const HomePage = () => {
               insightful articles to accelerate your learning journey.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4 ">
+              <Link href="/blog">
               <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap hover-elevate active-elevate-2 border border-primary-border min-h-10 rounded-md bg-white text-primary hover:bg-blue-50 text-base font-semibold px-8">
                 Start Reading
               </button>
+              </Link>
+              <Link href="/courses">
               <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-10 rounded-md px-8 border-white/30 text-white hover:bg-white/10 hover:text-white text-base">
                 Explore Courses
               </button>
+              </Link>
             </div>
           </div>
 
@@ -63,12 +74,16 @@ const HomePage = () => {
                 Our topic for this week.
               </p>
             </div>
-            <div>
-              <button>View all blog</button>
-              <icon></icon>
+            <div className="flex items-center gap-2 text-primary font-medium cursor-pointer">
+              <Link href="/blog">
+                <button className="inline-flex items-center gap-2 hover:cursor-pointer">
+                  View all blog
+                </button>
+                <FontAwesomeIcon icon={faAngleRight} />
+              </Link>
             </div>
           </div>
-          <HeroPost 
+          <HeroPost
             image="/library.png"
             category="Development"
             date="Dec 25, 2025"
@@ -92,7 +107,7 @@ const HomePage = () => {
               description="Everything you need to know about the latest features in React ecosystem."
               author="Anh Son"
             />
-            
+
             <BlogCard
               image="/library.png"
               category="Development"
@@ -125,7 +140,12 @@ const HomePage = () => {
                     Most viewed study materials
                   </p>
                 </div>
-                <button className="text-sm font-medium">View all</button>
+                <div>
+                  <Link href="/documents">
+                    <button className="text-sm font-medium hover:cursor-pointer">View all</button>
+                    <FontAwesomeIcon icon={faAngleRight} />
+                  </Link>
+                </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
                 <TopDocs
@@ -168,7 +188,10 @@ const HomePage = () => {
                     Top-rated learning paths{" "}
                   </p>
                 </div>
-                <button className="text-sm font-medium">View all</button>
+                <Link href="/courses">
+                  <button className="text-sm font-medium hover:cursor-pointer">View all</button>
+                  <FontAwesomeIcon icon={faAngleRight} />
+                </Link>
               </div>
 
               <div className="space-y-4">
@@ -180,7 +203,7 @@ const HomePage = () => {
                   time="12"
                   rating="4.8"
                 />
-                
+
                 <TopCourses
                   image="library.png"
                   level="Advance"
@@ -189,7 +212,7 @@ const HomePage = () => {
                   time="12"
                   rating="4.8"
                 />
-                
+
                 <TopCourses
                   image="library.png"
                   level="Advance"
@@ -203,24 +226,25 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-      <section className="py-20 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center space-y-6">
-          <h2 className="text-3xl lg:text-4xl font-heading font-bold">
-            Ready to Elevate Your Learning Journey?
-          </h2>
-          <p className="max-w-2xl mx-auto text-lg text-blue-100">
-            Join Docs4Study today and unlock a world of knowledge at your
-            fingertips. Whether you're a student, professional, or lifelong
-            learner, we have the resources to help you succeed.
-          </p>
-          
-            <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap hover-elevate active-elevate-2 border border-primary-border min-h-10 rounded-md bg-white text-primary hover:bg-blue-50 text-base font-semibold px-8">
-              Create Your Free Account
-            </button>
-            
-          
-        </div>
-      </section>
+      {!isLoggedIn && (
+        <section className="py-20 bg-primary text-primary-foreground">
+          <div className="container mx-auto px-4 text-center space-y-6">
+            <h2 className="text-3xl lg:text-4xl font-heading font-bold">
+              Ready to Elevate Your Learning Journey?
+            </h2>
+            <p className="max-w-2xl mx-auto text-lg text-blue-100">
+              Join Docs4Study today and unlock a world of knowledge at your
+              fingertips. Whether you're a student, professional, or lifelong
+              learner, we have the resources to help you succeed.
+            </p>
+            <Link href="/auth">
+              <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap hover-elevate active-elevate-2 border border-primary-border min-h-10 rounded-md bg-white text-primary hover:bg-blue-50 text-base font-semibold px-8">
+                Create Your Free Account
+              </button>
+            </Link>
+          </div>
+        </section>
+      )}
     </Layout>
   );
 };

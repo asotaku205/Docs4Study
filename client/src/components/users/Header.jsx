@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import authService from "../../services/authService";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass,faUser } from '@fortawesome/free-solid-svg-icons';
+import { faGear } from '@fortawesome/free-solid-svg-icons';
+import { faUserTie } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 
 export function Header() {
   const [user, setUser] = useState(() =>{
@@ -113,22 +118,7 @@ export function Header() {
                 setSearchOpen(!searchOpen);
               }}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-search h-5 w-5"
-                aria-hidden="true"
-              >
-                <path d="m21 21-4.34-4.34"></path>
-                <circle cx="11" cy="11" r="8"></circle>
-              </svg>
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
             </button>
             {searchOpen && (
               <div className="absolute top-full mt-4 right-0 w-80 bg-card p-4 rounded-lg shadow-lg">
@@ -151,24 +141,28 @@ export function Header() {
                   setUserMenuOpen(!userMenuOpen);
                 }}
               >
+                <FontAwesomeIcon icon={faUser} className="bg-muted-foreground/20 rounded-full p-2" />
                 {user?.fullName}
               </button>
               {userMenuOpen && (
                 <div className="absolute right-0 top-full mt-4 w-48 bg-card border border-border rounded-lg shadow-lg overflow-hidden animate-in slide-in-from-top-2">
                   <Link href="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer select-none">
                     <button >
+                      <FontAwesomeIcon icon={faUser} className="mr-2" />
                       Profile
                     </button>
                   </Link>
                   <Link href="/settings" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer select-none">
                     <button >
+                      <FontAwesomeIcon icon={faGear} className="mr-2" />
                       Settings
                     </button>
                   </Link>
                   {isAdmin && (
                     <Link href="/admin" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer select-none">
                       <button >
-                        Admin Dashboard
+                        <FontAwesomeIcon icon={faUserTie} className="mr-2" style={{color: "#FFD43B",}} />
+                        Admin 
                       </button>
                     </Link>
                   )}
@@ -177,6 +171,7 @@ export function Header() {
                     onClick={handleLogout}
                     
                   >
+                    <FontAwesomeIcon icon={faArrowRightFromBracket} className="mr-2" style={{color: "#ff0000",}} />
                     Logout
                   </button>
                   </Link>

@@ -1,3 +1,7 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { faBookOpen } from '@fortawesome/free-solid-svg-icons';
+
 const TopCourses = ({image,level,price,title,time,rating}) => {
     return (
         <button className="group w-full overflow-hidden rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-md transition-all text-left">
@@ -24,10 +28,10 @@ const TopCourses = ({image,level,price,title,time,rating}) => {
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>
-                           {time} Lessons
+                           <FontAwesomeIcon icon={faBookOpen} /> {time} Lessons
                         </span>
                        <span>
-                        {rating} Rating
+                        {rating} <FontAwesomeIcon icon={faStar} style={{color: "#FFD43B",}} />
                        </span>
                       
                       </div>

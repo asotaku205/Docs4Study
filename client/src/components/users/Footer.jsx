@@ -4,7 +4,7 @@ import { useState } from "react";
 const Footer = () => {
   return (
     <>
-      <footer className="bg-background/30 backdrop-blur text-center py-12 w-full">
+      <footer className="bg-white border-t backdrop-blur text-center py-12 w-full">
         <div className="mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mx-auto px-4 text-left">
             <div className=" space-y-4 ">
@@ -70,7 +70,7 @@ const Footer = () => {
           </div>
           <div className="mt-12 border-t pt-8 ">
             <p className="text-muted-foreground mb-4">
-              © 2024 Docs4Study. All rights reserved.
+              © 2026 Docs4Study. All rights reserved.
             </p>
           </div>
         </div>
