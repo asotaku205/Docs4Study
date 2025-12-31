@@ -1,7 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { Link } from "wouter";
 const BlogCard = ({ image, category, date, title, description, author }) => {
   return (
+    <Link href="/blog-detail">
     <div className="rounded-xl border bg-card text-card-foreground shadow overflow-hidden border-border hover:shadow-lg transition-all duration-300 group cursor-pointer">
       <div className="overflow-hidden">
         <img
@@ -29,6 +31,7 @@ const BlogCard = ({ image, category, date, title, description, author }) => {
         </span>
       </div>
     </div>
+    </Link>
   );
 };
 export default BlogCard;

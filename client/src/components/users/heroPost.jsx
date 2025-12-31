@@ -6,7 +6,7 @@ import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 const HeroPost = ({image, category, date, title, description, author}) => {
   return (
     <div className="mb-16">
-      <Link href="/">
+      <Link href="/blog-detail">
         <button className="w-full grid lg:grid-cols-2 gap-8 items-center bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all text-left">
           <div className=" h-full overflow-hidden">
             <img

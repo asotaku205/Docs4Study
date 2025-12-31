@@ -158,7 +158,7 @@ const Documents = () => {
           </div>
           <div className="lg:col-span-3">
             <div className="flex justify-between items-center">
-              <h3 className="text-muted-foreground">4 results found</h3>
+              <h3 className="text-muted-foreground">{filteredDocs.length} results found</h3>
               <select className="border border-border rounded-md p-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                 <option>Sort by: Relevance</option>
                 <option>Sort by: Most Downloaded</option>
