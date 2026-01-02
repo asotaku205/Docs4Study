@@ -8,30 +8,22 @@ import {
   faComment,
   faShareFromSquare,
   faClock,
-  faCalendar,
-  faUser,
+  faCalendar
+  
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import BlogCard from "../components/users/blogCard";
 import CommentCard from "../components/users/commentCard";
+import BackgroundPhoto from "../components/users/BackgroundPhoto";
+import BackButton from "../components/ui/BackButton";
+import AboutAuthor from "../components/users/AboutAuthor";
 
 const BlogDetail = () => {
   return (
     <Layout>
-      <div className="relative overflow-hidden h-96 lg:h-[500px]">
-        <img
-          src="/library.png"
-          alt="Blog Detail"
-          className="w-full  h-full object-cover"
-        ></img>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent "></div>
-      </div>
+      <BackgroundPhoto image="/library.png" />
       <div className="container mx-auto px-4 max-w-6xl -mt-32 relative z-10">
-        <Link href="/blog">
-          <button className="mb-6 text-sm text-primary font-medium hover:underline bg-white/90 px-4 py-2 rounded-md shadow-md">
-            <FontAwesomeIcon icon={faAngleLeft} /> Back to Blog
-          </button>
-        </Link>
+        <BackButton />
         <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
           <div className="lg:col-span-3">
             <div className="bg-card rounded-2xl shadow-lg p-8 lg:p-12">
@@ -122,23 +114,7 @@ const BlogDetail = () => {
                   <FontAwesomeIcon icon={faShareFromSquare} /> Share
                 </button>
               </div>
-              <div className="mt-12 p-6 bg-muted/50 rounded-xl border border-border">
-                <h3 className="text-lg font-bold mb-4">About the author</h3>
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold">
-                    <FontAwesomeIcon icon={faUserPen} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Jane Doe</p>
-                    <p className="text-sm text-muted-foreground max-w-lg">
-                      Jane is a seasoned web developer with over a decade of
-                      experience in building scalable web applications. She is
-                      passionate about sharing knowledge and helping others grow
-                      in their careers.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <AboutAuthor  />
             </div>
           </div>
           <div className="hidden lg:block">

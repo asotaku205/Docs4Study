@@ -7,6 +7,8 @@ import Blog from "./pages/Blog";
 import Courses from "./pages/Courses";
 import Documents from "./pages/Documents";
 import BlogDetail from "./pages/BlogDetail";
+import CoursesDetail from "./pages/CoursesDetail";
+import DocumentDetail from "./pages/DocumentDetail";
 
 function Routes() {
   return (
@@ -17,6 +19,8 @@ function Routes() {
       <Route path="/blog-detail" component={BlogDetail} />
 
       <Route path="/courses" component={Courses} />
+      <Route path="/courses/detail" component={CoursesDetail} />
+      <Route path="/documents/detail" component={DocumentDetail} />
       <Route path="/documents" component={Documents} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />

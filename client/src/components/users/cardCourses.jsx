@@ -2,9 +2,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
+import { Link } from "wouter";
 
 const CardCourses = ({image, title, description, duration, students, price}) => {
   return (
+    <Link href="/courses/detail">
     <div className="group bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
       <div className="h-48 overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent">
@@ -32,6 +34,7 @@ const CardCourses = ({image, title, description, duration, students, price}) => 
         </div>
       </div>
     </div>
+    </Link>
   );
 };
 export default CardCourses;
