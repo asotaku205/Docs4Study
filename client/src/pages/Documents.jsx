@@ -1,6 +1,6 @@
 import React, { use, useEffect } from "react";
 import Layout from "../components/Layout";
-import CardDocs from "../components/users/cardDocs";
+import CardDocs from "../components/users/Documents/cardDocs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faFilter } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
