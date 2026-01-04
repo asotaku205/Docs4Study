@@ -1,10 +1,10 @@
 import React from "react";
 import { useState } from "react";
 import Layout from "../components/Layout";
-import BlogCard from "../components/users/blogCard";
-import HeroPost from "../components/users/heroPost";
-import TopDocs from "../components/users/topDocs";
-import TopCourses from "../components/users/topCourses";
+import BlogCard from "../components/users/Blogs/blogCard";
+import HeroPost from "../components/users/Blogs/heroPost";
+import TopDocs from "../components/users/Documents/topDocs";
+import TopCourses from "../components/users/Courses/topCourses";
 import { Link } from "wouter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";

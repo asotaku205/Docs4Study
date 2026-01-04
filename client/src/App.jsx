@@ -9,6 +9,7 @@ import Documents from "./pages/Documents";
 import BlogDetail from "./pages/BlogDetail";
 import CoursesDetail from "./pages/CoursesDetail";
 import DocumentDetail from "./pages/DocumentDetail";
+import Profile from "./pages/Profile";
 
 function Routes() {
   return (
@@ -22,6 +23,8 @@ function Routes() {
       <Route path="/courses/detail" component={CoursesDetail} />
       <Route path="/documents/detail" component={DocumentDetail} />
       <Route path="/documents" component={Documents} />
+      <Route path="/profile" component={Profile} />
+
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
@@ -29,9 +32,7 @@ function Routes() {
 }
 
 function App() {
-  return (
-    <Routes/>
-  );
+  return <Routes />;
 }
 
 export default App;

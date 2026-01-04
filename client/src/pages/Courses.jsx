@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import Layout from "../components/Layout";
-import CardCourses from "../components/users/cardCourses";
+import CardCourses from "../components/users/Courses/cardCourses";
 import { useState } from "react";
 const Courses = () => {
   const [activeTab, setActiveTab] = useState("All");

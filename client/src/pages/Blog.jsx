@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import Layout from "../components/Layout";
 import { Link } from "wouter";
-import BlogCard from "../components/users/blogCard";
-import HeroPost from "../components/users/heroPost";
+import BlogCard from "../components/users/Blogs/blogCard";
+import HeroPost from "../components/users/Blogs/heroPost";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";

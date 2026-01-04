@@ -12,7 +12,7 @@ import {
   
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import BlogCard from "../components/users/blogCard";
+import BlogCard from "../components/users/Blogs/blogCard";
 import CommentCard from "../components/users/commentCard";
 import BackgroundPhoto from "../components/users/BackgroundPhoto";
 import BackButton from "../components/ui/BackButton";
