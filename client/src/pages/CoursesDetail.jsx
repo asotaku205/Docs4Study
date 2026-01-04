@@ -8,8 +8,8 @@ import { faUsers, faUserPen } from "@fortawesome/free-solid-svg-icons";
 import { faClock } from "@fortawesome/free-solid-svg-icons";
 
 import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
-import LockPart from "../components/users/LockPart";
-import CompletedPart from "../components/users/CompletedPart";
+import LockPart from "../components/users/Courses/LockPart";
+import CompletedPart from "../components/users/Courses/CompletedPart";
 import CommentCard from "../components/users/commentCard";
 import AboutAuthor from "../components/users/AboutAuthor";
 

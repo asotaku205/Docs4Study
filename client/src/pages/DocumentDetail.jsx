@@ -2,7 +2,13 @@ import Layout from "../components/Layout";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CommentCard from "../components/users/commentCard";
 import BackButton from "../components/ui/BackButton";
-import { faCalendar, faComment, faShareFromSquare, faStar, faThumbsUp } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCalendar,
+  faComment,
+  faShareFromSquare,
+  faStar,
+  faThumbsUp,
+} from "@fortawesome/free-solid-svg-icons";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { faFileLines } from "@fortawesome/free-solid-svg-icons";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
@@ -12,7 +18,7 @@ const DocumentDetail = () => {
   return (
     <Layout>
       <div class="container mx-auto px-4 py-12">
-        <BackButton link="/documents" />
+        <BackButton link="/documents" text="Documents" />
         <div class="grid lg:grid-cols-3 gap-8">
           <div class="lg:col-span-2 space-y-8">
             <div class="bg-card rounded-2xl p-8 shadow-lg">
@@ -59,8 +65,7 @@ const DocumentDetail = () => {
                 </p>
                 <p class="text-muted-foreground mb-6">PDF Preview Loading...</p>
                 <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground border border-primary-border min-h-9 px-4 py-2 gap-2">
-                  <FontAwesomeIcon icon={faDownload}  /> Open Full
-                  Document
+                  <FontAwesomeIcon icon={faDownload} /> Open Full Document
                 </button>
               </div>
             </div>
@@ -96,13 +101,11 @@ const DocumentDetail = () => {
                   42 Helpful
                 </button>
                 <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 px-4 py-2 gap-2">
-                  <FontAwesomeIcon icon={faComment} />{" "}
-                  14 Comments
+                  <FontAwesomeIcon icon={faComment} /> 14 Comments
                 </button>
               </div>
               <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 px-4 py-2 gap-2">
-                <FontAwesomeIcon icon={faShareFromSquare} />{" "}
-                Share
+                <FontAwesomeIcon icon={faShareFromSquare} /> Share
               </button>
             </div>
             <AboutAuthor />
@@ -116,12 +119,10 @@ const DocumentDetail = () => {
               </div>
               <div class="p-6 pt-0 space-y-4">
                 <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 bg-primary text-primary-foreground border border-primary-border min-h-9 px-4 py-2 w-full h-12 gap-2 font-semibold text-base">
-                  <FontAwesomeIcon icon={faDownload}  />{" "}
-                  Download Now
+                  <FontAwesomeIcon icon={faDownload} /> Download Now
                 </button>
                 <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full h-12 gap-2">
-                  <FontAwesomeIcon icon={faShareFromSquare} />{" "}
-                  Share Document
+                  <FontAwesomeIcon icon={faShareFromSquare} /> Share Document
                 </button>
                 <div class="mt-6 pt-6 border-t border-border space-y-3 text-sm">
                   <div>

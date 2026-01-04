@@ -3,11 +3,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "wouter";
 import React from "react";
 
-const BackButton = (link) => {
+const BackButton = ({link, text}) => {
   return (
     <Link href= {link}>
           <button className="mb-6 text-sm text-primary font-medium hover:underline bg-white/90 px-4 py-2 rounded-md shadow-md">
-            <FontAwesomeIcon icon={faAngleLeft} /> Back to Blog
+            <FontAwesomeIcon icon={faAngleLeft} /> Back to {text}
           </button>
     </Link>
   );
