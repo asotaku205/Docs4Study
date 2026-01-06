@@ -2,7 +2,8 @@ import { faCalendar } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBolt } from "@fortawesome/free-solid-svg-icons"; 
 import { faPenToSquare } from "@fortawesome/free-regular-svg-icons";
-const ProfileCard = () => {
+import { Link } from "wouter";
+const ProfileCard = ({ setActiveTab }) => {
     return(
          <div className="rounded-xl border bg-card text-card-foreground border-border shadow-md overflow-hidden">
               <div className="p-8 text-center border-b border-border">
@@ -45,8 +46,9 @@ const ProfileCard = () => {
                   </span>
                   <span className="font-medium text-green-600">18 Days</span>
                 </div>
-                
-                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-input shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full mt-2">
+                <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-input shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full mt-2"
+                onClick={() => setActiveTab("Setting")}
+                >
                   <FontAwesomeIcon icon={faPenToSquare} />
                   Edit Profile
                 </button>

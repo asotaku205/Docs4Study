@@ -11,6 +11,7 @@ import { useState } from "react";
 import SavedDocs from "../components/users/Profile/SavedDoc";
 
 import MyPost from "../components/users/Profile/MyPost"; 
+import Setting from "../components/users/Profile/Setting";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 
 const Profile = () => {
@@ -26,7 +27,9 @@ const Profile = () => {
       <div className="container mx-auto px-4 max-w-6xl -mt-24 relative z-10 pb-20">
         <div className="grid lg:grid-cols-12 gap-8">
          <div className="lg:col-span-4 space-y-6">
-            <ProfileCard />
+            <ProfileCard 
+            setActiveTab={setActiveTab}
+            />
 
             <Statistics />
           </div>
@@ -67,7 +70,14 @@ const Profile = () => {
                   <FontAwesomeIcon icon={faPen} />
                   My Posts
                 </button>
-                <button className="inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2 ml-auto">
+                <button
+                  className={
+                    activeTab === "Setting"
+                      ? "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2 ml-auto bg-primary text-primary-foreground"
+                      : "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2 ml-auto"
+                  }
+                  onClick={() => setActiveTab("Setting")}
+                >
                   <FontAwesomeIcon icon={faGear} />
                 </button>
               </div>
@@ -75,6 +85,7 @@ const Profile = () => {
               {activeTab === "My Courses" && <MyCourses />}
               {activeTab === "Saved Docs" && <SavedDocs />}
               {activeTab === "My Posts" && <MyPost />}
+              {activeTab === "Setting" && <Setting />}
             </div>
           </div>
         </div>
