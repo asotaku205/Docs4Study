@@ -4,7 +4,11 @@ import dotenv from 'dotenv';
 import routerAuth from './routes/Auth.route.js';
 import cookieParser from 'cookie-parser';
 import routerUser from './routes/User.route.js';
-import adminDashboardRoutes from './routes/CRUDadmindashboard.route.js';
+import usersRoutes from './routes/Users.route.js';
+import coursesRoutes from './routes/Courses.route.js';
+import documentsRoutes from './routes/Documents.route.js';
+import ordersRoutes from './routes/Orders.route.js';
+import blogPostsRoutes from './routes/BlogPosts.route.js';
 
 //Tai bien moi truong
 dotenv.config();
@@ -37,7 +41,11 @@ app.use(cookieParser());
 //Cac route
 app.use("/api/auth", routerAuth);
 app.use("/api/user", routerUser);
-app.use("/api/admin", adminDashboardRoutes);
+app.use("/api/admin/users", usersRoutes);
+app.use("/api/admin/courses", coursesRoutes);
+app.use("/api/admin/documents", documentsRoutes);
+app.use("/api/admin/orders", ordersRoutes);
+app.use("/api/admin/blog-posts", blogPostsRoutes);
 
 const runServer = async () => {
     try {
