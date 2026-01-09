@@ -122,12 +122,15 @@ export function Header() {
             </button>
             {searchOpen && (
               <div className="absolute top-full mt-4 right-0 w-80 bg-card p-4 rounded-lg shadow-lg">
-                <input
+                <form action="/search" method="GET">
+                  <input
                   type="text"
                   placeholder="Search blogs, courses, documents..."
                   className=" p-2 w-full rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <p className="text-muted-foreground text-center py-4 text-xs">Start typing to search...</p>
+                </form>
+                
               </div>
             )}
           </div>

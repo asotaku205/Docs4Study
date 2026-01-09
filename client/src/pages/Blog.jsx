@@ -63,7 +63,7 @@ const Blog = () => {
         <div className="container mx-auto px-4 py-12">
           <div className="flex item-start justify-between gap-4 mb-8">
             <h1 className="font-bold font-leading text-4xl">Knowledge Hub</h1>
-            <Link href="/blog/create">
+            <Link href="/create-post">
               <button className="ml-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 transition">
                 <FontAwesomeIcon icon={faPlus} /> Create Post
               </button>

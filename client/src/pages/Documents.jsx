@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faFilter } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import { ca } from "zod/v4/locales";
+import Searching from "../components/users/Searching";
 const Documents = () => {
   const allDocs = [
     {
@@ -90,29 +91,11 @@ const Documents = () => {
   const filteredDocs = activeCategory === "All Documents" ? allDocs : allDocs.filter(doc => doc.category === activeCategory);
   return (
     <Layout>
-      <section className="bg-muted/30 py-12 border-b border-border">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="font-bold text-4xl mb-4 text-foreground text-center">
-            Study Documents
-          </h2>
-          <p className="text-muted-foreground mx-auto mb-6">
-            Access thousands of study notes, cheat sheets, and research papers
-            shared by the community.
-          </p>
-          <div className="max-w-xl mx-auto relative">
-            <FontAwesomeIcon
-              icon={faMagnifyingGlass}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              type="text"
-              placeholder="Search documents..."
-              className="w-full px-4 py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pl-10"
-            />
-          </div>
-        </div>
-      </section>
-
+      <Searching
+        title="Study Documents"
+        description="Access thousands of study notes, cheat sheets, and research papers shared by the community."
+        
+      />
       <section className="py-12">
         <div className="container mx-auto px-4 py-12 grid lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 space-y-8">
