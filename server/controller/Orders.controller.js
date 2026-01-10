@@ -1,6 +1,15 @@
 import ordersService from "../Service/Orders.service.js";
 
 class OrdersController {
+  constructor() {
+    this.getAllOrders = this.getAllOrders.bind(this);
+    this.getOrderById = this.getOrderById.bind(this);
+    this.createOrder = this.createOrder.bind(this);
+    this.updateOrder = this.updateOrder.bind(this);
+    this.deleteOrder = this.deleteOrder.bind(this);
+    this.restoreOrder = this.restoreOrder.bind(this);
+  }
+
   sendError(res, err, fallbackStatus = 500) {
     const status = err.status || fallbackStatus;
     const payload = err.payload || { error: err.message };

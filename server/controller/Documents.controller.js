@@ -1,6 +1,15 @@
 import documentsService from "../Service/Documents.service.js";
 
 class DocumentsController {
+  constructor() {
+    this.getAllDocuments = this.getAllDocuments.bind(this);
+    this.getDocumentById = this.getDocumentById.bind(this);
+    this.createDocument = this.createDocument.bind(this);
+    this.updateDocument = this.updateDocument.bind(this);
+    this.deleteDocument = this.deleteDocument.bind(this);
+    this.restoreDocument = this.restoreDocument.bind(this);
+  }
+
   sendError(res, err, fallbackStatus = 500) {
     const status = err.status || fallbackStatus;
     const payload = err.payload || { error: err.message };

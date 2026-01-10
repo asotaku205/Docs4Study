@@ -3,7 +3,6 @@ import { connectDB } from './config/db.js';
 import dotenv from 'dotenv';
 import routerAuth from './routes/Auth.route.js';
 import cookieParser from 'cookie-parser';
-import routerUser from './routes/User.route.js';
 import usersRoutes from './routes/Users.route.js';
 import coursesRoutes from './routes/Courses.route.js';
 import documentsRoutes from './routes/Documents.route.js';
@@ -40,7 +39,7 @@ app.use(cookieParser());
 
 //Cac route
 app.use("/api/auth", routerAuth);
-app.use("/api/user", routerUser);
+app.use("/api/user", usersRoutes);
 app.use("/api/admin/users", usersRoutes);
 app.use("/api/admin/courses", coursesRoutes);
 app.use("/api/admin/documents", documentsRoutes);

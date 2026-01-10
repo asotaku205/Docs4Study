@@ -1,6 +1,15 @@
 import blogPostsService from "../Service/BlogPosts.service.js";
 
 class BlogPostsController {
+  constructor() {
+    this.getAllBlogPosts = this.getAllBlogPosts.bind(this);
+    this.getBlogPostById = this.getBlogPostById.bind(this);
+    this.createBlogPost = this.createBlogPost.bind(this);
+    this.updateBlogPost = this.updateBlogPost.bind(this);
+    this.deleteBlogPost = this.deleteBlogPost.bind(this);
+    this.restoreBlogPost = this.restoreBlogPost.bind(this);
+  }
+
   sendError(res, err, fallbackStatus = 500) {
     const status = err.status || fallbackStatus;
     const payload = err.payload || { error: err.message };

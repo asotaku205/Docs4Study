@@ -1,6 +1,17 @@
 import usersService from "../Service/Users.service.js";
 
 class UsersController {
+    constructor() {
+        // Bind all methods to preserve 'this' context
+        this.getAllUsers = this.getAllUsers.bind(this);
+        this.getUserById = this.getUserById.bind(this);
+        this.createUser = this.createUser.bind(this);
+        this.updateUser = this.updateUser.bind(this);
+        this.deleteUser = this.deleteUser.bind(this);
+        this.restoreUser = this.restoreUser.bind(this);
+        this.me = this.me.bind(this);
+    }
+
     sendError(res, err, fallbackStatus = 500) {
         const status = err.status || fallbackStatus;
         const payload = err.payload || { error: err.message };

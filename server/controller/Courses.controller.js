@@ -1,6 +1,15 @@
 import coursesService from "../Service/Courses.service.js";
 
 class CoursesController {
+  constructor() {
+    this.getAllCourses = this.getAllCourses.bind(this);
+    this.getCourseById = this.getCourseById.bind(this);
+    this.createCourse = this.createCourse.bind(this);
+    this.updateCourse = this.updateCourse.bind(this);
+    this.deleteCourse = this.deleteCourse.bind(this);
+    this.restoreCourse = this.restoreCourse.bind(this);
+  }
+
   sendError(res, err, fallbackStatus = 500) {
     const status = err.status || fallbackStatus;
     const payload = err.payload || { error: err.message };

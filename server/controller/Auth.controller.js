@@ -10,6 +10,17 @@ const getRefreshCookieOptions = () => ({
     maxAge: REFRESH_TOKEN_TTL,
 });
 class AuthController {
+    constructor() {
+        // Bind all methods to preserve 'this' context
+        this.signin = this.signin.bind(this);
+        this.signup = this.signup.bind(this);
+        this.signout = this.signout.bind(this);
+        this.refreshToken = this.refreshToken.bind(this);
+        this.forgotPassword = this.forgotPassword.bind(this);
+        this.validateResetToken = this.validateResetToken.bind(this);
+        this.resetPassword = this.resetPassword.bind(this);
+    }
+
     async signin(req, res) {
         try {
             const { email, password } = req.body;
