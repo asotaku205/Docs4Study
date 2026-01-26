@@ -276,6 +276,60 @@ const restoreBlogPost = async (req, res) => {
   }
 };
 
+const getAllCategories = async (req, res) => {
+  try {
+    const result = await adminDashboardService.getAllCategories(req);
+    res.status(200).json(result);
+  } catch (err) {
+    sendError(res, err, 500);
+  }
+};
+
+const getCategoryById = async (req, res) => {
+  try {
+    const category = await adminDashboardService.getCategoryById(req);
+    res.status(200).json(category);
+  } catch (err) {
+    sendError(res, err, 500);
+  }
+};
+
+const createCategory = async (req, res) => {
+  try {
+    const category = await adminDashboardService.createCategory(req);
+    res.status(201).json(category);
+  } catch (err) {
+    sendError(res, err, 400);
+  }
+};
+
+const updateCategory = async (req, res) => {
+  try {
+    const category = await adminDashboardService.updateCategory(req);
+    res.status(200).json(category);
+  } catch (err) {
+    sendError(res, err, 400);
+  }
+};
+
+const deleteCategory = async (req, res) => {
+  try {
+    const result = await adminDashboardService.deleteCategory(req);
+    res.status(200).json(result);
+  } catch (err) {
+    sendError(res, err, 500);
+  }
+};
+
+const restoreCategory = async (req, res) => {
+  try {
+    const result = await adminDashboardService.restoreCategory(req);
+    res.status(200).json(result);
+  } catch (err) {
+    sendError(res, err, 500);
+  }
+};
+
 export default {
   getAllUsers,
   getUserById,
@@ -307,4 +361,10 @@ export default {
   updateBlogPost,
   deleteBlogPost,
   restoreBlogPost,
+  getAllCategories,
+  getCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  restoreCategory,
 };

@@ -24,7 +24,7 @@ function Routes() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/blog" component={Blog} />
-      <Route path="/blog-detail" component={BlogDetail} />
+      <Route path="/blog-detail/:id" component={BlogDetail} />
       <Route path="/create-post" component={CreatePost} />
       <Route path="/search" component={Search} />
       <Route path="/courses" component={Courses} />

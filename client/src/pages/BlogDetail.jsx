@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
-import { Link } from "wouter";
+import { useRoute } from "wouter";
 import {
   faAngleLeft,
   faUserPen,
@@ -9,7 +9,6 @@ import {
   faShareFromSquare,
   faClock,
   faCalendar
-  
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import BlogCard from "../components/users/Blogs/blogCard";
@@ -17,11 +16,76 @@ import CommentCard from "../components/users/commentCard";
 import BackgroundPhoto from "../components/users/BackgroundPhoto";
 import BackButton from "../components/ui/BackButton";
 import AboutAuthor from "../components/users/AboutAuthor";
+import { blogService } from "../services/blogService";
 
 const BlogDetail = () => {
+  const [, params] = useRoute("/blog-detail/:id");
+  const [blog, setBlog] = useState(null);
+  const [relatedBlogs, setRelatedBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+
+  useEffect(() => {
+    if (params?.id) {
+      fetchBlogDetail();
+      fetchRelatedBlogs();
+    }
+  }, [params?.id]);
+
+  const fetchBlogDetail = async () => {
+    try {
+      setLoading(true);
+      const response = await blogService.getBlogById(params.id);
+      setBlog(response.data);
+    } catch (error) {
+      console.error("Error fetching blog:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRelatedBlogs = async () => {
+    try {
+      const response = await blogService.getAllBlogs({ limit: 3 });
+      setRelatedBlogs(response.data || []);
+    } catch (error) {
+      console.error("Error fetching related blogs:", error);
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      await blogService.likeBlog(params.id);
+      setLiked(true);
+      setBlog(prev => ({ ...prev, likes: prev.likes + 1 }));
+    } catch (error) {
+      console.error("Error liking blog:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <p>Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!blog) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <p>Blog not found</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <BackgroundPhoto image="/library.png" />
+      <BackgroundPhoto image={blog.image || "/library.png"} />
       <div className="container mx-auto px-4 max-w-6xl -mt-32 relative z-10">
         <BackButton />
         <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
@@ -29,14 +93,14 @@ const BlogDetail = () => {
             <div className="bg-card rounded-2xl shadow-lg p-8 lg:p-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="px-4 py-2 bg-primary text-white rounded transition text-xs">
-                  Development
+                  {blog.category?.name || "General"}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  <FontAwesomeIcon icon={faCalendar} /> December 31,2025
+                  <FontAwesomeIcon icon={faCalendar} /> {new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </span>
               </div>
               <h1 className="text-4xl lg:text-5xl font-heading font-bold mb-6 leading-tight">
-                Mastering React in 2025: A Comprehensive Guide
+                {blog.title}
               </h1>
               <div className="flex items-center justify-between pb-8 border-b border-border">
                 <div className="flex items-center gap-3">
@@ -44,77 +108,42 @@ const BlogDetail = () => {
                     <FontAwesomeIcon icon={faUserPen} />
                   </div>
                   <div className="">
-                    <p className="font-bold text-sm">Jane Doe</p>
-                    <p className="text-xs text-muted-foreground">Editor</p>
+                    <p className="font-bold text-sm">{blog.author?.fullName || "Unknown"}</p>
+                    <p className="text-xs text-muted-foreground">{blog.author?.email || "Editor"}</p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {" "}
-                  <FontAwesomeIcon icon={faClock} />8 min read
+                  <FontAwesomeIcon icon={faClock} /> {blog.views} views
                 </p>
               </div>
               <div className="max-w-none mt-8 mb-12 space-y-6 text-foreground">
-                <p className="text-lg leading-relaxed text-muted-foreground">
-                  Everything you need to know about the latest features in React
-                  ecosystem.
-                </p>
-                <h2 className="text-2xl font-bold font-heading scroll-mt-20">
-                  Introduction
-                </h2>
-                <p className="text-lg leading-relaxed ">
-                  This comprehensive guide walks you through everything you need
-                  to know. Whether you're a beginner or an experienced
-                  professional, you'll find valuable insights and practical tips
-                  that you can apply immediately.
-                </p>
-                <h2 className="text-2xl font-bold font-heading scroll-mt-20">
-                  Key Takeaways
-                </h2>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Understanding React 18 and its new features.</li>
-                  <li>
-                    Effective state management with Redux and Context API.
-                  </li>
-                  <li>
-                    Building performant applications with React Suspense and
-                    Concurrent Mode.
-                  </li>
-                  <li>
-                    Best practices for testing and deploying React applications.
-                  </li>
-                </ul>
-                <h2 className="text-2xl font-bold font-heading scroll-mt-20">
-                  Getting Started with React 18
-                </h2>
-                <p className="text-lg leading-relaxed ">
-                  By the end of this guide, you'll have a solid understanding of
-                  React's capabilities in 2025 and be well-equipped to build
-                  modern, efficient web applications.
-                </p>
-                <h2 className="text-2xl font-bold font-heading scroll-mt-20">
-                  Conclusion
-                </h2>
-                <p className="text-lg leading-relaxed ">
-                  As you implement these strategies, remember that learning is a
-                  continuous journey. Stay curious, keep experimenting, and
-                  don't hesitate to explore new approaches. The knowledge you
-                  gain today will become the foundation for your future growth.
-                </p>
+                {blog.description && (
+                  <p className="text-lg leading-relaxed text-muted-foreground">
+                    {blog.description}
+                  </p>
+                )}
+                <div className="text-lg leading-relaxed whitespace-pre-wrap">
+                  {blog.content}
+                </div>
               </div>
               <div className="flex items-center justify-between py-6 border-t border-b border-border">
                 <div>
-                  <button>
-                    <FontAwesomeIcon icon={faThumbsUp} /> 36 Likes
+                  <button 
+                    onClick={handleLike}
+                    disabled={liked}
+                    className={`${liked ? 'text-primary' : ''}`}
+                  >
+                    <FontAwesomeIcon icon={faThumbsUp} /> {blog.likes || 0} Likes
                   </button>
                   <button className="ml-4">
-                    <FontAwesomeIcon icon={faComment} /> 36 Comments
+                    <FontAwesomeIcon icon={faComment} /> {blog.comments?.length || 0} Comments
                   </button>
                 </div>
                 <button className="px-4 py-2 text-primary text-sm">
                   <FontAwesomeIcon icon={faShareFromSquare} /> Share
                 </button>
               </div>
-              <AboutAuthor  />
+              <AboutAuthor />
             </div>
           </div>
           <div className="hidden lg:block">
@@ -122,26 +151,26 @@ const BlogDetail = () => {
               <div className="p-6">
                 <div className="border-b border-border">
                   <h3 className="font-heading font-semibold mb-4 flex items-center gap-2">
-                    Index
+                    Post Info
                   </h3>
                 </div>
-                <div className="space-y-2 mt-4">
-                  <button className="block w-full text-left px-3 py-2 rounded-lg transition-all text-sm bg-primary/10 text-primary font-semibold">
-                    {" "}
-                    Introduction
-                  </button>
-                  <button className="block w-full text-left px-3 py-2 rounded-lg transition-all text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground">
-                    {" "}
-                    Key Takeaways
-                  </button>
-                  <button className="block w-full text-left px-3 py-2 rounded-lg transition-all text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground">
-                    {" "}
-                    Getting Started
-                  </button>
-                  <button className="block w-full text-left px-3 py-2 rounded-lg transition-all text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground">
-                    {" "}
-                    Conclusion
-                  </button>
+                <div className="space-y-3 mt-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Category</p>
+                    <p className="font-semibold">{blog.category?.name || "General"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Published</p>
+                    <p className="font-semibold">{new Date(blog.publishedAt || blog.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Views</p>
+                    <p className="font-semibold">{blog.views}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Likes</p>
+                    <p className="font-semibold">{blog.likes || 0}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -152,36 +181,24 @@ const BlogDetail = () => {
             Related Articles
           </h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <BlogCard
-              image="/library.png"
-              category="Design"
-              date="Dec 23, 2025"
-              title="UI/UX Design Principles"
-              description="Master the fundamentals of modern design"
-              author="Anh Son"
-            />
-            <BlogCard
-              image="/library.png"
-              category="Development"
-              date="Dec 20, 2025"
-              title="Advanced JavaScript Techniques"
-              description="Take your JS skills to the next level"
-              author="Anh Son"
-            />
-            <BlogCard
-              image="/library.png"
-              category="Marketing"
-              date="Dec 18, 2025"
-              title="Digital Marketing Trends in 2025"
-              description="Stay ahead with the latest marketing strategies"
-              author="Anh Son"
-            />
+            {relatedBlogs.slice(0, 3).map((post) => (
+              <BlogCard
+                key={post._id}
+                id={post._id}
+                image={post.image || "/library.png"}
+                category={post.category?.name || "General"}
+                date={new Date(post.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                title={post.title}
+                description={post.description}
+                author={post.author?.fullName || "Unknown"}
+              />
+            ))}
           </div>
         </div>
       </div>
-        <CommentCard />
-      
+      <CommentCard blogId={params.id} comments={blog.comments || []} onCommentAdded={fetchBlogDetail} />
     </Layout>
   );
 };
 export default BlogDetail;
+                  

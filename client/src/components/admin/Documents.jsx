@@ -1,272 +1,302 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Eye, Edit, Trash2, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { documentsAPI } from "@/services/api";
 
 export default function Documents() {
-  const [documents, setDocuments] = useState([
-    {
-      id: 1,
-      title: "Calculus I Cheatsheet",
-      category: "Math",
-      views: 1205,
-      downloads: 340,
-      fileSize: "2.4 MB",
-    },
-    {
-      id: 2,
-      title: "Intro to Psychology",
-      category: "Science",
-      views: 850,
-      downloads: 120,
-      fileSize: "1.8 MB",
-    },
-    {
-      id: 3,
-      title: "Organic Chemistry",
-      category: "Science",
-      views: 2100,
-      downloads: 890,
-      fileSize: "3.2 MB",
-    },
-  ]);
+  const [documents, setDocuments] = useState([]);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [editDoc, setEditDoc] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [viewMode, setViewMode] = useState("list");
-  const [activeDoc, setActiveDoc] = useState(null);
-  const [docToDelete, setDocToDelete] = useState(null);
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
-  const handleAddDocument = (newDoc) => {
-    setDocuments((prev) => [
-      ...prev,
-      {
-        ...newDoc,
-        id: Date.now(),
-        views: 0,
-        downloads: 0,
-        fileSize: "0 MB",
-      },
-    ]);
-    setViewMode("list");
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await documentsAPI.getAll({ limit: 100 });
+      setDocuments(response.data.data || []);
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSave = () => {
-    setDocuments((prev) =>
-      prev.map((doc) =>
-        doc.id === activeDoc.id ? activeDoc : doc
-      )
-    );
-    setViewMode("detail");
+  const filteredDocs = documents.filter(d => 
+    d.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleDelete = async (id) => {
+    try {
+      await documentsAPI.delete(id);
+      setDocuments(documents.filter(d => d._id !== id));
+      setSelectedDoc(null);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete document");
+    }
   };
 
-  const handleDelete = () => {
-    setDocuments((prev) =>
-      prev.filter((doc) => doc.id !== docToDelete.id)
-    );
-    setDocToDelete(null);
-    setActiveDoc(null);
-    setViewMode("list");
+  const handleSave = async (updatedDoc) => {
+    try {
+      const response = await documentsAPI.update(updatedDoc._id, updatedDoc);
+      setDocuments(documents.map(d => d._id === updatedDoc._id ? response.data : d));
+      if (selectedDoc?._id === updatedDoc._id) setSelectedDoc(response.data);
+      setEditDoc(null);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update document");
+    }
   };
 
-  let content = null;
+  const handleAdd = async (title, category) => {
+    if (!title.trim() || !category.trim()) return;
+    try {
+      const response = await documentsAPI.create({ 
+        title, 
+        category, 
+        content: "No content yet" 
+      });
+      setDocuments([response.data, ...documents]);
+      setShowAddForm(false);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add document");
+    }
+  };
 
-  if (viewMode === "add") {
-    content = (
-      <AddDocumentForm
-        onCancel={() => setViewMode("list")}
-        onAdd={handleAddDocument}
-      />
-    );
-  }
-
-  else if (viewMode === "edit") {
-    content = (
-      <EditDocumentForm
-        doc={activeDoc}
-        onChange={setActiveDoc}
-        onSave={handleSave}
-        onCancel={() => setViewMode("detail")}
-      />
-    );
-  }
-
-  else if (viewMode === "detail") {
-    content = (
-      <DocumentDetail
-        doc={activeDoc}
-        onBack={() => setViewMode("list")}
-        onEdit={() => setViewMode("edit")}
-        onDelete={() => setDocToDelete(activeDoc)}
-      />
-    );
-  }
-
-  else {
-    content = (
-      <DocumentList
-        documents={documents}
-        onView={(doc) => {
-          setActiveDoc(doc);
-          setViewMode("detail");
-        }}
-        onEdit={(doc) => {
-          setActiveDoc(doc);
-          setViewMode("edit");
-        }}
-        onDelete={(doc) => setDocToDelete(doc)}
-        onAdd={() => setViewMode("add")}
-      />
-    );
-  }
-
-  return (
-    <>
-      {content}
-
-      {docToDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h3 className="text-lg font-bold mb-2">
-              Delete document?
-            </h3>
-
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete
-              <strong> {docToDelete.title}</strong>?
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 border rounded"
-                onClick={() => setDocToDelete(null)}
-              >
-                Cancel
-              </button>
-
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded"
-                onClick={handleDelete}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+  if (selectedDoc) {
+    if (editDoc) {
+      return (
+        <div className="space-y-4">
+          <Button variant="outline" onClick={() => { setSelectedDoc(null); setEditDoc(null); }} className="gap-2" size="sm">
+            <ChevronRight className="h-4 w-4 rotate-180" /> Back
+          </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Edit Document</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Title</label>
+                  <Input value={editDoc.title || ""} onChange={(e) => setEditDoc({...editDoc, title: e.target.value})} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Category</label>
+                  <Input value={editDoc.category || ""} onChange={(e) => setEditDoc({...editDoc, category: e.target.value})} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Views</label>
+                  <Input type="number" value={editDoc.views || 0} onChange={(e) => setEditDoc({...editDoc, views: parseInt(e.target.value) || 0})} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Downloads</label>
+                  <Input type="number" value={editDoc.downloads || 0} onChange={(e) => setEditDoc({...editDoc, downloads: parseInt(e.target.value) || 0})} className="mt-1" />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button onClick={() => handleSave(editDoc)} size="sm">Save Changes</Button>
+                <Button variant="outline" onClick={() => { setSelectedDoc(null); setEditDoc(null); }} size="sm">Cancel</Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={() => setSelectedDoc(null)} className="gap-2" size="sm">
+          <ChevronRight className="h-4 w-4 rotate-180" /> Back
+        </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>{selectedDoc.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Category</p>
+                <p className="font-semibold">{selectedDoc.category || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">File Size</p>
+                <p className="font-semibold">{selectedDoc.fileSize || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Views</p>
+                <p className="text-lg font-semibold">{selectedDoc.views || 0}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Downloads</p>
+                <p className="text-lg font-semibold">{selectedDoc.downloads || 0}</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+              <Button onClick={() => setEditDoc(selectedDoc)} size="sm" className="sm:w-auto">Edit</Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="sm:w-auto">Delete</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogTitle>Delete Document?</AlertDialogTitle>
+                  <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
+                  <div className="flex gap-3 justify-end">
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDelete(selectedDoc._id)} className="bg-destructive">Delete</AlertDialogAction>
+                  </div>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
+        <h2 className="text-xl md:text-2xl font-bold">Documents ({filteredDocs.length})</h2>
+        <Button className="gap-2 w-full sm:w-auto" size="sm" onClick={() => setShowAddForm(true)}>
+          <Plus className="h-4 w-4" /> Upload
+        </Button>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input 
+          placeholder="Search documents..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {showAddForm && (
+        <Card className="bg-muted/30">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4">
+              <Input placeholder="Document title" id="doc-title" />
+              <Input placeholder="Category" id="doc-category" />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => {
+                const title = document.getElementById("doc-title")?.value || "";
+                const category = document.getElementById("doc-category")?.value || "";
+                if (title && category) {
+                  handleAdd(title, category);
+                  document.getElementById("doc-title").value = "";
+                  document.getElementById("doc-category").value = "";
+                }
+              }}>Add Document</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
-    </>
-  );
-}
 
-function DocumentList({ documents, onView, onEdit, onDelete, onAdd }) {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6 flex justify-between">
-        Manage Documents ({documents.length})
-        <button
-          className="px-4 py-2 bg-black text-white rounded"
-          onClick={onAdd}
-        >
-          + Add Document
-        </button>
-      </h1>
-
-      <table className="w-full border">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-3 border text-left">Title</th>
-            <th className="p-3 border text-left">Category</th>
-            <th className="p-3 border text-left">Views</th>
-            <th className="p-3 border text-left">Downloads</th>
-            <th className="p-3 border text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {documents.map((doc) => (
-            <tr key={doc.id}>
-              <td className="p-3 border">{doc.title}</td>
-              <td className="p-3 border">{doc.category}</td>
-              <td className="p-3 border">{doc.views}</td>
-              <td className="p-3 border">{doc.downloads}</td>
-              <td className="p-3 border">
-                <button onClick={() => onView(doc)} className="mr-2 text-blue-600">View</button>
-                <button onClick={() => onEdit(doc)} className="mr-2 text-green-600">Edit</button>
-                <button onClick={() => onDelete(doc)} className="text-red-600">Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function DocumentDetail({ doc, onBack, onEdit, onDelete }) {
-  return (
-    <div>
-      <button onClick={onBack} className="mb-4 text-blue-600">← Back</button>
-      <h2 className="text-xl font-bold mb-4">{doc.title}</h2>
-      <p>Category: {doc.category}</p>
-      <p>Views: {doc.views}</p>
-      <p>Downloads: {doc.downloads}</p>
-
-      <div className="mt-4 flex gap-3">
-        <button className="bg-black text-white px-4 py-2 rounded" onClick={onEdit}>Edit</button>
-        <button className="border border-red-500 text-red-600 px-4 py-2 rounded" onClick={onDelete}>Delete</button>
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">Loading documents...</div>
+        ) : filteredDocs.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">No documents found</div>
+        ) : (
+          filteredDocs.map((doc) => (
+            <Card key={doc._id} className="hover:shadow-md transition-all">
+              <CardContent className="pt-4">
+                <p className="font-semibold text-sm mb-2">{doc.title}</p>
+                <div className="space-y-2 text-xs mb-3">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Category:</span> <Badge variant="secondary">{doc.category || "N/A"}</Badge></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Views:</span> <span>{doc.views || 0}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Downloads:</span> <span>{doc.downloads || 0}</span></div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => setSelectedDoc(doc)}>
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { setSelectedDoc(doc); setEditDoc(doc); }}>
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive flex-1">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogTitle>Delete Document?</AlertDialogTitle>
+                      <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                      <div className="flex gap-3 justify-end">
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(doc._id)} className="bg-destructive">Delete</AlertDialogAction>
+                      </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
-    </div>
-  );
-}
 
-function EditDocumentForm({ doc, onChange, onSave, onCancel }) {
-  return (
-    <div>
-      <button onClick={onCancel} className="mb-4 text-blue-600">← Back</button>
-      <h2 className="text-xl font-bold mb-4">Edit Document</h2>
-
-      <Input label="Title" value={doc.title} onChange={(v) => onChange({ ...doc, title: v })} />
-      <Input label="Category" value={doc.category} onChange={(v) => onChange({ ...doc, category: v })} />
-      <Input label="Views" type="number" value={doc.views} onChange={(v) => onChange({ ...doc, views: Number(v) })} />
-      <Input label="Downloads" type="number" value={doc.downloads} onChange={(v) => onChange({ ...doc, downloads: Number(v) })} />
-
-      <div className="mt-4 flex gap-3">
-        <button className="bg-black text-white px-4 py-2 rounded" onClick={onSave}>Save</button>
-        <button className="border px-4 py-2 rounded" onClick={onCancel}>Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function AddDocumentForm({ onCancel, onAdd }) {
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-
-  return (
-    <div>
-      <button onClick={onCancel} className="mb-4 text-blue-600">← Back</button>
-      <h2 className="text-xl font-bold mb-4">Add New Document</h2>
-
-      <Input label="Title" value={title} onChange={setTitle} />
-      <Input label="Category" value={category} onChange={setCategory} />
-
-      <div className="mt-4 flex gap-3">
-        <button
-          className="bg-black text-white px-4 py-2 rounded"
-          onClick={() => onAdd({ title, category })}
-        >
-          Add
-        </button>
-        <button className="border px-4 py-2 rounded" onClick={onCancel}>Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function Input({ label, value, onChange, type = "text" }) {
-  return (
-    <div className="mb-3">
-      <label className="text-sm text-gray-500">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full border rounded px-3 py-2 mt-1"
-      />
+      <Card className="hidden md:block overflow-hidden">
+        <CardContent className="pt-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold">Title</th>
+                  <th className="text-left px-4 py-3 font-semibold">Category</th>
+                  <th className="text-left px-4 py-3 font-semibold">Views</th>
+                  <th className="text-left px-4 py-3 font-semibold">Downloads</th>
+                  <th className="text-left px-4 py-3 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-500">Loading...</td></tr>
+                ) : filteredDocs.length === 0 ? (
+                  <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-500">No documents found</td></tr>
+                ) : (
+                  filteredDocs.map((doc) => (
+                    <tr key={doc._id} className="border-b hover:bg-muted/30">
+                      <td className="px-4 py-3 font-medium">{doc.title}</td>
+                      <td className="px-4 py-3"><Badge variant="secondary">{doc.category || "N/A"}</Badge></td>
+                      <td className="px-4 py-3">{doc.views || 0}</td>
+                      <td className="px-4 py-3">{doc.downloads || 0}</td>
+                      <td className="px-4 py-3 flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedDoc(doc)}><Eye className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSelectedDoc(doc); setEditDoc(doc); }}><Edit className="h-4 w-4" /></Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogTitle>Delete Document?</AlertDialogTitle>
+                            <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
+                            <div className="flex gap-3 justify-end">
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(doc._id)} className="bg-destructive">Delete</AlertDialogAction>
+                            </div>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

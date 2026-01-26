@@ -1,245 +1,270 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Eye, Edit, Trash2, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { coursesAPI } from "@/services/api";
 
 export default function Courses() {
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      title: "Advanced Web Dev",
-      instructor: "Alex Code",
-      students: 245,
-      revenue: "$12,250",
-      level: "Advanced",
-    },
-    {
-      id: 2,
-      title: "UI/UX Fundamentals",
-      instructor: "Design Pro",
-      students: 189,
-      revenue: "$9,450",
-      level: "Beginner",
-    },
-  ]);
+  const [courses, setCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [editCourse, setEditCourse] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [viewMode, setViewMode] = useState("list");
-  const [activeCourse, setActiveCourse] = useState(null);
-  const [courseToDelete, setCourseToDelete] = useState(null);
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
-  const handleAdd = (course) => {
-    setCourses((prev) => [
-      ...prev,
-      { ...course, id: Date.now(), students: 0, revenue: "$0" },
-    ]);
-    setViewMode("list");
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const response = await coursesAPI.getAll({ limit: 100 });
+      setCourses(response.data.data || []);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSave = () => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === activeCourse.id ? activeCourse : c
-      )
-    );
-    setViewMode("detail");
+  const filteredCourses = courses.filter(c => 
+    c.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleDelete = async (id) => {
+    try {
+      await coursesAPI.delete(id);
+      setCourses(courses.filter(c => c._id !== id));
+      setSelectedCourse(null);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete course");
+    }
   };
 
-  const handleDelete = () => {
-    setCourses((prev) =>
-      prev.filter((c) => c.id !== courseToDelete.id)
-    );
-    setCourseToDelete(null);
-    setActiveCourse(null);
-    setViewMode("list");
+  const handleSave = async (updatedCourse) => {
+    try {
+      const updateData = {
+        title: updatedCourse.title,
+        instructor: updatedCourse.instructor,
+        level: updatedCourse.level?.toLowerCase() || updatedCourse.level,
+      };
+      const response = await coursesAPI.update(updatedCourse._id, updateData);
+      setCourses(courses.map(c => c._id === updatedCourse._id ? response.data : c));
+      if (selectedCourse?._id === updatedCourse._id) setSelectedCourse(response.data);
+      setEditCourse(null);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update course");
+    }
   };
 
-  let content = null;
+  const handleAdd = async (title, instructor, level) => {
+    if (!title.trim() || !instructor.trim()) return;
+    try {
+      const slug = title.toLowerCase().replace(/\s+/g, "-");
+      const response = await coursesAPI.create({ 
+        title, 
+        instructor, 
+        level: level.toLowerCase(), 
+        slug 
+      });
+      setCourses([response.data, ...courses]);
+      setShowAddForm(false);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add course");
+    }
+  };
 
-  if (viewMode === "add") {
-    content = (
-      <AddCourseForm
-        onAdd={handleAdd}
-        onCancel={() => setViewMode("list")}
-      />
-    );
-  } else if (viewMode === "edit") {
-    content = (
-      <EditCourseForm
-        course={activeCourse}
-        onChange={setActiveCourse}
-        onSave={handleSave}
-        onCancel={() => setViewMode("detail")}
-      />
-    );
-  } else if (viewMode === "detail") {
-    content = (
-      <CourseDetail
-        course={activeCourse}
-        onBack={() => setViewMode("list")}
-        onEdit={() => setViewMode("edit")}
-        onDelete={() => setCourseToDelete(activeCourse)}
-      />
-    );
-  } else {
-    content = (
-      <CourseList
-        courses={courses}
-        onAdd={() => setViewMode("add")}
-        onView={(c) => {
-          setActiveCourse(c);
-          setViewMode("detail");
-        }}
-        onEdit={(c) => {
-          setActiveCourse(c);
-          setViewMode("edit");
-        }}
-        onDelete={(c) => setCourseToDelete(c)}
-      />
+  if (selectedCourse) {
+    if (editCourse) {
+      return (
+        <div className="space-y-4">
+          <Button variant="outline" onClick={() => { setSelectedCourse(null); setEditCourse(null); }} className="gap-2" size="sm">
+            <ChevronRight className="h-4 w-4 rotate-180" /> Back
+          </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Edit Course</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <Input value={editCourse.title || ""} onChange={(e) => setEditCourse({...editCourse, title: e.target.value})} className="mt-1" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Instructor</label>
+                  <Input value={editCourse.instructor || ""} onChange={(e) => setEditCourse({...editCourse, instructor: e.target.value})} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Level</label>
+                  <select value={editCourse.level || "Beginner"} onChange={(e) => setEditCourse({...editCourse, level: e.target.value})} className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1">
+                    <option>Beginner</option>
+                    <option>Intermediate</option>
+                    <option>Advanced</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button onClick={() => handleSave(editCourse)} size="sm">Save Changes</Button>
+                <Button variant="outline" onClick={() => { setSelectedCourse(null); setEditCourse(null); }} size="sm">Cancel</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={() => setSelectedCourse(null)} className="gap-2" size="sm">
+          <ChevronRight className="h-4 w-4 rotate-180" /> Back
+        </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>{selectedCourse.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Instructor</p>
+                <p className="font-semibold">{selectedCourse.instructor}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Level</p>
+                <Badge>{selectedCourse.level || "N/A"}</Badge>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Students</p>
+                <p className="text-lg font-semibold">{selectedCourse.students || 0}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Revenue</p>
+                <p className="text-lg font-semibold text-primary">{selectedCourse.revenue || "$0"}</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+              <Button onClick={() => setEditCourse(selectedCourse)} size="sm" className="sm:w-auto">Edit</Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="sm:w-auto">Delete</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogTitle>Delete Course?</AlertDialogTitle>
+                  <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
+                  <div className="flex gap-3 justify-end">
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDelete(selectedCourse._id)} className="bg-destructive">Delete</AlertDialogAction>
+                  </div>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <>
-      {content}
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
+        <h2 className="text-xl md:text-2xl font-bold">Courses ({filteredCourses.length})</h2>
+        <Button className="gap-2 w-full sm:w-auto" size="sm" onClick={() => setShowAddForm(true)}>
+          <Plus className="h-4 w-4" /> New Course
+        </Button>
+      </div>
 
-      {courseToDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h3 className="text-lg font-bold mb-2">
-              Delete course?
-            </h3>
-            <p className="text-sm mb-4">
-              Delete <strong>{courseToDelete.title}</strong>?
-            </p>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input 
+          placeholder="Search courses..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
 
-            <div className="flex justify-end gap-3">
-              <button
-                className="border px-4 py-2 rounded"
-                onClick={() => setCourseToDelete(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-red-600 text-white px-4 py-2 rounded"
-                onClick={handleDelete}
-              >
-                Delete
-              </button>
+      {showAddForm && (
+        <Card className="bg-muted/30">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4">
+              <Input placeholder="Course title" id="course-title" />
+              <Input placeholder="Instructor name" id="course-instructor" />
+              <select id="course-level" className="border border-input rounded-md px-3 py-2 text-sm">
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+              </select>
             </div>
-          </div>
-        </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => {
+                const title = document.getElementById("course-title")?.value || "";
+                const instructor = document.getElementById("course-instructor")?.value || "";
+                const level = document.getElementById("course-level")?.value || "";
+                if (title && instructor && level) {
+                  handleAdd(title, instructor, level);
+                  document.getElementById("course-title").value = "";
+                  document.getElementById("course-instructor").value = "";
+                  document.getElementById("course-level").value = "Beginner";
+                }
+              }}>Add Course</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
-    </>
-  );
-}
 
-function CourseList({ courses, onView, onEdit, onDelete, onAdd }) {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6 flex justify-between">
-        Courses ({courses.length})
-        <button onClick={onAdd} className="bg-black text-white px-4 py-2 rounded">
-          + Add Course
-        </button>
-      </h1>
-
-      <table className="w-full border">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-3 border text-left">Title</th>
-            <th className="p-3 border text-left">Instructor</th>
-            <th className="p-3 border text-left">Level</th>
-            <th className="p-3 border text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {courses.map((c) => (
-            <tr key={c.id}>
-              <td className="p-3 border">{c.title}</td>
-              <td className="p-3 border">{c.instructor}</td>
-              <td className="p-3 border">{c.level}</td>
-              <td className="p-3 border">
-                <button onClick={() => onView(c)} className="mr-2 text-blue-600">View</button>
-                <button onClick={() => onEdit(c)} className="mr-2 text-green-600">Edit</button>
-                <button onClick={() => onDelete(c)} className="text-red-600">Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function CourseDetail({ course, onBack, onEdit, onDelete }) {
-  return (
-    <div>
-      <button onClick={onBack} className="mb-4 text-blue-600">← Back</button>
-      <h2 className="text-xl font-bold">{course.title}</h2>
-      <p>Instructor: {course.instructor}</p>
-      <p>Level: {course.level}</p>
-      <p>Students: {course.students}</p>
-      <p>Revenue: {course.revenue}</p>
-
-      <div className="mt-4 flex gap-3">
-        <button onClick={onEdit} className="bg-black text-white px-4 py-2 rounded">Edit</button>
-        <button onClick={onDelete} className="border border-red-500 text-red-600 px-4 py-2 rounded">Delete</button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          <div className="col-span-full text-center py-8 text-gray-500">Loading courses...</div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="col-span-full text-center py-8 text-gray-500">No courses found</div>
+        ) : (
+          filteredCourses.map((course) => (
+            <Card key={course._id} className="hover:shadow-lg transition-all flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-base line-clamp-2">{course.title}</CardTitle>
+                <CardDescription className="text-xs">{course.instructor}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 flex-1 flex flex-col">
+                <div>
+                  <p className="text-xs text-muted-foreground">Students</p>
+                  <p className="text-xl font-bold">{course.students || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Revenue</p>
+                  <p className="text-lg font-bold text-primary">{course.revenue || "$0"}</p>
+                </div>
+                <Badge className="w-fit">{course.level || "N/A"}</Badge>
+                <div className="flex gap-2 pt-3 mt-auto">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedCourse(course)}>
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setSelectedCourse(course); setEditCourse(course); }}>
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="h-3 w-3" /></Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogTitle>Delete Course?</AlertDialogTitle>
+                      <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
+                      <div className="flex gap-3 justify-end">
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(course._id)} className="bg-destructive">Delete</AlertDialogAction>
+                      </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
-    </div>
-  );
-}
-
-function EditCourseForm({ course, onChange, onSave, onCancel }) {
-  return (
-    <div>
-      <button onClick={onCancel} className="mb-4 text-blue-600">← Back</button>
-      <h2 className="text-xl font-bold mb-4">Edit Course</h2>
-
-      <Input label="Title" value={course.title} onChange={(v) => onChange({ ...course, title: v })} />
-      <Input label="Instructor" value={course.instructor} onChange={(v) => onChange({ ...course, instructor: v })} />
-      <Input label="Level" value={course.level} onChange={(v) => onChange({ ...course, level: v })} />
-
-      <div className="mt-4 flex gap-3">
-        <button onClick={onSave} className="bg-black text-white px-4 py-2 rounded">Save</button>
-        <button onClick={onCancel} className="border px-4 py-2 rounded">Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function AddCourseForm({ onAdd, onCancel }) {
-  const [title, setTitle] = useState("");
-  const [instructor, setInstructor] = useState("");
-  const [level, setLevel] = useState("Beginner");
-
-  return (
-    <div>
-      <button onClick={onCancel} className="mb-4 text-blue-600">← Back</button>
-      <h2 className="text-xl font-bold mb-4">Add Course</h2>
-
-      <Input label="Title" value={title} onChange={setTitle} />
-      <Input label="Instructor" value={instructor} onChange={setInstructor} />
-      <Input label="Level" value={level} onChange={setLevel} />
-
-      <div className="mt-4 flex gap-3">
-        <button
-          className="bg-black text-white px-4 py-2 rounded"
-          onClick={() => onAdd({ title, instructor, level })}
-        >
-          Add
-        </button>
-        <button onClick={onCancel} className="border px-4 py-2 rounded">Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function Input({ label, value, onChange }) {
-  return (
-    <div className="mb-3">
-      <label className="text-sm text-gray-500">{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full border rounded px-3 py-2 mt-1"
-      />
     </div>
   );
 }

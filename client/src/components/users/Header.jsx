@@ -33,12 +33,12 @@ export function Header() {
       <div className="flex-grow p-4 px-4 justify-between flex items-center mx-auto container">
         
         <Link href="/">
-          <a className="text-2xl font-bold cursor-pointer gap-2 flex items-center select-none">
+          <div className="text-2xl font-bold cursor-pointer gap-2 flex items-center select-none">
             <span className="bg-primary text-white px-2 py-1 rounded font-heading">
               D4S
             </span>
             Docs4Study
-          </a>
+          </div>
         </Link>
 
         <nav className="gap-8 flex items-center text-white">

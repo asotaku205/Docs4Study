@@ -3,11 +3,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import { Link } from "wouter";
 
-const BlogCard = ({ image, category, date, title, description, author }) => {
+const BlogCard = ({ id, image, category, date, title, description, author }) => {
   return (
-    <Link href="/blog-detail">
+    <Link href={`/blog-detail/${id}`}>
       <div className="rounded-xl border bg-card text-card-foreground shadow overflow-hidden border-border hover:shadow-lg transition-all duration-300 group cursor-pointer">
-        {/* Image Section */}
         <div className="overflow-hidden">
           <img
             src={image}
@@ -16,7 +15,6 @@ const BlogCard = ({ image, category, date, title, description, author }) => {
           />
         </div>
 
-        {/* Content Section */}
         <div className="p-6">
           <div className="flex items-center mb-4 gap-2 justify-between">
             <div className="text-sm text-secondary-foreground font-medium border rounded-md bg-secondary px-2 py-1 border-primary/20">
@@ -28,7 +26,6 @@ const BlogCard = ({ image, category, date, title, description, author }) => {
           <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
         </div>
 
-        {/* Footer Section */}
         <div className="flex items-center p-6 border-t border-border pt-4">
           <span className="text-xs text-muted-foreground font-semibold flex items-center gap-2">
             <FontAwesomeIcon icon={faUserPen} />

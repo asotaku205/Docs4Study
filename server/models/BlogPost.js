@@ -5,7 +5,22 @@ const blogPostSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  content: String,
+  content: {
+    type: String,
+    required: true
+  },
+  description: String,
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true
+  },
+  image: String, // Main/featured image (kept for backward compatibility)
+  images: [{
+    url: String,
+    caption: String,
+    order: Number
+  }], // Support multiple images
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -15,12 +30,32 @@ const blogPostSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  likes: {
+    type: Number,
+    default: 0
+  },
+  comments: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    content: String,
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   status: {
     type: String,
-    enum: ['draft', 'published'],
+    enum: ['draft', 'pending', 'published'],
     default: 'draft'
   },
-    publishedAt: Date
+  publishedAt: Date,
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: Date
 }, { 
   timestamps: true 
 });

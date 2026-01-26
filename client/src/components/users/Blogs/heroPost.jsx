@@ -3,11 +3,11 @@ import { Link } from "wouter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 
-const HeroPost = ({image, category, date, title, description, author}) => {
+const HeroPost = ({id, image, category, date, title, description, author}) => {
   return (
     <div className="mb-16">
-      <Link href="/blog-detail">
-        <button className="w-full grid lg:grid-cols-2 gap-8 items-center bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all text-left">
+      <Link href={`/blog-detail/${id}`}>
+        <div className="w-full grid lg:grid-cols-2 gap-8 items-center bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
           <div className=" h-full overflow-hidden">
             <img
               src={image}
@@ -40,12 +40,12 @@ const HeroPost = ({image, category, date, title, description, author}) => {
                   <p className="text-xs text-muted-foreground">Editor</p>
                 </div>
               </div>
-              <button className="items-center rounded-md px-4 py-2 font-medium gap-2 justify-center text-sm border border-primary inline-flex whitespace-nowrap">
+              <span className="items-center rounded-md px-4 py-2 font-medium gap-2 justify-center text-sm border border-primary inline-flex whitespace-nowrap">
                 Read full story
-              </button>
+              </span>
             </div>
           </div>
-        </button>
+        </div>
       </Link>
     </div>
   );

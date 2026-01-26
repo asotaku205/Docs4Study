@@ -3,6 +3,7 @@ import Course from "../models/Course.js";
 import Document from "../models/Document.js";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
+import Category from "../models/Category.js";
 const MAX_LIMIT = 100;
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -537,7 +538,12 @@ const getAllBlogPosts = async (req) => {
   }
 
   const [posts, total] = await Promise.all([
-    BlogPost.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    BlogPost.find(filter)
+      .populate('author', 'fullName email')
+      .populate('category', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
     BlogPost.countDocuments(filter),
   ]);
 
@@ -553,7 +559,9 @@ const getBlogPostById = async (req) => {
     filter.isDeleted = { $ne: true };
   }
 
-  const post = await BlogPost.findOne(filter);
+  const post = await BlogPost.findOne(filter)
+    .populate('author', 'fullName email')
+    .populate('category', 'name');
   if (!post) {
     throw createServiceError("Blog post not found", 404, {
       message: "Blog post not found",
@@ -676,6 +684,128 @@ const restoreBlogPost = async (req) => {
   return { message: "Blog post restored" };
 };
 
+const getAllCategories = async (req) => {
+  const { page, limit, skip } = parsePagination(req);
+  const filter = {};
+
+  if (!shouldIncludeDeleted(req)) {
+    filter.isDeleted = { $ne: true };
+  }
+
+  if (req.query.isActive !== undefined) {
+    const isActive = parseBoolean(req.query.isActive);
+    if (isActive !== undefined) {
+      filter.isActive = isActive;
+    }
+  }
+
+  if (req.query.q) {
+    const regex = new RegExp(escapeRegex(req.query.q), "i");
+    filter.$or = [{ name: regex }, { description: regex }];
+  }
+
+  const [categories, total] = await Promise.all([
+    Category.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Category.countDocuments(filter),
+  ]);
+
+  return {
+    data: categories,
+    pagination: buildPagination(page, limit, total),
+  };
+};
+
+const getCategoryById = async (req) => {
+  const filter = { _id: req.params.id };
+  if (!shouldIncludeDeleted(req)) {
+    filter.isDeleted = { $ne: true };
+  }
+
+  const category = await Category.findOne(filter);
+  if (!category) {
+    throw createServiceError("Category not found", 404, {
+      message: "Category not found",
+    });
+  }
+  return category;
+};
+
+const createCategory = async (req) => {
+  const requiredFields = ["name"];
+  const missing = requiredFields.filter((field) => !req.body?.[field]);
+  if (missing.length) {
+    throw createServiceError("Missing required fields", 400, {
+      message: "Missing required fields",
+      missing,
+    });
+  }
+
+  const slug = req.body.slug || req.body.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  
+  const existingCategory = await Category.findOne({ slug });
+  if (existingCategory) {
+    throw createServiceError("Category with this name already exists", 400, {
+      message: "Category with this name already exists",
+    });
+  }
+
+  const categoryData = {
+    ...req.body,
+    slug,
+  };
+
+  const category = new Category(categoryData);
+  await category.save();
+  return category;
+};
+
+const updateCategory = async (req) => {
+  const categoryData = { ...req.body };
+
+  if (categoryData.name && !categoryData.slug) {
+    categoryData.slug = categoryData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  }
+
+  const category = await Category.findByIdAndUpdate(req.params.id, categoryData, {
+    new: true,
+    runValidators: true,
+  });
+  if (!category) {
+    throw createServiceError("Category not found", 404, {
+      message: "Category not found",
+    });
+  }
+  return category;
+};
+
+const deleteCategory = async (req) => {
+  const deletedCategory = await Category.findByIdAndUpdate(
+    req.params.id,
+    { isDeleted: true, deletedAt: new Date() },
+    { new: true, strict: false }
+  );
+  if (!deletedCategory) {
+    throw createServiceError("Category not found", 404, {
+      message: "Category not found",
+    });
+  }
+  return { message: "Category deleted" };
+};
+
+const restoreCategory = async (req) => {
+  const restoredCategory = await Category.findByIdAndUpdate(
+    req.params.id,
+    { isDeleted: false, deletedAt: null },
+    { new: true, strict: false }
+  );
+  if (!restoredCategory) {
+    throw createServiceError("Category not found", 404, {
+      message: "Category not found",
+    });
+  }
+  return { message: "Category restored" };
+};
+
 export default {
   getAllUsers,
   getUserById,
@@ -707,4 +837,10 @@ export default {
   updateBlogPost,
   deleteBlogPost,
   restoreBlogPost,
+  getAllCategories,
+  getCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  restoreCategory,
 };

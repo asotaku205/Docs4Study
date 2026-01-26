@@ -38,4 +38,11 @@ router.put("/blog-posts/:id", adminDashboardController.updateBlogPost);
 router.delete("/blog-posts/:id", adminDashboardController.deleteBlogPost);
 router.post("/blog-posts/:id/restore", adminDashboardController.restoreBlogPost);
 
+router.get("/categories", adminDashboardController.getAllCategories);
+router.get("/categories/:id", adminDashboardController.getCategoryById);
+router.post("/categories", adminDashboardController.createCategory);
+router.put("/categories/:id", adminDashboardController.updateCategory);
+router.delete("/categories/:id", adminDashboardController.deleteCategory);
+router.post("/categories/:id/restore", adminDashboardController.restoreCategory);
+
 export default router;

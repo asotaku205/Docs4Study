@@ -1,12 +1,13 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api/admin";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL + "/admin",
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 export const usersAPI = {
@@ -52,6 +53,15 @@ export const blogPostsAPI = {
   update: (id, data) => api.put(`/blog-posts/${id}`, data),
   delete: (id) => api.delete(`/blog-posts/${id}`),
   restore: (id) => api.post(`/blog-posts/${id}/restore`),
+};
+
+export const categoriesAPI = {
+  getAll: (params) => api.get("/categories", { params }),
+  getById: (id) => api.get(`/categories/${id}`),
+  create: (data) => api.post("/categories", data),
+  update: (id, data) => api.put(`/categories/${id}`, data),
+  delete: (id) => api.delete(`/categories/${id}`),
+  restore: (id) => api.post(`/categories/${id}/restore`),
 };
 
 export default api;
