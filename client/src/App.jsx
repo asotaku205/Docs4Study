@@ -13,11 +13,16 @@ import Profile from "./pages/Profile";
 import Search from "./pages/Search";
 import OtherProfile from "./pages/OtherProfile";
 import CreatePost from "./pages/CreatePost";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
 function Routes() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={Auth} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog-detail" component={BlogDetail} />
       <Route path="/create-post" component={CreatePost} />

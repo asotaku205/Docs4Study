@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocation } from "wouter";
 import authService from "../services/authService";
 
 const registerSchema = z
@@ -26,6 +27,7 @@ const loginSchema = z.object({
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
+  const [, setLocation] = useLocation();
 
   const {
     register,
@@ -166,8 +168,8 @@ const Auth = () => {
                   </div>
 
                   <a
-                    href="#"
-                    className="text-sm text-primary hover:underline self-end"
+                    onClick={() => setLocation("/forgot-password")}
+                    className="text-sm text-primary hover:underline self-end cursor-pointer"
                   >
                     Forgot password?
                   </a>

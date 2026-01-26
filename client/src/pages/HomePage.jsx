@@ -1,5 +1,4 @@
 import React from "react";
-import { useState } from "react";
 import Layout from "../components/Layout";
 import BlogCard from "../components/users/Blogs/blogCard";
 import HeroPost from "../components/users/Blogs/heroPost";
@@ -8,13 +7,10 @@ import TopCourses from "../components/users/Courses/topCourses";
 import { Link } from "wouter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../hooks/useAuth";
 
 const HomePage = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return !!(
-      localStorage.getItem("accessToken") && localStorage.getItem("user")
-    );
-  });
+  const { isLoggedIn } = useAuth();
   return (
     <Layout>
       <section className="relative overflow-hidden bg-primary py-20 lg:py-32">

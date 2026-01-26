@@ -4,5 +4,6 @@ import { protectedRoute } from "../middleware/Auth.middleware.js";
 const routerUser = Router();
 
 routerUser.get('/me', protectedRoute, UserController.me);
+routerUser.post('/change-password', protectedRoute, UserController.changePassword);
 
 export default routerUser;

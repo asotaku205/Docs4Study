@@ -38,6 +38,49 @@ const authService = {
     } catch (error) {
         throw error;
     }
+ },
+ forgotPassword: async (email) => {
+    try {
+        const response = await apiUser.post("/auth/forgot-password", {
+            email
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+ },
+ validateResetToken: async (token) => {
+    try {
+        const response = await apiUser.get("/auth/validate-reset-token", {
+            params: { resetToken: token }
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+ },
+ resetPassword: async (token, password) => {
+    try {
+        const response = await apiUser.post("/auth/reset-password", {
+            password
+        }, {
+            params: { token }
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+ },
+ changePassword: async (oldPassword, newPassword) => {
+    try {
+        const response = await apiUser.post("/user/change-password", {
+            oldPassword,
+            newPassword
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
  }
 };
 export default authService; 

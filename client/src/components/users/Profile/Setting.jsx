@@ -1,9 +1,32 @@
+import React, { useState } from "react";
+import { useLocation } from "wouter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faBell, faShield } from "@fortawesome/free-solid-svg-icons";
+import ChangePasswordModal from "./ChangePasswordModal";
+import authService from "../../../services/authService";
 
 const Setting = () => {
+    const [, setLocation] = useLocation();
+    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+
+    const handleLogout = async () => {
+        const confirmLogout = window.confirm("Are you sure you want to logout?");
+        if (confirmLogout) {
+            try {
+                await authService.signout();
+            } catch (error) {
+                console.error("Logout error:", error);
+            } finally {
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("user");
+                window.location.href = "/auth";
+            }
+        }
+    };
+
     return (
-        <div className="mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 space-y-6 focus-visible:outline-none">
+        <>
+            <div className="mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 space-y-6 focus-visible:outline-none">
             <div className="grid gap-6">
                 <div className="rounded-xl border bg-card text-card-foreground border-border shadow-sm">
                     <div className="flex flex-col space-y-1.5 p-6 border-b border-border bg-muted/10">
@@ -76,14 +99,31 @@ const Setting = () => {
                             </div>
                         </div>
                         <div className="p-6 pt-0 space-y-4">
-                            <button className="inline-flex items-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-8 rounded-md px-3 text-xs w-full justify-start h-10 border-border">Change Password</button>
+                            <button 
+                                onClick={() => setIsChangePasswordModalOpen(true)}
+                                className="inline-flex items-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-8 rounded-md px-3 text-xs w-full justify-start h-10 border-border"
+                            >
+                                Change Password
+                            </button>
                             <button className="inline-flex items-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-8 rounded-md px-3 text-xs w-full justify-start h-10 border-border">Privacy Settings</button>
-                            <button className="inline-flex items-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-8 rounded-md px-3 text-xs w-full justify-start h-10 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">Logout Account</button>
+                            <button 
+                                onClick={handleLogout}
+                                className="inline-flex items-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-8 rounded-md px-3 text-xs w-full justify-start h-10 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                                Logout Account
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+            
+            {/* Change Password Modal */}
+            <ChangePasswordModal 
+                isOpen={isChangePasswordModalOpen}
+                onClose={() => setIsChangePasswordModalOpen(false)}
+            />
+        </>
     );
 }
 export default Setting;

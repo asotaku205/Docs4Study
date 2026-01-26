@@ -15,7 +15,10 @@ import Setting from "../components/users/Profile/Setting";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState("My Courses");
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "My Courses");
 
   return (
     <Layout>

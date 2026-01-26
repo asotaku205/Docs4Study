@@ -1,20 +1,16 @@
-import React, { useEffect } from "react";
+import React from "react";
 import Layout from "../components/Layout";
 import CardCourses from "../components/users/Courses/cardCourses";
-import { useState } from "react";
+import TabButton from "../components/ui/TabButton";
+import { useTabs } from "../hooks/useTabs";
+import { useFilter } from "../hooks/useFilter";
+
 const Courses = () => {
-  const [activeTab, setActiveTab] = useState("All");
-  const taps = ["All", "Development", "Design", "Marketing", "Business"];
-  useEffect(() => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash) {
-        setActiveTab(hash);
-      }
-  } ,[]);
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-    window.location.hash = tab;
-  }
+  
+  const tabs = ["All", "Development", "Design", "Marketing", "Business"];
+
+  const { activeTab, handleTabChange } = useTabs("All");
+
   const allCourses = [
     {
       id: 1,
@@ -57,10 +53,12 @@ const Courses = () => {
       image: "library.png"
     },
   ];
-  const filteredCourses = activeTab === "All" ? allCourses : allCourses.filter(course => course.category === activeTab);
+
+  const filteredCourses = useFilter(allCourses, activeTab, 'category', 'All');
 
   return (
     <Layout>
+      {/* Hero Section */}
       <section className="py-16 bg-primary text-primary-foreground text-center">
         <div className="container mx-auto px-4 space-y-4">
           <h1 className="text-4xl font-bold font-heading">Online Courses</h1>
@@ -68,28 +66,31 @@ const Courses = () => {
             Explore our wide range of courses designed to help you enhance your
             skills and knowledge across various subjects.
           </p>
+
+          {/* Tabs */}
           <div className="flex flex-wrap justify-center gap-8 mt-6">
-            {taps.map((tab) => (
-              <button
+            {tabs.map((tab) => (
+              <TabButton
                 key={tab}
-                onClick={() => handleTabClick(tab)}
-                className={`px-4 py-2 rounded-lg font-semibold cursor-pointer transition-colors ${
-                  activeTab === tab
-                    ? "bg-secondary text-secondary-foreground"
-                    : "bg-primary/30 text-primary-foreground hover:bg-primary/50"
-                }`}
+                active={activeTab === tab}
+                onClick={() => handleTabChange(tab)}
+                variant="pill"
               >
                 {tab}
-              </button>
+              </TabButton>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Courses Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredCourses.length === 0 ? (
-              <p className="text-center text-muted-foreground col-span-full">No courses available in this category.</p>
+              <p className="text-center text-muted-foreground col-span-full">
+                No courses available in this category.
+              </p>
             ) : (
               filteredCourses.map((course) => (
                 <CardCourses key={course.id} {...course} />
@@ -101,5 +102,4 @@ const Courses = () => {
     </Layout>
   );
 };
-
 export default Courses;
