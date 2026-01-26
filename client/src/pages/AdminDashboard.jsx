@@ -7,7 +7,6 @@ import {
   faFileAlt, 
   faBook, 
   faBlog, 
-  faPaperPlane, 
   faTags, 
   faUsers, 
   faCog,
@@ -19,7 +18,6 @@ import Overview from "@/components/admin/Overview";
 import Documents from "@/components/admin/Documents";
 import Courses from "@/components/admin/Courses";
 import BlogPosts from "@/components/admin/BlogPosts";
-import Submissions from "@/components/admin/Submissions";
 import Categories from "@/components/admin/Categories";
 import Users from "@/components/admin/Users";
 import Settings from "@/components/admin/Settings";
@@ -33,7 +31,6 @@ export default function AdminDashboard() {
     { icon: faFileAlt, label: "Documents", id: "documents" },
     { icon: faBook, label: "Courses", id: "courses" },
     { icon: faBlog, label: "Blog Posts", id: "blog" },
-    { icon: faPaperPlane, label: "Submissions", id: "submissions" },
     { icon: faTags, label: "Categories", id: "categories" },
     { icon: faUsers, label: "Users", id: "users" },
     { icon: faCog, label: "Settings", id: "settings" },
@@ -48,7 +45,7 @@ export default function AdminDashboard() {
         />
       )}
 
-      <div className={`fixed lg:relative w-64 bg-primary text-primary-foreground border-r border-primary/20 p-4 md:p-6 h-screen overflow-y-auto z-40 transition-transform ${
+      <div className={`fixed lg:relative w-64 bg-primary text-primary-foreground border-r border-primary/20 p-4 md:p-6 overflow-y-auto z-40 transition-transform ${
         sidebarOpen ? "translate-x-0 lg:translate-x-0" : "-translate-x-full lg:translate-x-0"
       }`}>
         <div className="flex items-center justify-between mb-8 md:mb-12">
@@ -115,7 +112,6 @@ export default function AdminDashboard() {
           {activeTab === "documents" && <Documents />}
           {activeTab === "courses" && <Courses />}
           {activeTab === "blog" && <BlogPosts />}
-          {activeTab === "submissions" && <Submissions />}
           {activeTab === "categories" && <Categories />}
           {activeTab === "users" && <Users />}
           {activeTab === "settings" && <Settings />}

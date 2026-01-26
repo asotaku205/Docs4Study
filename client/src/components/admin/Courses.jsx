@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { coursesAPI } from "@/services/api";
+import apiUser from "@/services/apiUser";
 
 export default function Courses() {
   const [courses, setCourses] = useState([]);
@@ -14,10 +15,21 @@ export default function Courses() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     fetchCourses();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await apiUser.get("/user/categories");
+      setCategories(response.data.data || []);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+    }
+  };
 
   const fetchCourses = async () => {
     try {
@@ -50,7 +62,12 @@ export default function Courses() {
       const updateData = {
         title: updatedCourse.title,
         instructor: updatedCourse.instructor,
+        category: updatedCourse.category?._id || updatedCourse.category || null,
         level: updatedCourse.level?.toLowerCase() || updatedCourse.level,
+        courseUrl: updatedCourse.courseUrl,
+        description: updatedCourse.description,
+        duration: updatedCourse.duration,
+        isPublished: updatedCourse.isPublished || false,
       };
       const response = await coursesAPI.update(updatedCourse._id, updateData);
       setCourses(courses.map(c => c._id === updatedCourse._id ? response.data : c));
@@ -61,14 +78,16 @@ export default function Courses() {
     }
   };
 
-  const handleAdd = async (title, instructor, level) => {
-    if (!title.trim() || !instructor.trim()) return;
+  const handleAdd = async (data) => {
+    if (!data.title?.trim() || !data.instructor?.trim() || !data.courseUrl?.trim()) {
+      alert("Please fill in all required fields (Title, Instructor, Course URL)");
+      return;
+    }
     try {
-      const slug = title.toLowerCase().replace(/\s+/g, "-");
+      const slug = data.title.toLowerCase().replace(/\s+/g, "-");
       const response = await coursesAPI.create({ 
-        title, 
-        instructor, 
-        level: level.toLowerCase(), 
+        ...data,
+        level: data.level.toLowerCase(), 
         slug 
       });
       setCourses([response.data, ...courses]);
@@ -91,22 +110,66 @@ export default function Courses() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Title</label>
+                <label className="text-sm font-medium">Title *</label>
                 <Input value={editCourse.title || ""} onChange={(e) => setEditCourse({...editCourse, title: e.target.value})} className="mt-1" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Course URL * (YouTube, Udemy, etc.)</label>
+                <Input value={editCourse.courseUrl || ""} onChange={(e) => setEditCourse({...editCourse, courseUrl: e.target.value})} placeholder="https://..." className="mt-1" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <textarea value={editCourse.description || ""} onChange={(e) => setEditCourse({...editCourse, description: e.target.value})} className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1 min-h-[80px]" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Instructor</label>
-                  <Input value={editCourse.instructor || ""} onChange={(e) => setEditCourse({...editCourse, instructor: e.target.value})} className="mt-1" />
+                  <label className="text-sm font-medium">Instructor *</label>
+                  <Input 
+                    value={editCourse.instructor || ""} 
+                    onChange={(e) => setEditCourse({...editCourse, instructor: e.target.value})} 
+                    placeholder="Instructor name"
+                    className="mt-1" 
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Level</label>
-                  <select value={editCourse.level || "Beginner"} onChange={(e) => setEditCourse({...editCourse, level: e.target.value})} className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1">
-                    <option>Beginner</option>
-                    <option>Intermediate</option>
-                    <option>Advanced</option>
+                  <label className="text-sm font-medium">Category</label>
+                  <select 
+                    value={editCourse.category?._id || editCourse.category || ""} 
+                    onChange={(e) => setEditCourse({...editCourse, category: e.target.value})} 
+                    className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1"
+                  >
+                    <option value="">No Category</option>
+                    {categories.map(cat => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Level *</label>
+                  <select value={editCourse.level || "beginner"} onChange={(e) => setEditCourse({...editCourse, level: e.target.value})} className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1">
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Duration</label>
+                  <Input value={editCourse.duration || ""} onChange={(e) => setEditCourse({...editCourse, duration: e.target.value})} placeholder="e.g., 8 hours" className="mt-1" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <input 
+                  type="checkbox" 
+                  id="edit-published"
+                  checked={editCourse.isPublished || false}
+                  onChange={(e) => setEditCourse({...editCourse, isPublished: e.target.checked})}
+                  className="h-4 w-4"
+                />
+                <label htmlFor="edit-published" className="text-sm font-medium">Published (visible to users)</label>
               </div>
               <div className="flex gap-3 pt-4">
                 <Button onClick={() => handleSave(editCourse)} size="sm">Save Changes</Button>
@@ -126,24 +189,37 @@ export default function Courses() {
         <Card>
           <CardHeader>
             <CardTitle>{selectedCourse.title}</CardTitle>
+            <CardDescription>{selectedCourse.description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Course URL</p>
+              <a href={selectedCourse.courseUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                {selectedCourse.courseUrl}
+              </a>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Instructor</p>
-                <p className="font-semibold">{selectedCourse.instructor}</p>
+                <p className="font-semibold">{selectedCourse.instructor || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Category</p>
+                <Badge>{selectedCourse.category?.name || "Uncategorized"}</Badge>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Level</p>
-                <Badge>{selectedCourse.level || "N/A"}</Badge>
+                <Badge className="capitalize">{selectedCourse.level || "beginner"}</Badge>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Students</p>
-                <p className="text-lg font-semibold">{selectedCourse.students || 0}</p>
+                <p className="text-sm text-muted-foreground">Duration</p>
+                <p className="font-semibold">{selectedCourse.duration || "N/A"}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Revenue</p>
-                <p className="text-lg font-semibold text-primary">{selectedCourse.revenue || "$0"}</p>
+                <p className="text-sm text-muted-foreground">Status</p>
+                <Badge variant={selectedCourse.isPublished ? "default" : "secondary"}>
+                  {selectedCourse.isPublished ? "Published" : "Draft"}
+                </Badge>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 pt-4">
@@ -190,25 +266,61 @@ export default function Courses() {
       {showAddForm && (
         <Card className="bg-muted/30">
           <CardContent className="pt-4 md:pt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4">
-              <Input placeholder="Course title" id="course-title" />
-              <Input placeholder="Instructor name" id="course-instructor" />
-              <select id="course-level" className="border border-input rounded-md px-3 py-2 text-sm">
-                <option>Beginner</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
-              </select>
+            <div className="grid grid-cols-1 gap-3 md:gap-4 mb-4">
+              <Input placeholder="Course title *" id="course-title" />
+              <Input placeholder="Course URL * (e.g., https://youtube.com/...)" id="course-url" />
+              <textarea placeholder="Description" id="course-description" className="border border-input rounded-md px-3 py-2 text-sm min-h-[80px]" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input placeholder="Instructor name *" id="course-instructor" />
+                <select id="course-category" className="border border-input rounded-md px-3 py-2 text-sm">
+                  <option value="">No Category</option>
+                  {categories.map(cat => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select id="course-level" className="border border-input rounded-md px-3 py-2 text-sm">
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input placeholder="Duration (e.g., 8 hours)" id="course-duration" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="add-published"
+                  defaultChecked={false}
+                  className="h-4 w-4"
+                />
+                <label htmlFor="add-published" className="text-sm font-medium">Published (visible to users)</label>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => {
-                const title = document.getElementById("course-title")?.value || "";
-                const instructor = document.getElementById("course-instructor")?.value || "";
-                const level = document.getElementById("course-level")?.value || "";
-                if (title && instructor && level) {
-                  handleAdd(title, instructor, level);
+                const data = {
+                  title: document.getElementById("course-title")?.value || "",
+                  courseUrl: document.getElementById("course-url")?.value || "",
+                  description: document.getElementById("course-description")?.value || "",
+                  instructor: document.getElementById("course-instructor")?.value || "",
+                  category: document.getElementById("course-category")?.value || "",
+                  level: document.getElementById("course-level")?.value || "beginner",
+                  duration: document.getElementById("course-duration")?.value || "",
+                  isPublished: document.getElementById("add-published")?.checked || false,
+                };
+                if (data.title && data.instructor && data.courseUrl) {
+                  handleAdd(data);
                   document.getElementById("course-title").value = "";
+                  document.getElementById("course-url").value = "";
+                  document.getElementById("course-description").value = "";
                   document.getElementById("course-instructor").value = "";
-                  document.getElementById("course-level").value = "Beginner";
+                  document.getElementById("course-category").value = "";
+                  document.getElementById("course-duration").value = "";
                 }
               }}>Add Course</Button>
               <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
@@ -227,18 +339,19 @@ export default function Courses() {
             <Card key={course._id} className="hover:shadow-lg transition-all flex flex-col">
               <CardHeader>
                 <CardTitle className="text-base line-clamp-2">{course.title}</CardTitle>
-                <CardDescription className="text-xs">{course.instructor}</CardDescription>
+                <CardDescription className="text-xs">
+                  {course.instructor || 'Unknown'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 flex-1 flex flex-col">
                 <div>
-                  <p className="text-xs text-muted-foreground">Students</p>
-                  <p className="text-xl font-bold">{course.students || 0}</p>
+                  <p className="text-xs text-muted-foreground">Level</p>
+                  <Badge className="w-fit capitalize">{course.level || "beginner"}</Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Revenue</p>
-                  <p className="text-lg font-bold text-primary">{course.revenue || "$0"}</p>
+                  <p className="text-xs text-muted-foreground">Duration</p>
+                  <p className="text-sm font-medium">{course.duration || "Self-paced"}</p>
                 </div>
-                <Badge className="w-fit">{course.level || "N/A"}</Badge>
                 <div className="flex gap-2 pt-3 mt-auto">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedCourse(course)}>
                     <Eye className="h-3 w-3" />

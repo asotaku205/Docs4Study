@@ -10,9 +10,12 @@ routerUser.post('/change-password', protectedRoute, UserController.changePasswor
 routerUser.get('/blogs', UserController.getAllBlogs);
 routerUser.get('/blogs/:id', UserController.getBlogById);
 routerUser.post('/blogs', protectedRoute, UserController.createBlog);
-routerUser.post('/blogs/:id/like', UserController.likeBlog);
+routerUser.post('/blogs/:id/like', protectedRoute, UserController.likeBlog);
 routerUser.post('/blogs/:id/comments', protectedRoute, UserController.addComment);
 
 routerUser.get('/categories', adminDashboardController.getAllCategories);
+routerUser.get('/courses', adminDashboardController.getAllCourses);
+routerUser.get('/courses/:id', adminDashboardController.getCourseById);
+routerUser.post('/courses/:id/comments', protectedRoute, UserController.addCourseComment);
 
 export default routerUser;

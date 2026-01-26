@@ -43,7 +43,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+// Increase payload size limit for large blog posts with images
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 // Create uploads directory if it doesn't exist

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import BlogCard from "../components/users/Blogs/blogCard";
 import HeroPost from "../components/users/Blogs/heroPost";
@@ -8,9 +8,62 @@ import { Link } from "wouter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../hooks/useAuth";
+import { blogService } from "../services/blogService";
 
 const HomePage = () => {
   const { isLoggedIn } = useAuth();
+  const [blogs, setBlogs] = useState([]);
+  const [featuredBlog, setFeaturedBlog] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBlogs();
+    fetchCourses();
+  }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      setLoading(true);
+      const response = await blogService.getAllBlogs({ limit: 4 });
+      const publishedBlogs = response.data.filter(
+        post => post.status === 'published' && !post.isDeleted
+      );
+      
+      // Set first blog as featured (hero post)
+      if (publishedBlogs.length > 0) {
+        setFeaturedBlog(publishedBlogs[0]);
+        // Set remaining blogs for Latest Update section
+        setBlogs(publishedBlogs.slice(1, 4));
+      }
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/user/courses?isPublished=true&limit=3');
+      const data = await response.json();
+      if (data.data) {
+        setCourses(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return 'No date';
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
     <Layout>
       <section className="relative overflow-hidden bg-primary py-20 lg:py-32">
@@ -79,14 +132,26 @@ const HomePage = () => {
               </Link>
             </div>
           </div>
-          <HeroPost
-            image="/library.png"
-            category="Development"
-            date="Dec 25, 2025"
-            title="Mastering React in 2025: A Comprehensive Guide"
-            description="Everything you need to know about the latest features in React ecosystem."
-            author="Anh Son"
-          />
+          {loading ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground">Loading featured blog...</p>
+            </div>
+          ) : featuredBlog ? (
+            <HeroPost
+              id={featuredBlog._id}
+              image={featuredBlog.image}
+              images={featuredBlog.images}
+              category={featuredBlog.category?.name || 'Uncategorized'}
+              date={formatDate(featuredBlog.publishedAt || featuredBlog.createdAt)}
+              title={featuredBlog.title}
+              description={featuredBlog.description}
+            author={featuredBlog.author?.fullName || 'Unknown'}
+            />
+          ) : (
+            <div className="text-center py-20 bg-card rounded-xl border border-border">
+              <p className="text-muted-foreground">No featured blog available yet.</p>
+            </div>
+          )}
         </div>
       </section>
       <section className="bg-muted/30 py-16">
@@ -94,33 +159,31 @@ const HomePage = () => {
           <h2 className="font-bold text-3xl mb-8 text-foreground text-center">
             Latest Update
           </h2>
-          <div className="grid grid-cols-3 gap-8">
-            <BlogCard
-              image="/library.png"
-              category="Development"
-              date="Dec 25, 2025"
-              title="Mastering React in 2025: A Comprehensive Guide"
-              description="Everything you need to know about the latest features in React ecosystem."
-              author="Anh Son"
-            />
-
-            <BlogCard
-              image="/library.png"
-              category="Development"
-              date="Dec 25, 2025"
-              title="Mastering React in 2025: A Comprehensive Guide"
-              description="Everything you need to know about the latest features in React ecosystem."
-              author="Anh Son"
-            />
-            <BlogCard
-              image="/library.png"
-              category="Development"
-              date="Dec 25, 2025"
-              title="Mastering React in 2025: A Comprehensive Guide"
-              description="Everything you need to know about the latest features in React ecosystem."
-              author="Anh Son"
-            />
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading blogs...</p>
+            </div>
+          ) : blogs.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No blogs available yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogs.map((blog) => (
+                <BlogCard
+                  key={blog._id}
+                  id={blog._id}
+                  image={blog.image}
+                  images={blog.images}
+                  category={blog.category?.name || 'Uncategorized'}
+                  date={formatDate(blog.publishedAt || blog.createdAt)}
+                  title={blog.title}
+                  description={blog.description}
+                  author={blog.author?.fullName || 'Unknown'}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
       <section className="py-20 bg-background/50">
@@ -191,32 +254,20 @@ const HomePage = () => {
               </div>
 
               <div className="space-y-4">
-                <TopCourses
-                  image="library.png"
-                  level="Advance"
-                  price="99"
-                  title="Advanced Web Development"
-                  time="12"
-                  rating="4.8"
-                />
-
-                <TopCourses
-                  image="library.png"
-                  level="Advance"
-                  price="99"
-                  title="Advanced Web Development"
-                  time="12"
-                  rating="4.8"
-                />
-
-                <TopCourses
-                  image="library.png"
-                  level="Advance"
-                  price="99"
-                  title="Advanced Web Development"
-                  time="12"
-                  rating="4.8"
-                />
+                {courses.length > 0 ? (
+                  courses.map((course) => (
+                    <TopCourses
+                      key={course._id}
+                      id={course._id}
+                      image={course.thumbnail}
+                      level={course.level}
+                      title={course.title}
+                      duration={course.duration}
+                    />
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">No courses available</p>
+                )}
               </div>
             </div>
           </div>

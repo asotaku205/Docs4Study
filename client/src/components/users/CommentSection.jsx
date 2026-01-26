@@ -1,26 +1,17 @@
 import { useState } from "react";
 import UserComment from "./userComment";
-import { blogService } from "../../services/blogService";
 
-const CommentCard = ({ blogId, comments, onCommentAdded }) => {
+const CommentSection = ({ comments = [], onCommentSubmit, submitting = false }) => {
   const [commentText, setCommentText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!commentText.trim()) return;
+    if (!commentText.trim() || submitting) return;
 
     try {
-      setSubmitting(true);
-      await blogService.addComment(blogId, commentText);
+      await onCommentSubmit(commentText);
       setCommentText("");
-      if (onCommentAdded) {
-        onCommentAdded();
-      }
     } catch (error) {
       console.error("Error adding comment:", error);
-      alert("Failed to add comment. Please login first.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -37,7 +28,7 @@ const CommentCard = ({ blogId, comments, onCommentAdded }) => {
           ) : (
             comments.map((comment, index) => (
               <UserComment 
-                key={index}
+                key={comment._id || index}
                 name={comment.user?.fullName || "Anonymous"}
                 content={comment.content}
                 date={new Date(comment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -65,4 +56,5 @@ const CommentCard = ({ blogId, comments, onCommentAdded }) => {
     </div>
   );
 };
-export default CommentCard;
+
+export default CommentSection;

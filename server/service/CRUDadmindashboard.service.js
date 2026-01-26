@@ -173,7 +173,11 @@ const getAllCourses = async (req) => {
   }
 
   const [courses, total] = await Promise.all([
-    Course.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Course.find(filter)
+      .populate('category', 'name slug')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
     Course.countDocuments(filter),
   ]);
 
@@ -189,7 +193,9 @@ const getCourseById = async (req) => {
     filter.isDeleted = { $ne: true };
   }
 
-  const course = await Course.findOne(filter);
+  const course = await Course.findOne(filter)
+    .populate('category', 'name slug')
+    .populate('comments.user', 'fullName avatar');
   if (!course) {
     throw createServiceError("Course not found", 404, {
       message: "Course not found",
@@ -199,7 +205,7 @@ const getCourseById = async (req) => {
 };
 
 const createCourse = async (req) => {
-  const requiredFields = ["title", "slug", "instructor"];
+  const requiredFields = ["title", "slug", "instructor", "courseUrl"];
   const missing = requiredFields.filter((field) => !req.body?.[field]);
   if (missing.length) {
     throw createServiceError("Missing required fields", 400, {
@@ -208,48 +214,7 @@ const createCourse = async (req) => {
     });
   }
 
-  // If instructor is a string (name), try to find admin by name or use first admin
-  let instructorId = req.body.instructor;
-  if (
-    typeof req.body.instructor === "string" &&
-    !req.body.instructor.match(/^[0-9a-fA-F]{24}$/)
-  ) {
-    // Not an ObjectId, try to find admin by fullName or use first admin
-    const admin = await User.findOne({
-      $or: [
-        { fullName: req.body.instructor, role: "admin" },
-        { email: req.body.instructor, role: "admin" },
-      ],
-    }).limit(1);
-
-    if (admin) {
-      instructorId = admin._id;
-    } else {
-      // If no admin found, use first admin or first user
-      const firstAdmin = await User.findOne({ role: "admin" }).limit(1);
-      if (firstAdmin) {
-        instructorId = firstAdmin._id;
-      } else {
-        const firstUser = await User.findOne().limit(1);
-        if (firstUser) {
-          instructorId = firstUser._id;
-        } else {
-          throw createServiceError(
-            "No admin found to assign as instructor",
-            400,
-            {
-              message: "No admin found to assign as instructor",
-            }
-          );
-        }
-      }
-    }
-  }
-
-  const courseData = {
-    ...req.body,
-    instructor: instructorId,
-  };
+  const courseData = { ...req.body };
 
   const course = new Course(courseData);
   await course.save();
@@ -258,29 +223,6 @@ const createCourse = async (req) => {
 
 const updateCourse = async (req) => {
   const courseData = { ...req.body };
-
-  // If instructor is a string (name), try to find admin by name or use first admin
-  if (
-    courseData.instructor &&
-    typeof courseData.instructor === "string" &&
-    !courseData.instructor.match(/^[0-9a-fA-F]{24}$/)
-  ) {
-    const admin = await User.findOne({
-      $or: [
-        { fullName: courseData.instructor, role: "admin" },
-        { email: courseData.instructor, role: "admin" },
-      ],
-    }).limit(1);
-
-    if (admin) {
-      courseData.instructor = admin._id;
-    } else {
-      const firstAdmin = await User.findOne({ role: "admin" }).limit(1);
-      if (firstAdmin) {
-        courseData.instructor = firstAdmin._id;
-      }
-    }
-  }
 
   // Convert level to lowercase if provided
   if (courseData.level) {

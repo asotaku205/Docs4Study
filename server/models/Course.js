@@ -13,32 +13,50 @@ const courseSchema = new mongoose.Schema({
   description: String,
   thumbnail: String,
   instructor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true
   },
-  category: String,
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category'
+  },
   level: {
     type: String,
     enum: ['beginner', 'intermediate', 'advanced'],
     default: 'beginner'
   },
-  price: {
-    type: Number,
-    default: 0
+  duration: {
+    type: String, // e.g., "8 hours", "12 weeks"
+    default: '0 hours'
   },
-  students: {
-    type: Number,
-    default: 0
+  courseUrl: {
+    type: String, // External course link (YouTube, Udemy, etc.)
+    required: true
   },
-  rating: {
-    type: Number,
-    default: 0
-  },
+  comments: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    content: {
+      type: String,
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   isPublished: {
     type: Boolean,
     default: false
-  }
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: Date
 }, { 
   timestamps: true 
 });

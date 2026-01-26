@@ -5,9 +5,16 @@ import User from "../models/User.js";
 
 const getRefreshCookieOptions = () => ({
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? "none" : "lax",
     maxAge: REFRESH_TOKEN_TTL,
+});
+
+const getAccessCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 });
 class AuthController {
     async signin(req, res) {
@@ -20,14 +27,15 @@ class AuthController {
                 })
             };
             const { accessToken, refreshToken, user } = await AuthService.signin(email, password);
-            // trả refresh token về trong cookie
+            // Gửi cả access và refresh token qua HttpOnly cookies
+            res.cookie("accessToken", accessToken, getAccessCookieOptions());
             res.cookie("refreshToken", refreshToken, getRefreshCookieOptions());
             return res.status(200).json({
                 success: true,
                 message: "Signin success",
                 data: {
                     user: user,
-                    token: accessToken
+                    token: accessToken // Giữ lại cho backward compatibility
                 }
             });
             
@@ -49,15 +57,15 @@ class AuthController {
                 });
             };
             const { user, accessToken, refreshToken } = await AuthService.signup(email, password, fullName);
-            // trả refresh token về trong cookie
+            // Gửi cả access và refresh token qua HttpOnly cookies
+            res.cookie("accessToken", accessToken, getAccessCookieOptions());
             res.cookie("refreshToken", refreshToken, getRefreshCookieOptions());
             return res.status(201).json({
                 success: true,
                 message: "User registered successfully",
                 data: {
-
                     user: user,
-                    token: accessToken
+                    token: accessToken // Giữ lại cho backward compatibility
                 }
             });
         } catch (error) {
@@ -77,6 +85,8 @@ class AuthController {
                 //xoa resfresh token tu cookie
                 res.clearCookie("refreshToken", getRefreshCookieOptions());
             };
+            // Xóa access token cookie
+            res.clearCookie("accessToken", getAccessCookieOptions());
             return res.sendStatus(204);
         } catch (error) {
             return res.status(error.statusCode || 500).json({
@@ -130,12 +140,14 @@ class AuthController {
             // xoa refresh token cu va tao refresh token moi
             await Session.deleteOne({ _id: session._id });
             const newRefreshToken = await AuthService.createRefreshTokenSession(session.userId);
+            res.cookie("accessToken", accessToken, getAccessCookieOptions());
             res.cookie("refreshToken", newRefreshToken, getRefreshCookieOptions());
             return res.status(200).json({
                 success: true,
                 message: "Access token refreshed successfully",
                 data: {
-                    token: accessToken
+                    accessToken: accessToken, // For localStorage backward compatibility
+                    token: accessToken // Giữ lại cho backward compatibility
                 }
             });
         } catch (error) {

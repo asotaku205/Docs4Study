@@ -15,6 +15,7 @@ import OtherProfile from "./pages/OtherProfile";
 import CreatePost from "./pages/CreatePost";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function Routes() {
   return (
@@ -25,15 +26,33 @@ function Routes() {
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog-detail/:id" component={BlogDetail} />
-      <Route path="/create-post" component={CreatePost} />
+      <Route path="/create-post">
+        {() => (
+          <ProtectedRoute>
+            <CreatePost />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route path="/search" component={Search} />
       <Route path="/courses" component={Courses} />
-      <Route path="/courses/detail" component={CoursesDetail} />
+      <Route path="/courses-detail/:id" component={CoursesDetail} />
       <Route path="/documents/detail" component={DocumentDetail} />
       <Route path="/documents" component={Documents} />
-      <Route path="/profile" component={Profile} />
+      <Route path="/profile">
+        {() => (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route path="/other-profile" component={OtherProfile} />
-      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin">
+        {() => (
+          <ProtectedRoute requireAdmin={true}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

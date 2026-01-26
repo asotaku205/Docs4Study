@@ -14,10 +14,8 @@ import { useToggle } from "../../hooks/useToggle";
 const NavLink = ({ href, currentLocation, children }) => {
   const isActive = currentLocation === href;
   return (
-    <Link href={href}>
-      <a className={`${isActive ? 'text-primary font-bold' : 'text-muted-foreground'} hover:text-primary cursor-pointer select-none`}>
-        {children}
-      </a>
+    <Link href={href} className={`${isActive ? 'text-primary font-bold' : 'text-muted-foreground'} hover:text-primary cursor-pointer select-none`}>
+      {children}
     </Link>
   );
 };
@@ -115,16 +113,12 @@ export function Header() {
               )}
             </div>
           ) : (
-            <div>
-              <Link href="/auth">
-                <a className="text-foreground py-2 px-4 cursor-pointer select-none">
-                  Log in
-                </a>
+            <div className="flex gap-2">
+              <Link href="/auth" className="text-foreground py-2 px-4 cursor-pointer select-none">
+                Log in
               </Link>
-              <Link href="/auth">
-                <a className="bg-primary text-secondary px-4 py-2 rounded-lg font-semibold hover:bg-primary/80 transition-colors cursor-pointer select-none">
-                  Sign up
-                </a>
+              <Link href="/auth" className="bg-primary text-secondary px-4 py-2 rounded-lg font-semibold hover:bg-primary/80 transition-colors cursor-pointer select-none">
+                Sign up
               </Link>
             </div>
           )}

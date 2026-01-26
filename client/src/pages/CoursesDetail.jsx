@@ -1,19 +1,73 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useRoute } from "wouter";
 import Layout from "../components/Layout";
 import BackgroundPhoto from "../components/users/BackgroundPhoto";
 import BackButton from "../components/ui/BackButton";
+import CommentSection from "../components/users/CommentSection";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCirclePlay, faStar } from "@fortawesome/free-solid-svg-icons";
-import { faUsers, faUserPen } from "@fortawesome/free-solid-svg-icons";
-import { faClock } from "@fortawesome/free-solid-svg-icons";
-
-import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
-import LockPart from "../components/users/Courses/LockPart";
-import CompletedPart from "../components/users/Courses/CompletedPart";
-import CommentCard from "../components/users/commentCard";
-import AboutAuthor from "../components/users/AboutAuthor";
+import { faExternalLink, faClock } from "@fortawesome/free-solid-svg-icons";
+import { coursesAPI } from "@/services/api";
+import apiUser from "@/services/apiUser";
 
 const CoursesDetail = () => {
+  const [, params] = useRoute("/courses-detail/:id");
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  useEffect(() => {
+    if (params?.id) {
+      fetchCourseDetail();
+    }
+  }, [params?.id]);
+
+  const fetchCourseDetail = async () => {
+    try {
+      setLoading(true);
+      const response = await apiUser.get(`/user/courses/${params.id}`);
+      setCourse(response.data);
+    } catch (error) {
+      console.error("Error fetching course:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCommentSubmit = async (content) => {
+    try {
+      setSubmittingComment(true);
+      await apiUser.post(`/user/courses/${params.id}/comments`, { content });
+      await fetchCourseDetail(); // Refresh to get new comments
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      alert("Failed to add comment. Please login first.");
+      throw error;
+    } finally {
+      setSubmittingComment
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <p>Loading course...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!course) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <p>Course not found</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <BackgroundPhoto image="/library.png" />
@@ -25,141 +79,78 @@ const CoursesDetail = () => {
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-card rounded-2xl p-8 shadow-lg">
               <div className="px-4 py-2 bg-primary text-white rounded transition text-xs inline-flex mb-6">
-                Development
+                {course.category?.name || "General"}
               </div>
               <h1 className="text-4xl font-heading font-bold mb-4">
-                Advance Web Development Course
+                {course.title}
               </h1>
               <p className="text-lg text-muted-foreground mb-6">
-                Full stack journey with Node.js and React.
+                {course.description || "Enhance your skills with this comprehensive course."}
               </p>
               <div className="flex items-center gap-6 py-6 border-y border-border">
                 <div className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faStar} style={{ color: "#FFD43B" }} />{" "}
-                  <span className="font-semibold">4.8</span>{" "}
-                  <span className="text-muted-foreground">(312 reviews)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faUsers} />{" "}
-                  <span className="font-semibold">1,245</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <FontAwesomeIcon icon={faClock} />{" "}
-                  <span className="font-semibold">12 weeks</span>
+                  <span className="font-semibold">{course.duration || "Self-paced"}</span>
+                </div>
+                <div className="px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                  {course.level || "Beginner"}
                 </div>
               </div>
             </div>
             <div className="bg-card rounded-2xl p-8">
               <h2 className="text-2xl font-bold font-heading mb-6">
-                What You'll Learn
+                Access Course
               </h2>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <span className="text-muted-foreground">
-                    {" "}
-                    <FontAwesomeIcon icon={faCircleCheck} /> Build dynamic web
-                    applications using React and Node.js
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-muted-foreground">
-                    {" "}
-                    <FontAwesomeIcon icon={faCircleCheck} /> Implement RESTful
-                    APIs and work with databases
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-muted-foreground">
-                    {" "}
-                    <FontAwesomeIcon icon={faCircleCheck} /> Deploy applications
-                    to cloud platforms
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-muted-foreground">
-                    {" "}
-                    <FontAwesomeIcon icon={faCircleCheck} /> Best practices in
-                    modern web development
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-muted-foreground">
-                    {" "}
-                    <FontAwesomeIcon icon={faCircleCheck} /> Hands-on projects
-                    to build your portfolio
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-muted-foreground">
-                    {" "}
-                    <FontAwesomeIcon icon={faCircleCheck} /> Collaboration and
-                    version control with Git
-                  </span>
-                </li>
-              </ul>
+              <p className="text-muted-foreground mb-4">
+                This course is hosted externally. Click the button below to access the full course content.
+              </p>
+              <a 
+                href={course.courseUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-semibold"
+              >
+                <FontAwesomeIcon icon={faExternalLink} />
+                Go to Course
+              </a>
             </div>
-            <div className="bg-card rounded-2xl p-8">
-              <h2 className="text-2xl font-text-2xl font-bold font-heading mb-6">
-                Course Course Syllabus
-              </h2>
-              <div className="space-y-3">
-                <CompletedPart />
-                <CompletedPart />
-                <CompletedPart />
-                <LockPart />
-                <LockPart />
-                <LockPart />
-              </div>
-            </div>
-            <AboutAuthor  />
           </div>
           <div className="lg:col-span-1">
-            <div class="rounded-xl border bg-card text-card-foreground sticky top-20 shadow-xl">
-              <div class="p-6 pt-6">
-                <div class="h-40 rounded-lg overflow-hidden mb-6">
+            <div className="rounded-xl border bg-card text-card-foreground sticky top-20 shadow-xl">
+              <div className="p-6 pt-6">
+                <div className="h-40 rounded-lg overflow-hidden mb-6">
                   <img
-                    alt="Advanced Web Development"
-                    class="w-full h-full object-cover"
-                    src="/library.png"
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                    src={course.thumbnail || "/library.png"}
                   />
                 </div>
-                <div class="space-y-4 mb-6">
-                  <div>
-                    <p class="text-sm text-muted-foreground">Price</p>
-                    <div class="flex items-baseline gap-2">
-                      <span class="text-3xl font-bold text-primary">$99</span>
-                      <span class="text-lg line-through text-muted-foreground">
-                        $129
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 bg-primary text-primary-foreground border border-primary-border min-h-9 px-4 py-2 w-full mb-3 gap-2 h-12 font-semibold">
-                  Enroll Now
-                  <FontAwesomeIcon icon={faCirclePlay} />
-                </button>
-                <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full">
-                  Add to Wishlist
-                </button>
-                <div class="mt-6 pt-6 border-t border-border space-y-3 text-sm">
-                  <p class="text-muted-foreground">
-                    <strong>Lifetime Access:</strong> Learn at your own pace
-                    with lifetime access to all materials.
+                <a 
+                  href={course.courseUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover-elevate active-elevate-2 bg-primary text-primary-foreground border border-primary-border min-h-9 px-4 py-2 w-full mb-3 gap-2 h-12 font-semibold"
+                >
+                  Access Course
+                  <FontAwesomeIcon icon={faExternalLink} />
+                </a>
+                <div className="mt-6 pt-6 border-t border-border space-y-3 text-sm">
+                  <p className="text-muted-foreground">
+                    <strong>Difficulty:</strong> {course.level || "Beginner"}
                   </p>
-                  <p class="text-muted-foreground">
-                    <strong>Certificate:</strong> Get a completion certificate
-                    upon finishing the course.
-                  </p>
-                  <p class="text-muted-foreground">
-                    <strong>Support:</strong> Join our community for Q&amp;A and
-                    discussions.
+                  <p className="text-muted-foreground">
+                    <strong>Duration:</strong> {course.duration || "Self-paced"}
                   </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <CommentCard/>
+        <CommentSection 
+          comments={course.comments || []}
+          onCommentSubmit={handleCommentSubmit}
+          submitting={submittingComment}
+        />
       </div>
     </Layout>
   );

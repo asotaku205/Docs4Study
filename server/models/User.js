@@ -31,22 +31,6 @@ const userSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
-    enrolledCourses: [
-      {
-        course: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Course",
-        },
-        enrolledAt: {
-          type: Date,
-          default: Date.now,
-        },
-        progress: {
-          type: Number,
-          default: 0,
-        },
-      },
-    ],
     comments: [
       {
         blogPost: {
@@ -85,11 +69,6 @@ userSchema.virtual("totalPosts", {
   localField: "_id",
   foreignField: "author",
   count: true,
-});
-
-// Virtual field: Tổng số khóa học đã đăng ký
-userSchema.virtual("totalCoursesEnrolled").get(function () {
-  return this.enrolledCourses ? this.enrolledCourses.length : 0;
 });
 
 // Để virtual fields được serialize khi convert to JSON

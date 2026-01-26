@@ -9,14 +9,21 @@ export default function BlogPosts() {
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [viewMode, setViewMode] = useState("list");
+  const [activeTab, setActiveTab] = useState("all"); // all, pending, published, deleted
   const [activePost, setActivePost] = useState(null);
   const [postToDelete, setPostToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage] = useState(10);
 
   useEffect(() => {
     fetchPosts();
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset về trang 1 khi chuyển tab
+  }, [activeTab]);
 
   const fetchCategories = async () => {
     try {
@@ -99,15 +106,7 @@ export default function BlogPosts() {
 
   let content = null;
 
-  if (viewMode === "add") {
-    content = (
-      <AddPostForm
-        categories={categories}
-        onAdd={handleAdd}
-        onCancel={() => setViewMode("list")}
-      />
-    );
-  } else if (viewMode === "edit") {
+  if (viewMode === "edit") {
     content = (
       <EditPostForm
         post={activePost}
@@ -132,7 +131,11 @@ export default function BlogPosts() {
       <PostList
         posts={posts}
         loading={loading}
-        onAdd={() => setViewMode("add")}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        currentPage={currentPage}
+        postsPerPage={postsPerPage}
+        onPageChange={setCurrentPage}
         onView={(p) => {
           setActivePost(p);
           setViewMode("detail");
@@ -183,106 +186,147 @@ export default function BlogPosts() {
   );
 }
 
-function PostList({ posts, loading, onView, onEdit, onDelete, onAdd, onRestore, onPublish }) {
-  const pendingPosts = posts.filter(p => p.status === 'pending' && !p.isDeleted);
-  const otherPosts = posts.filter(p => p.status !== 'pending' || p.isDeleted);
+function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPerPage, onPageChange, onView, onEdit, onDelete, onRestore, onPublish }) {
+  // Lọc posts theo tab
+  const getFilteredPosts = () => {
+    switch (activeTab) {
+      case 'pending':
+        return posts.filter(p => p.status === 'pending' && !p.isDeleted);
+      case 'published':
+        return posts.filter(p => p.status === 'published' && !p.isDeleted);
+      case 'deleted':
+        return posts.filter(p => p.isDeleted);
+      default: // 'all'
+        return posts.filter(p => !p.isDeleted);
+    }
+  };
+
+  const filteredPosts = getFilteredPosts();
+  
+  // Phân trang
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+
+  const tabs = [
+    { id: 'all', label: 'All Posts', count: posts.filter(p => !p.isDeleted).length },
+    { id: 'pending', label: 'Pending Approval', count: posts.filter(p => p.status === 'pending' && !p.isDeleted).length },
+    { id: 'published', label: 'Published', count: posts.filter(p => p.status === 'published' && !p.isDeleted).length },
+    { id: 'deleted', label: 'Deleted', count: posts.filter(p => p.isDeleted).length },
+  ];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Blog Posts ({posts.length})</h1>
-        <button
-          onClick={onAdd}
-          className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
-        >
-          New Post
-        </button>
+        <h1 className="text-2xl font-bold">Blog Posts ({filteredPosts.length})</h1>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="flex gap-4">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === tab.id
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                activeTab === tab.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </nav>
       </div>
 
       {loading ? (
         <p className="text-center py-8">Loading...</p>
+      ) : filteredPosts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No posts found in this category</p>
+        </div>
       ) : (
         <>
-          {pendingPosts.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-4 text-orange-600">Pending Approval ({pendingPosts.length})</h2>
-              <div className="overflow-x-auto bg-orange-50 rounded-lg border border-orange-200">
-                <table className="w-full">
-                  <thead className="bg-orange-100 border-b border-orange-200">
-                    <tr>
-                      <th className="p-4 text-left text-sm font-semibold">Title</th>
-                      <th className="p-4 text-left text-sm font-semibold">Author</th>
-                      <th className="p-4 text-left text-sm font-semibold">Category</th>
-                      <th className="p-4 text-left text-sm font-semibold">Status</th>
-                      <th className="p-4 text-left text-sm font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingPosts.map((p) => (
-                      <tr key={p._id} className="hover:bg-orange-100">
-                        <td className="p-4 border-t border-orange-200">{p.title}</td>
-                        <td className="p-4 border-t border-orange-200">{p.author?.fullName || p.author}</td>
-                        <td className="p-4 border-t border-orange-200">{p.category?.name || p.category}</td>
-                        <td className="p-4 border-t border-orange-200">
-                          <span className="px-2 py-1 rounded text-xs bg-orange-500 text-white">
-                            Pending
-                          </span>
-                        </td>
-                        <td className="p-4 border-t border-orange-200">
-                          <div className="flex gap-2">
-                            <button onClick={() => onView(p)} className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">View</button>
-                            <button onClick={() => onPublish(p)} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">Approve</button>
-                            <button onClick={() => onDelete(p)} className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Reject</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
           <div className="overflow-x-auto bg-white rounded-lg border">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className={`border-b ${
+                activeTab === 'pending' ? 'bg-orange-50' : 
+                activeTab === 'deleted' ? 'bg-red-50' : 'bg-gray-50'
+              }`}>
                 <tr>
                   <th className="p-4 text-left text-sm font-semibold">Title</th>
                   <th className="p-4 text-left text-sm font-semibold">Author</th>
                   <th className="p-4 text-left text-sm font-semibold">Category</th>
                   <th className="p-4 text-left text-sm font-semibold">Status</th>
-                  <th className="p-4 text-left text-sm font-semibold">Views</th>
+                  <th className="p-4 text-left text-sm font-semibold">Date</th>
                   <th className="p-4 text-left text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {otherPosts.map((p) => (
-                  <tr key={p._id} className={p.isDeleted ? 'bg-gray-50' : 'hover:bg-gray-50'}>
+                {currentPosts.map((p) => (
+                  <tr key={p._id} className="hover:bg-gray-50">
                     <td className="p-4 border-t">{p.title}</td>
                     <td className="p-4 border-t">{p.author?.fullName || p.author}</td>
                     <td className="p-4 border-t">{p.category?.name || p.category}</td>
                     <td className="p-4 border-t">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        p.isDeleted ? 'bg-gray-200' :
-                        p.status === 'published' ? 'bg-gray-900 text-white' : 'bg-gray-300'
+                        p.isDeleted ? 'bg-red-100 text-red-700' :
+                        p.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                        p.status === 'published' ? 'bg-green-100 text-green-700' :
+                        'bg-gray-100 text-gray-700'
                       }`}>
                         {p.isDeleted ? 'Deleted' : p.status}
                       </span>
                     </td>
-                    <td className="p-4 border-t">{p.views}</td>
+                    <td className="p-4 border-t text-sm text-gray-600">
+                      {new Date(p.createdAt).toLocaleDateString()}
+                    </td>
                     <td className="p-4 border-t">
                       <div className="flex gap-2">
-                        {p.isDeleted ? (
-                          <button onClick={() => onRestore(p)} className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Restore</button>
-                        ) : (
+                        <button 
+                          onClick={() => onView(p)} 
+                          className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                        >
+                          View
+                        </button>
+                        {!p.isDeleted && (
                           <>
-                            <button onClick={() => onView(p)} className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">View</button>
-                            <button onClick={() => onEdit(p)} className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Edit</button>
-                            {p.status === 'draft' && (
-                              <button onClick={() => onPublish(p)} className="px-3 py-1 text-sm bg-gray-900 text-white rounded hover:bg-gray-800">Publish</button>
+                            {p.status === 'pending' && (
+                              <button 
+                                onClick={() => onPublish(p)} 
+                                className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                              >
+                                Approve
+                              </button>
                             )}
-                            <button onClick={() => onDelete(p)} className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
+                            <button 
+                              onClick={() => onEdit(p)} 
+                              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => onDelete(p)} 
+                              className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              Delete
+                            </button>
                           </>
+                        )}
+                        {p.isDeleted && (
+                          <button 
+                            onClick={() => onRestore(p)} 
+                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            Restore
+                          </button>
                         )}
                       </div>
                     </td>
@@ -291,6 +335,44 @@ function PostList({ posts, loading, onView, onEdit, onDelete, onAdd, onRestore, 
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-6">
+              <p className="text-sm text-gray-600">
+                Showing {indexOfFirstPost + 1} to {Math.min(indexOfLastPost, filteredPosts.length)} of {filteredPosts.length} posts
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => onPageChange(page)}
+                    className={`px-3 py-1 border rounded ${
+                      currentPage === page
+                        ? 'bg-gray-900 text-white'
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

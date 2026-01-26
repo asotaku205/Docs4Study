@@ -1,60 +1,51 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
 import CardCourses from "../components/users/Courses/cardCourses";
 import TabButton from "../components/ui/TabButton";
 import { useTabs } from "../hooks/useTabs";
-import { useFilter } from "../hooks/useFilter";
+import apiUser from "../services/apiUser";
 
 const Courses = () => {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   
-  const tabs = ["All", "Development", "Design", "Marketing", "Business"];
-
+  const tabs = ["All", ...categories.map(c => c.name)];
   const { activeTab, handleTabChange } = useTabs("All");
 
-  const allCourses = [
-    {
-      id: 1,
-      category: "Development",
-      title: "Advanced Web Development",
-      description: "Full stack journey with Node.js and React.",
-      duration: "8",
-      students: "120",
-      price: "199",
-      image: "library.png"
-    },
-    {
-      id: 2,
-      category: "Design",
-      title: "UI/UX Design Mastery",
-      description: "Become a pro in user interface and experience design.",
-      duration: "6",
-      students: "85",
-      price: "149",
-      image: "library.png"
-    },
-    {
-      id: 3,
-      category: "Marketing",
-      title: "Digital Marketing 101",
-      description: "Learn the fundamentals of digital marketing.",
-      duration: "4",
-      students: "200",
-      price: "99",
-      image: "library.png"
-    },
-    {
-      id: 4,
-      category: "Marketing",
-      title: "Digital Marketing 101",
-      description: "Learn the fundamentals of digital marketing.",
-      duration: "4",
-      students: "200",
-      price: "99",
-      image: "library.png"
-    },
-  ];
+  useEffect(() => {
+    fetchCategories();
+    fetchCourses();
+  }, []);
 
-  const filteredCourses = useFilter(allCourses, activeTab, 'category', 'All');
+  const fetchCategories = async () => {
+    try {
+      const response = await apiUser.get("/user/categories");
+      setCategories(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const response = await apiUser.get("/user/courses", {
+        params: { limit: 50, isPublished: true }
+      });
+      setCourses(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCourses = useMemo(() => {
+    return activeTab === "All" 
+      ? courses 
+      : courses.filter(course => course.category?.name === activeTab);
+  }, [activeTab, courses]);
 
   return (
     <Layout>
@@ -86,17 +77,31 @@ const Courses = () => {
       {/* Courses Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCourses.length === 0 ? (
-              <p className="text-center text-muted-foreground col-span-full">
-                No courses available in this category.
-              </p>
-            ) : (
-              filteredCourses.map((course) => (
-                <CardCourses key={course.id} {...course} />
-              ))
-            )}
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading courses...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredCourses.length === 0 ? (
+                <p className="text-center text-muted-foreground col-span-full">
+                  No courses available in this category.
+                </p>
+              ) : (
+                filteredCourses.map((course) => (
+                  <CardCourses 
+                    key={course._id} 
+                    id={course._id}
+                    title={course.title}
+                    description={course.description}
+                    duration={course.duration}
+                    image={course.thumbnail}
+                    level={course.level}
+                  />
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
     </Layout>

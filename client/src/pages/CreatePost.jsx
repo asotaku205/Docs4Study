@@ -76,7 +76,13 @@ const CreatePost = () => {
       }
     } catch (error) {
       console.error("Error uploading images:", error);
-      alert("Failed to upload images. Please try again.");
+      const errorMsg = error.response?.data?.message || error.message || "Failed to upload images";
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        alert("Please login to upload images.");
+        setLocation("/auth");
+      } else {
+        alert(`Failed to upload images: ${errorMsg}`);
+      }
     } finally {
       setUploading(false);
     }
@@ -113,6 +119,11 @@ const CreatePost = () => {
     try {
       setSubmitting(true);
       
+      // Check token before submitting
+      const token = localStorage.getItem("accessToken");
+      console.log("Token exists:", !!token);
+      console.log("Token:", token?.substring(0, 20) + "...");
+      
       // Prepare post data with images array
       const postData = {
         ...formData,
@@ -123,12 +134,22 @@ const CreatePost = () => {
         }))
       };
       
-      await blogService.createBlog(postData);
+      console.log("Submitting post data:", postData);
+      
+      const response = await blogService.createBlog(postData);
+      console.log("Response:", response);
       alert("Post submitted successfully! Waiting for admin approval.");
       setLocation("/blog");
     } catch (error) {
       console.error("Error creating post:", error);
-      alert("Failed to create post. Please login first.");
+      console.error("Error response:", error.response);
+      const errorMsg = error.response?.data?.message || error.message || "Failed to create post";
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        alert("Please login to create a post.");
+        setLocation("/auth");
+      } else {
+        alert(`Failed to create post: ${errorMsg}`);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -136,21 +157,21 @@ const CreatePost = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-heading font-bold mb-2">Share Your Knowledge</h1>
-            <p className="text-lg text-muted-foreground">Submit your post for admin review and publication</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-3xl font-heading font-bold mb-2">Share Your Knowledge</h1>
+            <p className="text-muted-foreground">Submit your post for admin review and publication</p>
           </div>
           
-          <div className="rounded-xl bg-card text-card-foreground shadow border border-border">
-            <div className="flex flex-col space-y-1.5 p-6">
-              <div className="font-semibold tracking-tight text-2xl">Create New Post</div>
+          <div className="rounded-lg bg-card text-card-foreground shadow-lg border border-border">
+            <div className="flex flex-col space-y-1.5 p-6 border-b border-border">
+              <div className="font-semibold tracking-tight text-xl">Create New Post</div>
               <div className="text-sm text-muted-foreground">Fill in the information below</div>
             </div>
             
-            <div className="p-6 pt-0">
-              <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="p-6">
+              <form className="space-y-5" onSubmit={handleSubmit}>
                 <div>
                   <label className="text-sm font-semibold block mb-2">Post Title *</label>
                   <input 

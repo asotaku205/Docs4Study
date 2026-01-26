@@ -42,14 +42,20 @@ const Blog = () => {
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = {
+        limit: 50 // Giới hạn số bài để tăng performance
+      };
       if (activeTab !== "all") {
         params.category = activeTab;
       }
       const response = await blogService.getAllBlogs(params);
-      setPosts(response.data || []);
-      if (response.data && response.data.length > 0) {
-        setHeroPost(response.data[0]);
+      // Chỉ lấy các bài published
+      const publishedPosts = (response.data || []).filter(post => 
+        post.status === 'published' && !post.isDeleted
+      );
+      setPosts(publishedPosts);
+      if (publishedPosts.length > 0) {
+        setHeroPost(publishedPosts[0]);
       }
     } catch (error) {
       console.error("Error fetching blogs:", error);

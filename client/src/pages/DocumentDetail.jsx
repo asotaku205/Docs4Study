@@ -1,6 +1,5 @@
 import Layout from "../components/Layout";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import CommentCard from "../components/users/commentCard";
 import BackButton from "../components/ui/BackButton";
 import {
   faCalendar,
@@ -13,7 +12,6 @@ import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { faFileLines } from "@fortawesome/free-solid-svg-icons";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
 import React from "react";
-import AboutAuthor from "../components/users/AboutAuthor";
 const DocumentDetail = () => {
   return (
     <Layout>
@@ -108,7 +106,6 @@ const DocumentDetail = () => {
                 <FontAwesomeIcon icon={faShareFromSquare} /> Share
               </button>
             </div>
-            <AboutAuthor />
           </div>
           <div class="lg:col-span-1">
             <div class="rounded-xl border bg-card text-card-foreground sticky top-20 shadow-xl">
@@ -167,7 +164,6 @@ const DocumentDetail = () => {
             </div>
           </div>
         </div>
-        <CommentCard />
       </div>
     </Layout>
   );

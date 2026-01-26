@@ -5,55 +5,55 @@ import BlogCard from "../components/users/Blogs/blogCard";
 import CardCourses from "../components/users/Courses/cardCourses";
 import CardDocs from "../components/users/Documents/cardDocs";
 import UserCard from "../components/users/UserCard";
+import { blogService } from "../services/blogService";
+
 const Search = () => {
   const tabs = ["All", "Blogs", "Courses", "Documents", "Users"];
   const [activeTab, setActiveTab] = useState("All");
-  
-  const mockBlogs = [
-    {
-      image: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500",
-      category: "Programming",
-      date: "Jan 5, 2026",
-      title: "Introduction to React Hooks",
-      description: "Learn about useState, useEffect and other essential React hooks for modern development.",
-      author: "John Doe"
-    },
-    {
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500",
-      category: "Web Development",
-      date: "Jan 3, 2026",
-      title: "JavaScript Best Practices 2026",
-      description: "Essential tips and tricks for writing clean, maintainable JavaScript code.",
-      author: "Jane Smith"
-    },
-    {
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500",
-      category: "Design",
-      date: "Dec 28, 2025",
-      title: "UI/UX Design Principles",
-      description: "Master the fundamentals of creating beautiful and user-friendly interfaces.",
-      author: "Mike Johnson"
-    }
-  ];
+  const [blogs, setBlogs] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockCourses = [
-    {
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500",
-      title: "Full Stack Web Development",
-      description: "Complete guide to modern web development with React, Node.js, and MongoDB.",
-      duration: "40 hours",
-      students: "1,234",
-      price: "49.99"
-    },
-    {
-      image: "https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=500",
-      title: "React Mastery Course",
-      description: "Master React from basics to advanced concepts including hooks and context.",
-      duration: "30 hours",
-      students: "856",
-      price: "39.99"
+  useEffect(() => {
+    fetchBlogs();
+    fetchCourses();
+  }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      setLoading(true);
+      const response = await blogService.getAllPosts({ limit: 6 });
+      const publishedBlogs = response.data.filter(
+        post => post.status === 'published' && !post.isDeleted
+      );
+      setBlogs(publishedBlogs);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/user/courses');
+      const data = await response.json();
+      if (data.success) {
+        setCourses(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return 'No date';
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
   const mockDocuments = [
     {
@@ -152,20 +152,48 @@ const Search = () => {
             <div className="space-y-8">
               <div>
                 <h3 className="text-2xl font-semibold mb-4">Blogs</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {mockBlogs.map((blog, index) => (
-                    <BlogCard key={index} {...blog} />
-                  ))}
-                </div>
+                {loading ? (
+                  <p className="text-muted-foreground">Loading blogs...</p>
+                ) : blogs.length === 0 ? (
+                  <p className="text-muted-foreground">No blogs found.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {blogs.slice(0, 3).map((blog) => (
+                      <BlogCard
+                        key={blog._id}
+                        id={blog._id}
+                        image={blog.image}
+                        images={blog.images}
+                        category={blog.category?.name || 'Uncategorized'}
+                        date={formatDate(blog.publishedAt || blog.createdAt)}
+                        title={blog.title}
+                        description={blog.description}
+                        author={blog.author?.fullName || 'Unknown'}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
                 <h3 className="text-2xl font-semibold mb-4">Courses</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {mockCourses.map((course, index) => (
-                    <CardCourses key={index} {...course} />
-                  ))}
-                </div>
+                {courses.length === 0 ? (
+                  <p className="text-muted-foreground">No courses found.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {courses.slice(0, 3).map((course) => (
+                      <CardCourses 
+                        key={course._id}
+                        id={course._id}
+                        image={course.thumbnail}
+                        title={course.title}
+                        description={course.description}
+                        duration={course.duration}
+                        level={course.level}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -189,20 +217,48 @@ const Search = () => {
           )}
             {activeTab === "Blogs" && (
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mockBlogs.map((blog, index) => (
-                  <BlogCard key={index} {...blog} />
-                ))}
-              </div>
+              {loading ? (
+                <p className="text-muted-foreground">Loading blogs...</p>
+              ) : blogs.length === 0 ? (
+                <p className="text-muted-foreground">No blogs found.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {blogs.map((blog) => (
+                    <BlogCard
+                      key={blog._id}
+                      id={blog._id}
+                      image={blog.image}
+                      images={blog.images}
+                      category={blog.category?.name || 'Uncategorized'}
+                      date={formatDate(blog.publishedAt || blog.createdAt)}
+                      title={blog.title}
+                      description={blog.description}
+                      author={blog.author?.fullName || 'Unknown'}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             )}
             {activeTab === "Courses" && (
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mockCourses.map((course, index) => (
-                  <CardCourses key={index} {...course} />
-                ))}
-              </div>
+              {courses.length === 0 ? (
+                <p className="text-muted-foreground">No courses found.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {courses.map((course) => (
+                    <CardCourses 
+                      key={course._id}
+                      id={course._id}
+                      image={course.thumbnail}
+                      title={course.title}
+                      description={course.description}
+                      duration={course.duration}
+                      level={course.level}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             )}
             {activeTab === "Documents" && (

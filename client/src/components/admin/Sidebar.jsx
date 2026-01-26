@@ -5,7 +5,6 @@ export default function Sidebar({ activeTab, onChangeTab }) {
     { id: "documents", label: "Documents" },
     { id: "courses", label: "Courses" },
     { id: "blog", label: "Blog Posts" },
-    { id: "submissions", label: "Submissions" },
     { id: "categories", label: "Categories" }
   ];
 

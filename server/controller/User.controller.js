@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import BlogPost from "../models/BlogPost.js";
+import Course from "../models/Course.js";
 
 class UserController {
     me(req,res){
@@ -184,12 +185,9 @@ class UserController {
     async likeBlog(req, res) {
         try {
             const { id } = req.params;
-            const blog = await BlogPost.findByIdAndUpdate(
-                id,
-                { $inc: { likes: 1 } },
-                { new: true }
-            );
-
+            const userId = req.user._id;
+            
+            const blog = await BlogPost.findById(id);
             if (!blog) {
                 return res.status(404).json({
                     success: false,
@@ -197,9 +195,38 @@ class UserController {
                 });
             }
 
+            // Check if user already liked this blog
+            const hasLiked = blog.likedBy?.includes(userId);
+            
+            let updatedBlog;
+            if (hasLiked) {
+                // Unlike: remove user from likedBy and decrease count
+                updatedBlog = await BlogPost.findByIdAndUpdate(
+                    id,
+                    { 
+                        $pull: { likedBy: userId },
+                        $inc: { likes: -1 }
+                    },
+                    { new: true }
+                ).populate('author', 'fullName email avatar')
+                 .populate('category', 'name slug color');
+            } else {
+                // Like: add user to likedBy and increase count
+                updatedBlog = await BlogPost.findByIdAndUpdate(
+                    id,
+                    { 
+                        $addToSet: { likedBy: userId },
+                        $inc: { likes: 1 }
+                    },
+                    { new: true }
+                ).populate('author', 'fullName email avatar')
+                 .populate('category', 'name slug color');
+            }
+
             return res.status(200).json({
                 success: true,
-                data: blog
+                data: updatedBlog,
+                liked: !hasLiked
             });
         } catch (error) {
             return res.status(500).json({
@@ -246,6 +273,52 @@ class UserController {
             return res.status(200).json({
                 success: true,
                 data: blog
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Server error"
+            });
+        }
+    }
+
+    async addCourseComment(req, res) {
+        try {
+            const { id } = req.params;
+            const { content } = req.body;
+            const userId = req.user._id;
+
+            if (!content) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Comment content is required"
+                });
+            }
+
+            const course = await Course.findByIdAndUpdate(
+                id,
+                { 
+                    $push: { 
+                        comments: {
+                            user: userId,
+                            content,
+                            createdAt: new Date()
+                        }
+                    }
+                },
+                { new: true }
+            ).populate('comments.user', 'fullName avatar');
+
+            if (!course) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Course not found"
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: course
             });
         } catch (error) {
             return res.status(500).json({
