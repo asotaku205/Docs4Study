@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { useRoute } from "wouter";
-import {
-  faAngleLeft,
-  faUserPen,
-  faThumbsUp,
-  faComment,
-  faShareFromSquare,
-  faClock,
-  faCalendar
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import BlogCard from "../components/users/Blogs/blogCard";
 import CommentSection from "../components/users/CommentSection";
 import BackgroundPhoto from "../components/users/BackgroundPhoto";
 import BackButton from "../components/ui/BackButton";
+import ContentHeader from "../components/users/shared/ContentHeader";
+import InteractionBar from "../components/users/shared/InteractionBar";
+import SidebarInfo from "../components/users/shared/SidebarInfo";
 import { blogService } from "../services/blogService";
 
 const BlogDetail = () => {
@@ -87,7 +80,13 @@ const BlogDetail = () => {
       await fetchBlogDetail(); // Refresh to get new comments
     } catch (error) {
       console.error("Error adding comment:", error);
-      alert("Failed to add comment. Please login first.");
+      const errorMessage = error.response?.data?.message || "Failed to add comment. Please login first.";
+      alert(errorMessage);
+      
+      // If 401/403, redirect to login
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        window.location.href = '/auth';
+      }
       throw error;
     } finally {
       setSubmittingComment(false);
@@ -121,32 +120,14 @@ const BlogDetail = () => {
         <BackButton  link = "/blog" />
         <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
           <div className="lg:col-span-3">
-            <div className="bg-card rounded-2xl shadow-lg p-8 lg:p-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="px-4 py-2 bg-primary text-white rounded transition text-xs">
-                  {blog.category?.name || "General"}
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  <FontAwesomeIcon icon={faCalendar} /> {new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </span>
-              </div>
-              <h1 className="text-4xl lg:text-5xl font-heading font-bold mb-6 leading-tight">
-                {blog.title}
-              </h1>
-              <div className="flex items-center justify-between pb-8 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                    <FontAwesomeIcon icon={faUserPen} />
-                  </div>
-                  <div className="">
-                    <p className="font-bold text-sm">{blog.author?.fullName || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground">{blog.author?.email || "Editor"}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  <FontAwesomeIcon icon={faClock} /> {blog.views} views
-                </p>
-              </div>
+            <ContentHeader
+              category={blog.category}
+              title={blog.title}
+              createdAt={blog.createdAt}
+              author={blog.author}
+              views={blog.views}
+            />
+            <div className="bg-card rounded-2xl shadow-lg p-8 lg:p-12 mt-8">
               {/* Images */}
               {blog.images && blog.images.length > 0 && (
                 <div className="mt-8 mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -186,52 +167,25 @@ const BlogDetail = () => {
                   prose-img:rounded-lg prose-img:shadow-md"
                 dangerouslySetInnerHTML={{ __html: blog.content }}
               />
-              <div className="flex items-center justify-between py-6 border-t border-b border-border">
-                <div>
-                  <button 
-                    onClick={handleLike}
-                    className={`transition-colors ${liked ? 'text-primary font-semibold' : 'hover:text-primary'}`}
-                  >
-                    <FontAwesomeIcon icon={faThumbsUp} /> {blog.likes || 0} Likes
-                  </button>
-                  <button className="ml-4">
-                    <FontAwesomeIcon icon={faComment} /> {blog.comments?.length || 0} Comments
-                  </button>
-                </div>
-                <button className="px-4 py-2 text-primary text-sm">
-                  <FontAwesomeIcon icon={faShareFromSquare} /> Share
-                </button>
-              </div>
+              <InteractionBar
+                likes={blog.likes}
+                commentsCount={blog.comments?.length}
+                liked={liked}
+                onLike={handleLike}
+                onShare={() => {}}
+              />
             </div>
           </div>
           <div className="hidden lg:block">
-            <div className="rounded-xl border bg-card text-card-foreground shadow sticky top-4 overflow-hidden">
-              <div className="p-6">
-                <div className="border-b border-border">
-                  <h3 className="font-heading font-semibold mb-4 flex items-center gap-2">
-                    Post Info
-                  </h3>
-                </div>
-                <div className="space-y-3 mt-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Category</p>
-                    <p className="font-semibold">{blog.category?.name || "General"}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Published</p>
-                    <p className="font-semibold">{new Date(blog.publishedAt || blog.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Views</p>
-                    <p className="font-semibold">{blog.views}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Likes</p>
-                    <p className="font-semibold">{blog.likes || 0}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SidebarInfo
+              title="Post Info"
+              items={[
+                { label: "Category", value: blog.category?.name || "General" },
+                { label: "Published", value: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString() },
+                { label: "Views", value: blog.views },
+                { label: "Likes", value: blog.likes || 0 }
+              ]}
+            />
           </div>
         </div>
         <div className="mt-16">

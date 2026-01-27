@@ -16,9 +16,8 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter
-const fileFilter = (req, file, cb) => {
-  // Accept images only
+// File filter for images
+const imageFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
@@ -26,10 +25,38 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// File filter for documents
+const documentFilter = (req, file, cb) => {
+  const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'application/zip',
+    'application/x-rar-compressed'
+  ];
+  
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('File type not supported!'), false);
+  }
+};
+
 export const upload = multer({ 
   storage: storage,
-  fileFilter: fileFilter,
+  fileFilter: imageFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+export const uploadDocument = multer({ 
+  storage: storage,
+  fileFilter: documentFilter,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit for documents
   }
 });

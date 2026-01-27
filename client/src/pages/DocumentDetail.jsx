@@ -1,171 +1,251 @@
+import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useRoute } from "wouter";
 import BackButton from "../components/ui/BackButton";
-import {
-  faCalendar,
-  faComment,
-  faShareFromSquare,
-  faStar,
-  faThumbsUp,
-} from "@fortawesome/free-solid-svg-icons";
-import { faDownload } from "@fortawesome/free-solid-svg-icons";
-import { faFileLines } from "@fortawesome/free-solid-svg-icons";
-import { faEye } from "@fortawesome/free-regular-svg-icons";
-import React from "react";
+import CommentSection from "../components/users/CommentSection";
+import ContentHeader from "../components/users/shared/ContentHeader";
+import InteractionBar from "../components/users/shared/InteractionBar";
+import SidebarInfo from "../components/users/shared/SidebarInfo";
+import { documentService } from "../services/documentService";
+
 const DocumentDetail = () => {
+  const [, params] = useRoute("/documents/:id");
+  const [document, setDocument] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
+  useEffect(() => {
+    if (params?.id) {
+      fetchDocumentDetail();
+    }
+  }, [params?.id]);
+
+  const fetchDocumentDetail = async () => {
+    try {
+      setLoading(true);
+      const response = await documentService.getDocumentById(params.id);
+      setDocument(response.data);
+      
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      if (currentUser._id && response.data.likedBy) {
+        const hasLiked = response.data.likedBy.includes(currentUser._id);
+        setLiked(hasLiked);
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      const response = await documentService.likeDocument(params.id);
+      setDocument(response.data);
+      setLiked(response.liked);
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      alert("Please login to like this document");
+    }
+  };
+
+  const handleCommentSubmit = async (content) => {
+    try {
+      setSubmittingComment(true);
+      await documentService.addComment(params.id, content);
+      await fetchDocumentDetail();
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      const errorMessage = error.response?.data?.message || "Failed to add comment. Please login first.";
+      alert(errorMessage);
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        window.location.href = '/auth';
+      }
+      throw error;
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (document?.fileUrl) {
+      const url = `${API_URL}${document.fileUrl}`;
+      window.open(url, '_blank');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12">
+          <p className="text-center py-8">Loading document...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!document) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12">
+          <p className="text-center py-8">Document not found</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div class="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-12 max-w-6xl">
         <BackButton link="/documents" text="Documents" />
-        <div class="grid lg:grid-cols-3 gap-8">
-          <div class="lg:col-span-2 space-y-8">
-            <div class="bg-card rounded-2xl p-8 shadow-lg">
-              <div class="flex items-center justify-between mb-6">
-                <div class="whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent shadow-xs bg-primary text-white">
-                  Intermediate
+        <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
+          <div className="lg:col-span-3 space-y-8">
+            <ContentHeader
+              category={document.category}
+              title={document.title}
+              description={document.description || 'No description available'}
+              createdAt={document.updatedAt}
+              author={document.author}
+              showAuthor={true}
+              badgeText={document.fileType?.toUpperCase() || 'FILE'}
+            >
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{document.views || 0}</span>
+                  <span className="text-muted-foreground">Views</span>
                 </div>
-                <span class="text-sm text-muted-foreground flex items-center gap-1">
-                  <FontAwesomeIcon icon={faCalendar} /> Updated 2 days ago
-                </span>
-              </div>
-              <h1 class="text-4xl font-heading font-bold mb-4">
-                Calculus I - Final Exam Cheatsheet
-              </h1>
-              <p class="text-lg text-muted-foreground mb-6">
-                Comprehensive formula sheet for derivatives and integrals.
-              </p>
-              <div class="flex items-center gap-6 py-6 border-y border-border">
-                <div class="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faEye} />
-                  <span class="font-semibold">1205</span>
-                  <span class="text-muted-foreground">Views</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{document.downloads || 0}</span>
+                  <span className="text-muted-foreground">Downloads</span>
                 </div>
-                <div class="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faDownload} />
-                  <span class="font-semibold">340</span>
-                  <span class="text-muted-foreground">Downloads</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faStar} style={{ color: "#FFD43B" }} />
-                  <span class="font-semibold">4.5</span>
-                  <span class="text-muted-foreground">(128 ratings)</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{document.likes || 0}</span>
+                  <span className="text-muted-foreground">Likes</span>
                 </div>
               </div>
-            </div>
-            <div class="bg-card rounded-2xl p-12 shadow-lg border-2 border-dashed border-border min-h-96 flex items-center justify-center">
-              <div class="text-center">
-                <div class="text-6xl mb-4">
-                  {" "}
-                  <FontAwesomeIcon icon={faFileLines} size="2x" />
-                </div>
-                <p class="text-xl font-semibold text-muted-foreground mb-4">
+            </ContentHeader>
+
+            <div className="bg-card rounded-2xl p-12 shadow-lg border-2 border-dashed border-border min-h-96 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">📄</div>
+                <p className="text-xl font-semibold text-muted-foreground mb-4">
                   Document Preview
                 </p>
-                <p class="text-muted-foreground mb-6">PDF Preview Loading...</p>
-                <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground border border-primary-border min-h-9 px-4 py-2 gap-2">
-                  <FontAwesomeIcon icon={faDownload} /> Open Full Document
+                <p className="text-muted-foreground mb-6">
+                  {document.fileType?.toUpperCase()} Document - {document.fileSize || 'N/A'}
+                </p>
+                <button 
+                  onClick={handleDownload}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 transition active:scale-95"
+                >
+                  Open Full Document
                 </button>
               </div>
             </div>
-            <div class="bg-card rounded-2xl p-8 border border-border">
-              <h2 class="text-2xl font-bold font-heading mb-6">
+
+            <div className="bg-card rounded-2xl p-8 border border-border">
+              <h2 className="text-2xl font-bold font-heading mb-6">
                 Document Information
               </h2>
-              <div class="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <p class="text-sm text-muted-foreground mb-2">Type</p>
-                  <p class="font-semibold text-lg">PDF</p>
+                  <p className="text-sm text-muted-foreground mb-2">Type</p>
+                  <p className="font-semibold text-lg">{document.fileType?.toUpperCase() || 'N/A'}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-muted-foreground mb-2">File Size</p>
-                  <p class="font-semibold text-lg">4.2 MB</p>
+                  <p className="text-sm text-muted-foreground mb-2">File Size</p>
+                  <p className="font-semibold text-lg">{document.fileSize || 'N/A'}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-muted-foreground mb-2">Level</p>
-                  <div class="whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-secondary text-secondary-foreground">
-                    Intermediate
-                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">Category</p>
+                  <p className="font-semibold">{document.category?.name || 'General'}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-muted-foreground mb-2">Subject</p>
-                  <p class="font-semibold">Mathematics</p>
+                  <p className="text-sm text-muted-foreground mb-2">Author</p>
+                  <p className="font-semibold">{document.author?.fullName || 'Unknown'}</p>
                 </div>
               </div>
             </div>
-            <div class="flex items-center justify-between p-6 bg-muted/50 rounded-2xl border border-border">
-              <div class="flex items-center gap-4">
-                <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 px-4 py-2 gap-2">
-                  <FontAwesomeIcon icon={faThumbsUp} />
-                  42 Helpful
-                </button>
-                <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 px-4 py-2 gap-2">
-                  <FontAwesomeIcon icon={faComment} /> 14 Comments
-                </button>
-              </div>
-              <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 px-4 py-2 gap-2">
-                <FontAwesomeIcon icon={faShareFromSquare} /> Share
-              </button>
+
+            <div className="bg-card rounded-2xl p-8 lg:p-12 border border-border">
+              <h2 className="text-2xl font-bold font-heading mb-4">
+                Description
+              </h2>
+              <div 
+                className="prose prose-lg max-w-none
+                  prose-headings:font-heading prose-headings:font-bold
+                  prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
+                  prose-p:text-foreground prose-p:leading-relaxed
+                  prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                  prose-strong:text-foreground prose-strong:font-bold
+                  prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
+                  prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
+                  prose-li:text-foreground prose-li:my-2
+                  prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:italic
+                  prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                  prose-pre:bg-gray-900 prose-pre:text-white prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
+                  prose-img:rounded-lg prose-img:shadow-md"
+                dangerouslySetInnerHTML={{ __html: document.content }}
+              />
             </div>
+
+            <InteractionBar
+              likes={document.likes}
+              commentsCount={document.comments?.length}
+              liked={liked}
+              onLike={handleLike}
+              onShare={() => {}}
+            />
           </div>
-          <div class="lg:col-span-1">
-            <div class="rounded-xl border bg-card text-card-foreground sticky top-20 shadow-xl">
-              <div class="flex flex-col space-y-1.5 p-6">
-                <div class="font-semibold tracking-tight text-2xl text-primary">
-                  Free to Download
-                </div>
-              </div>
-              <div class="p-6 pt-0 space-y-4">
-                <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 bg-primary text-primary-foreground border border-primary-border min-h-9 px-4 py-2 w-full h-12 gap-2 font-semibold text-base">
-                  <FontAwesomeIcon icon={faDownload} /> Download Now
+
+          <div className="lg:col-span-1">
+            <SidebarInfo title="Free to Download">
+              <div className="space-y-4">
+                <button 
+                  onClick={handleDownload}
+                  className="w-full h-12 px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 transition active:scale-95 font-semibold"
+                >
+                  Download Now
                 </button>
-                <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full h-12 gap-2">
-                  <FontAwesomeIcon icon={faShareFromSquare} /> Share Document
+                <button className="w-full h-12 px-4 py-2 border rounded hover:bg-gray-50 transition">
+                  Share Document
                 </button>
-                <div class="mt-6 pt-6 border-t border-border space-y-3 text-sm">
+                <div className="mt-6 pt-6 border-t border-border space-y-3 text-sm">
                   <div>
-                    <p class="text-muted-foreground">
-                      <strong>Uploaded:</strong> 15 days ago
-                    </p>
+                    <p className="text-muted-foreground">Uploaded</p>
+                    <p className="font-semibold">{new Date(document.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p class="text-muted-foreground">
-                      <strong>Last Updated:</strong> 2 days ago
-                    </p>
+                    <p className="text-muted-foreground">Last Updated</p>
+                    <p className="font-semibold">{new Date(document.updatedAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p class="text-muted-foreground">
-                      <strong>Pages:</strong> 28
-                    </p>
+                    <p className="text-muted-foreground">Category</p>
+                    <p className="font-semibold">{document.category?.name || 'General'}</p>
                   </div>
                   <div>
-                    <p class="text-muted-foreground">
-                      <strong>Language:</strong> English
-                    </p>
-                  </div>
-                </div>
-                <div class="mt-6 pt-6 border-t border-border">
-                  <h3 class="font-semibold mb-3">Topics Covered</h3>
-                  <div class="flex flex-wrap gap-2">
-                    <div class="whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-secondary text-secondary-foreground text-xs">
-                      Derivatives
-                    </div>
-                    <div class="whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-secondary text-secondary-foreground text-xs">
-                      Integrals
-                    </div>
-                    <div class="whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-secondary text-secondary-foreground text-xs">
-                      Limits
-                    </div>
-                    <div class="whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-secondary text-secondary-foreground text-xs">
-                      Functions
-                    </div>
+                    <p className="text-muted-foreground">Views</p>
+                    <p className="font-semibold">{document.views || 0}</p>
                   </div>
                 </div>
               </div>
-            </div>
+            </SidebarInfo>
           </div>
+        </div>
+        <div className="mt-16">
+          <CommentSection 
+            comments={document.comments || []}
+            onSubmit={handleCommentSubmit}
+            submitting={submittingComment}
+          />
         </div>
       </div>
     </Layout>
   );
 };
+
 export default DocumentDetail;

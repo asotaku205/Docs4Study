@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
-import { Link } from "wouter";
 import BlogCard from "../components/users/Blogs/blogCard";
 import HeroPost from "../components/users/Blogs/heroPost";
 import TabButton from "../components/ui/TabButton";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import PageHeader from "../components/shared/PageHeader";
+import Pagination from "../components/shared/Pagination";
 import { useTabs } from "../hooks/useTabs";
 import { blogService } from "../services/blogService";
 import { categoryService } from "../services/categoryService";
@@ -15,6 +14,8 @@ const Blog = () => {
   const [categories, setCategories] = useState([{ _id: 'all', name: 'All Post' }]);
   const [loading, setLoading] = useState(true);
   const [heroPost, setHeroPost] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
   
   const { activeTab, handleTabChange } = useTabs("all");
 
@@ -43,13 +44,12 @@ const Blog = () => {
     try {
       setLoading(true);
       const params = {
-        limit: 50 // Giới hạn số bài để tăng performance
+        limit: 1000
       };
       if (activeTab !== "all") {
         params.category = activeTab;
       }
       const response = await blogService.getAllBlogs(params);
-      // Chỉ lấy các bài published
       const publishedPosts = (response.data || []).filter(post => 
         post.status === 'published' && !post.isDeleted
       );
@@ -57,6 +57,7 @@ const Blog = () => {
       if (publishedPosts.length > 0) {
         setHeroPost(publishedPosts[0]);
       }
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching blogs:", error);
     } finally {
@@ -64,18 +65,30 @@ const Blog = () => {
     }
   };
 
+  const otherPosts = posts.slice(1);
+
+  const paginatedPosts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return otherPosts.slice(startIndex, endIndex);
+  }, [otherPosts, currentPage]);
+
+  const totalPages = Math.ceil(otherPosts.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 400, behavior: 'smooth' });
+  };
+
   return (
     <Layout>
       <section className="flex-1 flex flex-col">
         <div className="container mx-auto px-4 py-12">
-          <div className="flex item-start justify-between gap-4 mb-8">
-            <h1 className="font-bold font-leading text-4xl">Knowledge Hub</h1>
-            <Link href="/create-post">
-              <button className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 transition active:scale-95">
-                <FontAwesomeIcon icon={faPlus} /> Create Post
-              </button>
-            </Link>
-          </div>
+          <PageHeader
+            title="Knowledge Hub"
+            actionLabel="Create Post"
+            actionLink="/create-post"
+          />
 
           {heroPost && (
             <HeroPost
@@ -106,12 +119,12 @@ const Blog = () => {
               <p className="text-center text-muted-foreground col-span-full">
                 Loading...
               </p>
-            ) : posts.length === 0 ? (
+            ) : paginatedPosts.length === 0 ? (
               <p className="text-center text-muted-foreground col-span-full">
-                No posts available in this category.
+                No posts found.
               </p>
             ) : (
-              posts.map((post) => (
+              paginatedPosts.map((post) => (
                 <BlogCard 
                   key={post._id}
                   id={post._id}
@@ -125,6 +138,16 @@ const Blog = () => {
               ))
             )}
           </div>
+
+          {!loading && otherPosts.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={otherPosts.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
         </div>
       </section>
     </Layout>

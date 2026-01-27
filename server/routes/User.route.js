@@ -13,6 +13,12 @@ routerUser.post('/blogs', protectedRoute, UserController.createBlog);
 routerUser.post('/blogs/:id/like', protectedRoute, UserController.likeBlog);
 routerUser.post('/blogs/:id/comments', protectedRoute, UserController.addComment);
 
+routerUser.get('/documents', UserController.getAllDocuments);
+routerUser.get('/documents/:id', UserController.getDocumentById);
+routerUser.post('/documents', protectedRoute, UserController.createDocument);
+routerUser.post('/documents/:id/like', protectedRoute, UserController.likeDocument);
+routerUser.post('/documents/:id/comments', protectedRoute, UserController.addDocumentComment);
+
 routerUser.get('/categories', adminDashboardController.getAllCategories);
 routerUser.get('/courses', adminDashboardController.getAllCourses);
 routerUser.get('/courses/:id', adminDashboardController.getCourseById);

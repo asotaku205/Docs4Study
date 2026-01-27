@@ -277,8 +277,8 @@ const getAllDocuments = async (req) => {
     filter.isDeleted = { $ne: true };
   }
 
+  if (req.query.status) filter.status = req.query.status;
   if (req.query.fileType) filter.fileType = req.query.fileType;
-  if (req.query.category) filter.category = req.query.category;
 
   if (req.query.q) {
     const regex = new RegExp(escapeRegex(req.query.q), "i");
@@ -286,7 +286,12 @@ const getAllDocuments = async (req) => {
   }
 
   const [documents, total] = await Promise.all([
-    Document.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Document.find(filter)
+      .populate('author', 'fullName email')
+      .populate('category', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
     Document.countDocuments(filter),
   ]);
 
@@ -302,7 +307,9 @@ const getDocumentById = async (req) => {
     filter.isDeleted = { $ne: true };
   }
 
-  const document = await Document.findOne(filter);
+  const document = await Document.findOne(filter)
+    .populate('author', 'fullName email')
+    .populate('category', 'name');
   if (!document) {
     throw createServiceError("Document not found", 404, {
       message: "Document not found",
@@ -312,7 +319,7 @@ const getDocumentById = async (req) => {
 };
 
 const createDocument = async (req) => {
-  const requiredFields = ["title", "content"];
+  const requiredFields = ["title", "content", "fileUrl", "author"];
   const missing = requiredFields.filter((field) => !req.body?.[field]);
   if (missing.length) {
     throw createServiceError("Missing required fields", 400, {
@@ -321,13 +328,69 @@ const createDocument = async (req) => {
     });
   }
 
-  const document = new Document(req.body);
+  // If author is a string (name), try to find user by name or email
+  let authorId = req.body.author;
+  if (
+    typeof req.body.author === "string" &&
+    !req.body.author.match(/^[0-9a-fA-F]{24}$/)
+  ) {
+    const user = await User.findOne({
+      $or: [{ fullName: req.body.author }, { email: req.body.author }],
+    }).limit(1);
+
+    if (user) {
+      authorId = user._id;
+    } else {
+      const firstUser = await User.findOne().limit(1);
+      if (firstUser) {
+        authorId = firstUser._id;
+      } else {
+        throw createServiceError("No user found to assign as author", 400, {
+          message: "No user found to assign as author",
+        });
+      }
+    }
+  }
+
+  const documentData = {
+    ...req.body,
+    author: authorId,
+  };
+
+  const document = new Document(documentData);
   await document.save();
   return document;
 };
 
 const updateDocument = async (req) => {
-  const document = await Document.findByIdAndUpdate(req.params.id, req.body, {
+  const documentData = { ...req.body };
+
+  // If author is a string (name), try to find user by name or email
+  if (
+    documentData.author &&
+    typeof documentData.author === "string" &&
+    !documentData.author.match(/^[0-9a-fA-F]{24}$/)
+  ) {
+    const user = await User.findOne({
+      $or: [{ fullName: documentData.author }, { email: documentData.author }],
+    }).limit(1);
+
+    if (user) {
+      documentData.author = user._id;
+    } else {
+      const firstUser = await User.findOne().limit(1);
+      if (firstUser) {
+        documentData.author = firstUser._id;
+      }
+    }
+  }
+
+  // Convert status to lowercase if provided
+  if (documentData.status) {
+    documentData.status = documentData.status.toLowerCase();
+  }
+
+  const document = await Document.findByIdAndUpdate(req.params.id, documentData, {
     new: true,
     runValidators: true,
   });

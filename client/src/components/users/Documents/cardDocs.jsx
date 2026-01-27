@@ -1,12 +1,12 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDownload, faFileLines, faEye } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "wouter";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileLines, faDownload } from "@fortawesome/free-solid-svg-icons";
 
 
-const CardDocs = ({ title, description, downloads, views, level, type }) => {
+const CardDocs = ({ id, title, description, downloads, views, type, category, fileSize }) => {
   return (
-    <Link href="/documents/detail" className="block">
+    <Link href={`/documents/${id}`} className="block">
       <div className="group bg-card border border-border rounded-xl p-6 hover:shadow-md transition-all duration-300 flex flex-col md:flex-row gap-6 items-start">
         {/* Icon Section */}
         <div className="h-16 w-16 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
@@ -22,8 +22,8 @@ const CardDocs = ({ title, description, downloads, views, level, type }) => {
               </h4>
               <p className="text-muted-foreground text-sm line-clamp-2">{description}</p>
             </div>
-            <button className="px-4 py-4 text-primary border border-primary rounded-md hover:bg-primary hover:text-white transition-all active:scale-95">
-              <FontAwesomeIcon icon={faDownload} />
+            <button className="px-2 py-2 text-primary border border-primary rounded-md hover:bg-primary hover:text-white transition-all active:scale-95">
+              <FontAwesomeIcon icon={faDownload}  />
             </button>
           </div>
 
@@ -35,10 +35,12 @@ const CardDocs = ({ title, description, downloads, views, level, type }) => {
                 <FontAwesomeIcon icon={faDownload} /> {downloads}
               </span>
               <span className="flex items-center gap-1">
-                <FontAwesomeIcon icon={faEye} /> {views}
+                Views: {views}
               </span>
             </div>
-            <div className="text-sm text-muted-foreground">{level}</div>
+            <div className="text-sm text-muted-foreground">
+              {category} • {fileSize}
+            </div>
           </div>
         </div>
       </div>

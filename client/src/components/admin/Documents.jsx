@@ -1,302 +1,446 @@
-import { useState, useEffect } from "react";
-import { Plus, Search, Eye, Edit, Trash2, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { documentsAPI } from "@/services/api";
+import { useState, useEffect, useRef } from "react";
+import { documentsAPI, categoriesAPI } from "../../services/api";
+import { uploadService } from "../../services/uploadService";
+import DocumentForm from "../shared/DocumentForm";
+import Pagination from "../shared/Pagination";
 
 export default function Documents() {
   const [documents, setDocuments] = useState([]);
-  const [selectedDoc, setSelectedDoc] = useState(null);
-  const [editDoc, setEditDoc] = useState(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [viewMode, setViewMode] = useState("list");
+  const [activeTab, setActiveTab] = useState("all");
+  const [activeDoc, setActiveDoc] = useState(null);
+  const [docToDelete, setDocToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [docsPerPage] = useState(10);
 
   useEffect(() => {
     fetchDocuments();
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll({ isActive: true });
+      setCategories(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const response = await documentsAPI.getAll({ limit: 100 });
+      const response = await documentsAPI.getAll({ includeDeleted: true });
       setDocuments(response.data.data || []);
-    } catch (err) {
-      console.error("Error fetching documents:", err);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredDocs = documents.filter(d => 
-    d.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleDelete = async (id) => {
+  const handleAdd = async (doc) => {
     try {
-      await documentsAPI.delete(id);
-      setDocuments(documents.filter(d => d._id !== id));
-      setSelectedDoc(null);
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete document");
+      await documentsAPI.create(doc);
+      await fetchDocuments();
+      setViewMode("list");
+    } catch (error) {
+      console.error("Error creating document:", error);
+      alert("Failed to create document");
     }
   };
 
-  const handleSave = async (updatedDoc) => {
+  const handleSave = async () => {
     try {
-      const response = await documentsAPI.update(updatedDoc._id, updatedDoc);
-      setDocuments(documents.map(d => d._id === updatedDoc._id ? response.data : d));
-      if (selectedDoc?._id === updatedDoc._id) setSelectedDoc(response.data);
-      setEditDoc(null);
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to update document");
+      await documentsAPI.update(activeDoc._id, activeDoc);
+      await fetchDocuments();
+      setViewMode("detail");
+    } catch (error) {
+      console.error("Error updating document:", error);
+      alert("Failed to update document");
     }
   };
 
-  const handleAdd = async (title, category) => {
-    if (!title.trim() || !category.trim()) return;
+  const handleDelete = async () => {
     try {
-      const response = await documentsAPI.create({ 
-        title, 
-        category, 
-        content: "No content yet" 
+      await documentsAPI.delete(docToDelete._id);
+      await fetchDocuments();
+      setDocToDelete(null);
+      setActiveDoc(null);
+      setViewMode("list");
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      alert("Failed to delete document");
+    }
+  };
+
+  const handleRestore = async (doc) => {
+    try {
+      await documentsAPI.restore(doc._id);
+      await fetchDocuments();
+    } catch (error) {
+      console.error("Error restoring document:", error);
+      alert("Failed to restore document");
+    }
+  };
+
+  const handlePublish = async (doc) => {
+    try {
+      await documentsAPI.update(doc._id, { 
+        status: 'published',
+        publishedAt: new Date()
       });
-      setDocuments([response.data, ...documents]);
-      setShowAddForm(false);
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to add document");
+      await fetchDocuments();
+    } catch (error) {
+      console.error("Error publishing document:", error);
+      alert("Failed to publish document");
     }
   };
 
-  if (selectedDoc) {
-    if (editDoc) {
-      return (
-        <div className="space-y-4">
-          <Button variant="outline" onClick={() => { setSelectedDoc(null); setEditDoc(null); }} className="gap-2" size="sm">
-            <ChevronRight className="h-4 w-4 rotate-180" /> Back
-          </Button>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Edit Document</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Title</label>
-                  <Input value={editDoc.title || ""} onChange={(e) => setEditDoc({...editDoc, title: e.target.value})} className="mt-1" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Category</label>
-                  <Input value={editDoc.category || ""} onChange={(e) => setEditDoc({...editDoc, category: e.target.value})} className="mt-1" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Views</label>
-                  <Input type="number" value={editDoc.views || 0} onChange={(e) => setEditDoc({...editDoc, views: parseInt(e.target.value) || 0})} className="mt-1" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Downloads</label>
-                  <Input type="number" value={editDoc.downloads || 0} onChange={(e) => setEditDoc({...editDoc, downloads: parseInt(e.target.value) || 0})} className="mt-1" />
-                </div>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button onClick={() => handleSave(editDoc)} size="sm">Save Changes</Button>
-                <Button variant="outline" onClick={() => { setSelectedDoc(null); setEditDoc(null); }} size="sm">Cancel</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
+  let content = null;
 
-    return (
-      <div className="space-y-4">
-        <Button variant="outline" onClick={() => setSelectedDoc(null)} className="gap-2" size="sm">
-          <ChevronRight className="h-4 w-4 rotate-180" /> Back
-        </Button>
-        <Card>
-          <CardHeader>
-            <CardTitle>{selectedDoc.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Category</p>
-                <p className="font-semibold">{selectedDoc.category || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">File Size</p>
-                <p className="font-semibold">{selectedDoc.fileSize || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Views</p>
-                <p className="text-lg font-semibold">{selectedDoc.views || 0}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Downloads</p>
-                <p className="text-lg font-semibold">{selectedDoc.downloads || 0}</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 pt-4">
-              <Button onClick={() => setEditDoc(selectedDoc)} size="sm" className="sm:w-auto">Edit</Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="sm:w-auto">Delete</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogTitle>Delete Document?</AlertDialogTitle>
-                  <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
-                  <div className="flex gap-3 justify-end">
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(selectedDoc._id)} className="bg-destructive">Delete</AlertDialogAction>
-                  </div>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardContent>
-        </Card>
+  if (viewMode === "edit") {
+    content = (
+      <div>
+        <button onClick={() => setViewMode("detail")} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
+        <h2 className="text-xl font-bold mb-4">Edit Document</h2>
+        <DocumentForm
+          initialData={activeDoc}
+          categories={categories}
+          onSubmit={async (formData) => {
+            await documentsAPI.update(activeDoc._id, formData);
+            await fetchDocuments();
+            setViewMode("detail");
+          }}
+          onCancel={() => setViewMode("detail")}
+          submitLabel="Save Changes"
+          isAdmin={true}
+        />
       </div>
+    );
+  } else if (viewMode === "detail") {
+    content = (
+      <DocDetail
+        doc={activeDoc}
+        onBack={() => setViewMode("list")}
+        onEdit={() => setViewMode("edit")}
+        onDelete={() => setDocToDelete(activeDoc)}
+        onPublish={handlePublish}
+      />
+    );
+  } else if (viewMode === "add") {
+    content = (
+      <div>
+        <button onClick={() => setViewMode("list")} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
+        <h2 className="text-xl font-bold mb-4">Add New Document</h2>
+        <DocumentForm
+          categories={categories}
+          onSubmit={async (formData) => {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            await handleAdd({ 
+              ...formData, 
+              author: currentUser._id || currentUser.id 
+            });
+          }}
+          onCancel={() => setViewMode("list")}
+          submitLabel="Add Document"
+          isAdmin={true}
+        />
+      </div>
+    );
+  } else {
+    content = (
+      <DocList
+        documents={documents}
+        loading={loading}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        currentPage={currentPage}
+        docsPerPage={docsPerPage}
+        onPageChange={setCurrentPage}
+        onView={(d) => {
+          setActiveDoc(d);
+          setViewMode("detail");
+        }}
+        onEdit={(d) => {
+          setActiveDoc(d);
+          setViewMode("edit");
+        }}
+        onDelete={(d) => setDocToDelete(d)}
+        onRestore={handleRestore}
+        onPublish={handlePublish}
+        onAdd={() => setViewMode("add")}
+      />
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
-        <h2 className="text-xl md:text-2xl font-bold">Documents ({filteredDocs.length})</h2>
-        <Button className="gap-2 w-full sm:w-auto" size="sm" onClick={() => setShowAddForm(true)}>
-          <Plus className="h-4 w-4" /> Upload
-        </Button>
-      </div>
+    <>
+      {content}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search documents..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      {docToDelete && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-lg font-bold mb-2">
+              Delete document?
+            </h3>
+            <p className="text-sm mb-4">
+              Delete <strong>{docToDelete.title}</strong>?
+            </p>
 
-      {showAddForm && (
-        <Card className="bg-muted/30">
-          <CardContent className="pt-4 md:pt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4">
-              <Input placeholder="Document title" id="doc-title" />
-              <Input placeholder="Category" id="doc-category" />
+            <div className="flex justify-end gap-3">
+              <button
+                className="border px-4 py-2 rounded"
+                onClick={() => setDocToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-red-600 text-white px-4 py-2 rounded"
+                onClick={handleDelete}
+              >
+                Delete
+              </button>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => {
-                const title = document.getElementById("doc-title")?.value || "";
-                const category = document.getElementById("doc-category")?.value || "";
-                if (title && category) {
-                  handleAdd(title, category);
-                  document.getElementById("doc-title").value = "";
-                  document.getElementById("doc-category").value = "";
-                }
-              }}>Add Document</Button>
-              <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
+    </>
+  );
+}
 
-      <div className="md:hidden space-y-3">
-        {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading documents...</div>
-        ) : filteredDocs.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No documents found</div>
-        ) : (
-          filteredDocs.map((doc) => (
-            <Card key={doc._id} className="hover:shadow-md transition-all">
-              <CardContent className="pt-4">
-                <p className="font-semibold text-sm mb-2">{doc.title}</p>
-                <div className="space-y-2 text-xs mb-3">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Category:</span> <Badge variant="secondary">{doc.category || "N/A"}</Badge></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Views:</span> <span>{doc.views || 0}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Downloads:</span> <span>{doc.downloads || 0}</span></div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => setSelectedDoc(doc)}>
-                    <Eye className="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { setSelectedDoc(doc); setEditDoc(doc); }}>
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-destructive flex-1">
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogTitle>Delete Document?</AlertDialogTitle>
-                      <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                      <div className="flex gap-3 justify-end">
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(doc._id)} className="bg-destructive">Delete</AlertDialogAction>
-                      </div>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
+function DocList({ documents, loading, activeTab, onTabChange, currentPage, docsPerPage, onPageChange, onView, onEdit, onDelete, onRestore, onPublish, onAdd }) {
+  const getFilteredDocs = () => {
+    switch (activeTab) {
+      case 'pending':
+        return documents.filter(d => d.status === 'pending' && !d.isDeleted);
+      case 'published':
+        return documents.filter(d => d.status === 'published' && !d.isDeleted);
+      case 'deleted':
+        return documents.filter(d => d.isDeleted);
+      default:
+        return documents.filter(d => !d.isDeleted);
+    }
+  };
+
+  const filteredDocs = getFilteredDocs();
+  
+  const indexOfLastDoc = currentPage * docsPerPage;
+  const indexOfFirstDoc = indexOfLastDoc - docsPerPage;
+  const currentDocs = filteredDocs.slice(indexOfFirstDoc, indexOfLastDoc);
+  const totalPages = Math.ceil(filteredDocs.length / docsPerPage);
+
+  const tabs = [
+    { id: 'all', label: 'All Documents', count: documents.filter(d => !d.isDeleted).length },
+    { id: 'pending', label: 'Pending Approval', count: documents.filter(d => d.status === 'pending' && !d.isDeleted).length },
+    { id: 'published', label: 'Published', count: documents.filter(d => d.status === 'published' && !d.isDeleted).length },
+    { id: 'deleted', label: 'Deleted', count: documents.filter(d => d.isDeleted).length },
+  ];
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Documents ({filteredDocs.length})</h1>
+        <button
+          onClick={onAdd}
+          className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
+        >
+          + Add Document
+        </button>
       </div>
 
-      <Card className="hidden md:block overflow-hidden">
-        <CardContent className="pt-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="flex gap-4">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === tab.id
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                activeTab === tab.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {loading ? (
+        <p className="text-center py-8">Loading...</p>
+      ) : filteredDocs.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No documents found in this category</p>
+        </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto bg-white rounded-lg border">
+            <table className="w-full">
+              <thead className={`border-b ${
+                activeTab === 'pending' ? 'bg-orange-50' : 
+                activeTab === 'deleted' ? 'bg-red-50' : 'bg-gray-50'
+              }`}>
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Title</th>
-                  <th className="text-left px-4 py-3 font-semibold">Category</th>
-                  <th className="text-left px-4 py-3 font-semibold">Views</th>
-                  <th className="text-left px-4 py-3 font-semibold">Downloads</th>
-                  <th className="text-left px-4 py-3 font-semibold">Actions</th>
+                  <th className="p-4 text-left text-sm font-semibold">Title</th>
+                  <th className="p-4 text-left text-sm font-semibold">Author</th>
+                  <th className="p-4 text-left text-sm font-semibold">Category</th>
+                  <th className="p-4 text-left text-sm font-semibold">Type</th>
+                  <th className="p-4 text-left text-sm font-semibold">Status</th>
+                  <th className="p-4 text-left text-sm font-semibold">Date</th>
+                  <th className="p-4 text-left text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-500">Loading...</td></tr>
-                ) : filteredDocs.length === 0 ? (
-                  <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-500">No documents found</td></tr>
-                ) : (
-                  filteredDocs.map((doc) => (
-                    <tr key={doc._id} className="border-b hover:bg-muted/30">
-                      <td className="px-4 py-3 font-medium">{doc.title}</td>
-                      <td className="px-4 py-3"><Badge variant="secondary">{doc.category || "N/A"}</Badge></td>
-                      <td className="px-4 py-3">{doc.views || 0}</td>
-                      <td className="px-4 py-3">{doc.downloads || 0}</td>
-                      <td className="px-4 py-3 flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedDoc(doc)}><Eye className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setSelectedDoc(doc); setEditDoc(doc); }}><Edit className="h-4 w-4" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogTitle>Delete Document?</AlertDialogTitle>
-                            <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
-                            <div className="flex gap-3 justify-end">
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(doc._id)} className="bg-destructive">Delete</AlertDialogAction>
-                            </div>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                {currentDocs.map((d) => (
+                  <tr key={d._id} className="hover:bg-gray-50">
+                    <td className="p-4 border-t">{d.title}</td>
+                    <td className="p-4 border-t">{d.author?.fullName || d.author}</td>
+                    <td className="p-4 border-t">{d.category?.name || d.category}</td>
+                    <td className="p-4 border-t">
+                      <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700 uppercase">
+                        {d.fileType}
+                      </span>
+                    </td>
+                    <td className="p-4 border-t">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        d.isDeleted ? 'bg-red-100 text-red-700' :
+                        d.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                        d.status === 'published' ? 'bg-green-100 text-green-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {d.isDeleted ? 'Deleted' : d.status}
+                      </span>
+                    </td>
+                    <td className="p-4 border-t text-sm text-gray-600">
+                      {new Date(d.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 border-t">
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => onView(d)} 
+                          className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                        >
+                          View
+                        </button>
+                        {!d.isDeleted && (
+                          <>
+                            {d.status === 'pending' && (
+                              <button 
+                                onClick={() => onPublish(d)} 
+                                className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                              >
+                                Approve
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => onEdit(d)} 
+                              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => onDelete(d)} 
+                              className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                        {d.isDeleted && (
+                          <button 
+                            onClick={() => onRestore(d)} 
+                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            Restore
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+              totalItems={filteredDocs.length}
+              itemsPerPage={docsPerPage}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }
+
+function DocDetail({ doc, onBack, onEdit, onDelete, onPublish }) {
+  const handleDownload = () => {
+    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${doc.fileUrl}`;
+    window.open(url, '_blank');
+  };
+
+  return (
+    <div>
+      <button onClick={onBack} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
+      <h2 className="text-xl font-bold mb-2">{doc.title}</h2>
+      <p className="text-sm text-gray-500 mb-2">
+        Author: {doc.author?.fullName || doc.author} · Status: {doc.status} · Category: {doc.category?.name || doc.category}
+      </p>
+      {doc.description && (
+        <p className="text-sm text-gray-600 mb-4 italic">{doc.description}</p>
+      )}
+      
+      <div className="mb-4 p-4 bg-gray-50 rounded">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-500">File Type</p>
+            <p className="font-semibold uppercase">{doc.fileType}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">File Size</p>
+            <p className="font-semibold">{doc.fileSize || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Views</p>
+            <p className="font-semibold">{doc.views || 0}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Downloads</p>
+            <p className="font-semibold">{doc.downloads || 0}</p>
+          </div>
+        </div>
+      </div>
+
+      <div 
+        className="mb-4 p-4 bg-gray-50 rounded prose max-w-none"
+        dangerouslySetInnerHTML={{ __html: doc.content }}
+      />
+
+      <div className="flex gap-3">
+        <button onClick={handleDownload} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Download File</button>
+        <button onClick={onEdit} className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">Edit</button>
+        {doc.status === 'pending' && (
+          <button onClick={() => onPublish(doc)} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Publish</button>
+        )}
+        <button onClick={onDelete} className="border border-red-500 text-red-600 px-4 py-2 rounded hover:bg-red-50">Delete</button>
+      </div>
+    </div>
+  );
+}
+

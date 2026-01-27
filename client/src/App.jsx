@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Search from "./pages/Search";
 import OtherProfile from "./pages/OtherProfile";
 import CreatePost from "./pages/CreatePost";
+import CreateDocument from "./pages/CreateDocument";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -36,8 +37,15 @@ function Routes() {
       <Route path="/search" component={Search} />
       <Route path="/courses" component={Courses} />
       <Route path="/courses-detail/:id" component={CoursesDetail} />
-      <Route path="/documents/detail" component={DocumentDetail} />
+      <Route path="/documents/:id" component={DocumentDetail} />
       <Route path="/documents" component={Documents} />
+      <Route path="/create-document">
+        {() => (
+          <ProtectedRoute>
+            <CreateDocument />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route path="/profile">
         {() => (
           <ProtectedRoute>

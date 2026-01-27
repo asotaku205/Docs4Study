@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import BlogPost from "../models/BlogPost.js";
 import Course from "../models/Course.js";
+import Document from "../models/Document.js";
 
 class UserController {
     me(req,res){
@@ -319,6 +320,216 @@ class UserController {
             return res.status(200).json({
                 success: true,
                 data: course
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Server error"
+            });
+        }
+    }
+
+    async getAllDocuments(req, res) {
+        try {
+            const { category, search, page = 1, limit = 10 } = req.query;
+            const query = { status: 'published', isDeleted: { $ne: true } };
+
+            if (category && category !== 'all') {
+                query.category = category;
+            }
+
+            if (search) {
+                query.$or = [
+                    { title: { $regex: search, $options: 'i' } },
+                    { content: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } }
+                ];
+            }
+
+            const skip = (parseInt(page) - 1) * parseInt(limit);
+            const total = await Document.countDocuments(query);
+            const documents = await Document.find(query)
+                .populate('author', 'fullName email avatar')
+                .populate('category', 'name slug color')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(parseInt(limit));
+
+            return res.status(200).json({
+                success: true,
+                data: documents,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total,
+                    totalPages: Math.ceil(total / parseInt(limit))
+                }
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Server error"
+            });
+        }
+    }
+
+    async getDocumentById(req, res) {
+        try {
+            const { id } = req.params;
+            const document = await Document.findOneAndUpdate(
+                { _id: id, status: 'published', isDeleted: { $ne: true } },
+                { $inc: { views: 1 } },
+                { new: true }
+            ).populate('author', 'fullName email avatar')
+             .populate('category', 'name slug color')
+             .populate('comments.user', 'fullName avatar');
+
+            if (!document) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Document not found"
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: document
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Server error"
+            });
+        }
+    }
+
+    async createDocument(req, res) {
+        try {
+            const { title, content, description, category, fileUrl, fileType, fileSize } = req.body;
+            const userId = req.user._id;
+
+            if (!title || !content || !fileUrl) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Title, content and file are required"
+                });
+            }
+
+            const document = new Document({
+                title,
+                content,
+                description,
+                category,
+                fileUrl,
+                fileType,
+                fileSize,
+                author: userId,
+                status: 'pending'
+            });
+
+            await document.save();
+
+            return res.status(201).json({
+                success: true,
+                message: "Document submitted successfully, waiting for admin approval",
+                data: document
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Server error"
+            });
+        }
+    }
+
+    async likeDocument(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.user._id;
+            
+            const document = await Document.findById(id);
+            if (!document) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Document not found"
+                });
+            }
+
+            const hasLiked = document.likedBy?.includes(userId);
+            
+            let updatedDocument;
+            if (hasLiked) {
+                updatedDocument = await Document.findByIdAndUpdate(
+                    id,
+                    { 
+                        $pull: { likedBy: userId },
+                        $inc: { likes: -1 }
+                    },
+                    { new: true }
+                ).populate('author', 'fullName email avatar')
+                 .populate('category', 'name slug color');
+            } else {
+                updatedDocument = await Document.findByIdAndUpdate(
+                    id,
+                    { 
+                        $addToSet: { likedBy: userId },
+                        $inc: { likes: 1 }
+                    },
+                    { new: true }
+                ).populate('author', 'fullName email avatar')
+                 .populate('category', 'name slug color');
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: updatedDocument,
+                liked: !hasLiked
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Server error"
+            });
+        }
+    }
+
+    async addDocumentComment(req, res) {
+        try {
+            const { id } = req.params;
+            const { content } = req.body;
+            const userId = req.user._id;
+
+            if (!content) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Comment content is required"
+                });
+            }
+
+            const document = await Document.findByIdAndUpdate(
+                id,
+                { 
+                    $push: { 
+                        comments: {
+                            user: userId,
+                            content,
+                            createdAt: new Date()
+                        }
+                    }
+                },
+                { new: true }
+            ).populate('comments.user', 'fullName avatar');
+
+            if (!document) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Document not found"
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: document
             });
         } catch (error) {
             return res.status(500).json({

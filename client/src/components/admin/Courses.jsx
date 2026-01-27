@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import Pagination from "../shared/Pagination";
 import { coursesAPI } from "@/services/api";
 import apiUser from "@/services/apiUser";
 
@@ -16,6 +17,8 @@ export default function Courses() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchCourses();
@@ -46,6 +49,11 @@ export default function Courses() {
   const filteredCourses = courses.filter(c => 
     c.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const indexOfLastCourse = currentPage * itemsPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - itemsPerPage;
+  const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
   const handleDelete = async (id) => {
     try {
@@ -335,7 +343,7 @@ export default function Courses() {
         ) : filteredCourses.length === 0 ? (
           <div className="col-span-full text-center py-8 text-gray-500">No courses found</div>
         ) : (
-          filteredCourses.map((course) => (
+          currentCourses.map((course) => (
             <Card key={course._id} className="hover:shadow-lg transition-all flex flex-col">
               <CardHeader>
                 <CardTitle className="text-base line-clamp-2">{course.title}</CardTitle>
@@ -378,6 +386,16 @@ export default function Courses() {
           ))
         )}
       </div>
+
+      {!loading && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredCourses.length}
+          itemsPerPage={itemsPerPage}
+        />
+      )}
     </div>
   );
 }

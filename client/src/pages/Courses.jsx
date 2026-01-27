@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
 import CardCourses from "../components/users/Courses/cardCourses";
 import TabButton from "../components/ui/TabButton";
+import Pagination from "../components/shared/Pagination";
 import { useTabs } from "../hooks/useTabs";
 import apiUser from "../services/apiUser";
 
@@ -9,6 +10,8 @@ const Courses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
   
   const tabs = ["All", ...categories.map(c => c.name)];
   const { activeTab, handleTabChange } = useTabs("All");
@@ -31,9 +34,10 @@ const Courses = () => {
     try {
       setLoading(true);
       const response = await apiUser.get("/user/courses", {
-        params: { limit: 50, isPublished: true }
+        params: { limit: 1000, isPublished: true }
       });
       setCourses(response.data.data || []);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching courses:", error);
     } finally {
@@ -46,6 +50,24 @@ const Courses = () => {
       ? courses 
       : courses.filter(course => course.category?.name === activeTab);
   }, [activeTab, courses]);
+
+  const paginatedCourses = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredCourses.slice(startIndex, endIndex);
+  }, [filteredCourses, currentPage]);
+
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 400, behavior: 'smooth' });
+  };
+
+  const handleTabChangeWithReset = (tab) => {
+    handleTabChange(tab);
+    setCurrentPage(1);
+  };
 
   return (
     <Layout>
@@ -64,7 +86,7 @@ const Courses = () => {
               <TabButton
                 key={tab}
                 active={activeTab === tab}
-                onClick={() => handleTabChange(tab)}
+                onClick={() => handleTabChangeWithReset(tab)}
                 variant="pill"
               >
                 {tab}
@@ -82,25 +104,37 @@ const Courses = () => {
               <p className="text-muted-foreground">Loading courses...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredCourses.length === 0 ? (
-                <p className="text-center text-muted-foreground col-span-full">
-                  No courses available in this category.
-                </p>
-              ) : (
-                filteredCourses.map((course) => (
-                  <CardCourses 
-                    key={course._id} 
-                    id={course._id}
-                    title={course.title}
-                    description={course.description}
-                    duration={course.duration}
-                    image={course.thumbnail}
-                    level={course.level}
-                  />
-                ))
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {paginatedCourses.length === 0 ? (
+                  <p className="text-center text-muted-foreground col-span-full">
+                    No courses found.
+                  </p>
+                ) : (
+                  paginatedCourses.map((course) => (
+                    <CardCourses 
+                      key={course._id} 
+                      id={course._id}
+                      title={course.title}
+                      description={course.description}
+                      duration={course.duration}
+                      image={course.thumbnail}
+                      level={course.level}
+                    />
+                  ))
+                )}
+              </div>
+
+              {filteredCourses.length > 0 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  totalItems={filteredCourses.length}
+                  itemsPerPage={itemsPerPage}
+                />
               )}
-            </div>
+            </>
           )}
         </div>
       </section>

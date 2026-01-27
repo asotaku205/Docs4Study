@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import Pagination from "../shared/Pagination";
 import { usersAPI } from "@/services/api";
 
 export default function Users() {
@@ -12,6 +13,8 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchUsers();
@@ -33,6 +36,11 @@ export default function Users() {
     (u.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
      u.email?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const indexOfLastUser = currentPage * itemsPerPage;
+  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   const handleDelete = async (id) => {
     try {
@@ -116,7 +124,7 @@ export default function Users() {
         ) : filteredUsers.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No users found</div>
         ) : (
-          filteredUsers.map((user) => (
+          currentUsers.map((user) => (
             <Card key={user._id} className="hover:shadow-md transition-all">
               <CardContent className="pt-4">
                 <p className="font-semibold text-sm mb-2">{user.fullName}</p>
@@ -154,7 +162,7 @@ export default function Users() {
                 ) : filteredUsers.length === 0 ? (
                   <tr><td colSpan="6" className="px-4 py-8 text-center text-gray-500">No users found</td></tr>
                 ) : (
-                  filteredUsers.map((user) => (
+                  currentUsers.map((user) => (
                     <tr key={user._id} className="border-b hover:bg-muted/30">
                       <td className="px-4 py-3 font-medium">{user.fullName}</td>
                       <td className="px-4 py-3 text-xs">{user.email}</td>
@@ -174,6 +182,16 @@ export default function Users() {
           </div>
         </CardContent>
       </Card>
+
+      {!loading && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredUsers.length}
+          itemsPerPage={itemsPerPage}
+        />
+      )}
     </div>
   );
 }
