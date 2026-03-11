@@ -8,7 +8,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Modern Blue Palette */
+  /* Bảng màu xanh hiện đại */
   /* Primary Colors
   background màu nền
   foreground màu chữ chính
@@ -76,46 +76,46 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
-/* LIGHT MODE - Minimalist & Modern */
+/* CHỮ ĐỘ SÁNG - Tối giản & Hiện đại */
 :root {
-  /* Base - White / Very Light Gray */
+  /* Nền - Trắng / Xám rất nhạt */
   --background: 210 40% 98%;
-  --foreground: 222 47% 11%; /* Deep Blue-Black */
+  --foreground: 222 47% 11%; /* Xanh đen sâu */
 
-  /* Cards - Pure White */
+  /* Thẻ - Trắng tinh */
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
 
-  /* Popover */
+  /* Cửa sổ nổi */
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  /* Primary - Deep Blue */
+  /* Màu chính - Xanh đậm */
   --primary: 222 47% 11%;
   --primary-foreground: 210 40% 98%;
 
-  /* Secondary - Soft Gray Blue */
+  /* Màu phụ - Xám xanh nhạt */
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222 47% 11%;
 
-  /* Muted - Gray */
+  /* Màu mờ - Xám */
   --muted: 210 40% 96.1%;
   --muted-foreground: 215 16% 47%;
 
-  /* Accent - Light Blue/Teal Touch */
+  /* Màu nhấn - Xanh nhạt */
   --accent: 210 40% 96.1%;
   --accent-foreground: 222 47% 11%;
 
-  /* Destructive */
+  /* Màu nguy hiểm */
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
 
-  /* Borders */
+  /* Viền */
   --border: 214 32% 91%;
   --input: 214 32% 91%;
   --ring: 222 47% 11%;
 
-  /* Sidebar */
+  /* Thanh bên */
   --sidebar: 0 0% 100%;
   --sidebar-foreground: 222 47% 11%;
   --sidebar-primary: 222 47% 11%;
@@ -125,7 +125,7 @@
   --sidebar-border: 220 13% 91%;
   --sidebar-ring: 217.2 91.2% 59.8%;
 
-  /* Charts */
+  /* Biểu đồ */
   --chart-1: 222 47% 11%;
   --chart-2: 215 25% 27%;
   --chart-3: 199 89% 48%;
@@ -186,7 +186,7 @@
   }
 }
 
-/* TipTap Editor Styles */
+/* Kiểu dáng TipTap Editor */
 .tiptap {
   > * + * {
     margin-top: 0.75em;
@@ -287,6 +287,231 @@
     color: #adb5bd;
     pointer-events: none;
     height: 0;
+  }
+}
+
+/* Kiểu dáng hiển thị nội dung Blog */
+.blog-content {
+  font-size: 1.125rem;
+  line-height: 1.85;
+  color: hsl(var(--foreground));
+  overflow-wrap: break-word;
+  word-break: break-word;
+
+  > * + * {
+    margin-top: 1.25em;
+  }
+
+  h1 {
+    font-size: 2.25em;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-top: 2em;
+    margin-bottom: 0.8em;
+    color: hsl(var(--foreground));
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-size: 1.75em;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-top: 1.8em;
+    margin-bottom: 0.6em;
+    color: hsl(var(--foreground));
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  h3 {
+    font-size: 1.375em;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-top: 1.6em;
+    margin-bottom: 0.5em;
+    color: hsl(var(--foreground));
+  }
+
+  h4 {
+    font-size: 1.125em;
+    font-weight: 600;
+    margin-top: 1.4em;
+    margin-bottom: 0.4em;
+  }
+
+  p {
+    margin: 1em 0;
+    color: hsl(var(--foreground) / 0.9);
+  }
+
+  a {
+    color: #3b82f6;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 500;
+    transition: color 0.15s;
+    word-break: break-all;
+  }
+
+  a:hover {
+    color: #2563eb;
+  }
+
+  strong {
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  ul, ol {
+    padding-left: 1.75em;
+    margin: 1.25em 0;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  li {
+    margin: 0.5em 0;
+    padding-left: 0.25em;
+  }
+
+  li > p {
+    margin: 0;
+  }
+
+  li::marker {
+    color: hsl(var(--muted-foreground));
+  }
+
+  blockquote {
+    border-left: 4px solid hsl(var(--primary));
+    padding: 0.75em 1.25em;
+    margin: 1.5em 0;
+    background: hsl(var(--muted) / 0.5);
+    border-radius: 0 0.5rem 0.5rem 0;
+    font-style: italic;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  blockquote p {
+    margin: 0.5em 0;
+  }
+
+  /* Mã nội tuyến */
+  code {
+    background-color: hsl(var(--muted));
+    color: #e11d48;
+    padding: 0.15em 0.4em;
+    border-radius: 0.3rem;
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    font-weight: 500;
+    border: 1px solid hsl(var(--border));
+    white-space: nowrap;
+  }
+
+  /* Khối mã */
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    margin: 1.75em 0;
+    font-size: 0.85em;
+    line-height: 1.75;
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), inset 0 1px 0 rgb(255 255 255 / 0.05);
+    tab-size: 2;
+    -moz-tab-size: 2;
+    position: relative;
+  }
+
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    font-weight: 400;
+    border: none;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  /* Thanh cuộn tùy chỉnh cho khối mã */
+  pre::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  pre::-webkit-scrollbar-track {
+    background: #1e293b;
+    border-radius: 3px;
+  }
+
+  pre::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+  }
+
+  pre::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.75rem;
+    margin: 1.5em 0;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  hr {
+    border: none;
+    border-top: 2px solid hsl(var(--border));
+    margin: 2.5em 0;
+  }
+
+  /* Bảng - chống tràn */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    font-size: 0.95em;
+    display: block;
+    overflow-x: auto;
+  }
+
+  th, td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.75em 1em;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    background: hsl(var(--muted));
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) {
+    background: hsl(var(--muted) / 0.3);
+  }
+
+  /* Chống iframe/embed tràn */
+  iframe, video, embed, object {
+    max-width: 100%;
   }
 }
 

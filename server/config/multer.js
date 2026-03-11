@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure storage
+// Cấu hình nơi lưu trữ file
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, '../uploads'));
@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter for images
+// Bộ lọc file cho ảnh
 const imageFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
@@ -25,7 +25,7 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
-// File filter for documents
+// Bộ lọc file cho tài liệu
 const documentFilter = (req, file, cb) => {
   const allowedTypes = [
     'application/pdf',
@@ -49,7 +49,7 @@ export const upload = multer({
   storage: storage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
   }
 });
 
@@ -57,6 +57,6 @@ export const uploadDocument = multer({
   storage: storage,
   fileFilter: documentFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit for documents
+    fileSize: 50 * 1024 * 1024 // Giới hạn 50MB cho tài liệu
   }
 });

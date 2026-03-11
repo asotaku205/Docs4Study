@@ -94,7 +94,7 @@ export function AdminStatusBadge({ status, isActive }) {
   );
 }
 
-export function AdminDeleteModal({ isOpen, title, itemName, onConfirm, onCancel }) {
+export function AdminDeleteModal({ isOpen, title, itemName, onConfirm, onCancel, cancelText, confirmText }) {
   if (!isOpen) return null;
 
   return (
@@ -102,20 +102,20 @@ export function AdminDeleteModal({ isOpen, title, itemName, onConfirm, onCancel 
       <div className="bg-white p-6 rounded-lg w-96">
         <h3 className="text-lg font-bold mb-2">{title}</h3>
         <p className="text-sm mb-4">
-          Delete <strong>{itemName}</strong>?
+          <strong>{itemName}</strong>
         </p>
         <div className="flex justify-end gap-3">
           <button
             className="border px-4 py-2 rounded hover:bg-gray-50"
             onClick={onCancel}
           >
-            Cancel
+            {cancelText || "Cancel"}
           </button>
           <button
             className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
             onClick={onConfirm}
           >
-            Delete
+            {confirmText || "Delete"}
           </button>
         </div>
       </div>

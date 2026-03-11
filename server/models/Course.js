@@ -26,11 +26,11 @@ const courseSchema = new mongoose.Schema({
     default: 'beginner'
   },
   duration: {
-    type: String, // e.g., "8 hours", "12 weeks"
+    type: String, // Ví dụ: "8 giờ", "12 tuần"
     default: '0 hours'
   },
   courseUrl: {
-    type: String, // External course link (YouTube, Udemy, etc.)
+    type: String, // Liên kết khóa học bên ngoài (YouTube, Udemy, v.v.)
     required: true
   },
   comments: [{

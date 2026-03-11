@@ -19,7 +19,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5001;
 
-// CORS middleware
+// Middleware CORS - xử lý chia sẻ tài nguyên giữa các nguồn gốc khác nhau
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
@@ -28,7 +28,6 @@ app.use((req, res, next) => {
     'http://localhost:5173'
   ];
   
-  // Allow GitHub Codespaces origins (all ports)
   if (origin && (allowedOrigins.includes(origin) || origin.includes('.app.github.dev'))) {
     res.header("Access-Control-Allow-Origin", origin);
   }
@@ -43,18 +42,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Increase payload size limit for large blog posts with images
+// Tăng giới hạn kích thước payload cho bài viết blog có chứa ảnh
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
-// Create uploads directory if it doesn't exist
+// Tạo thư mục uploads nếu chưa tồn tại
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve static files from uploads directory
+// Phục vụ file tĩnh từ thư mục uploads
 app.use('/uploads', express.static(uploadsDir));
 
 //Cac route

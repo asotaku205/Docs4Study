@@ -3,16 +3,17 @@ import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
 import { faFileLines } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "wouter";
-const TopDocs = ({ category, title, description, dowloaded, view }) => {
+
+const TopDocs = ({ id, category, title, description, downloaded, views }) => {
   return (
-    <div className="h-full ">
-      <Link href="/documents/detail">
+    <div className="h-full">
+      <Link href={`/documents/${id}`}>
         <button className="h-full flex flex-col p-6 border border-border rounded-lg hover-elevate bg-card text-card-foreground w-full">
           <div className="flex justify-between shrink-0 items-start mb-2">
             <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <FontAwesomeIcon icon={faFileLines} />
             </div>
-            <div className="rounded-md px-2  text-sm border border-primary/20 inline-block whitespace-nowrap">
+            <div className="rounded-md px-2 text-sm border border-primary/20 inline-block whitespace-nowrap">
               {category}
             </div>
           </div>
@@ -24,10 +25,10 @@ const TopDocs = ({ category, title, description, dowloaded, view }) => {
           </p>
           <div className="text-xs text-muted-foreground flex items-center gap-4 mt-auto border-t pt-4">
             <span>
-              {dowloaded} <FontAwesomeIcon icon={faDownload} />
+              <FontAwesomeIcon icon={faDownload} /> {downloaded}
             </span>
             <span>
-              {view} <FontAwesomeIcon icon={faEye} />
+              <FontAwesomeIcon icon={faEye} /> {views}
             </span>
           </div>
         </button>

@@ -5,29 +5,31 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
 import authService from "../services/authService";
-
-const registerSchema = z
-  .object({
-    fullName: z.string().min(2, "Full name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z
-      .string()
-      .min(6, "Confirm Password must be at least 6 characters"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Wrong password"),
-});
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [, setLocation] = useLocation();
+  const { t } = useLanguage();
+
+  const registerSchema = z
+    .object({
+      fullName: z.string().min(2, t.validation.fullNameMin),
+      email: z.string().email(t.validation.invalidEmail),
+      password: z.string().min(6, t.validation.passwordMin),
+      confirmPassword: z
+        .string()
+        .min(6, t.validation.confirmPasswordMin),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t.validation.passwordsDontMatch,
+      path: ["confirmPassword"],
+    });
+
+  const loginSchema = z.object({
+    email: z.string().email(t.validation.invalidEmail),
+    password: z.string().min(1, t.validation.wrongPassword),
+  });
 
   const {
     register,
@@ -52,7 +54,7 @@ const Auth = () => {
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
-        "An error occurred during registration.";
+        t.alerts.registrationError;
       alert(errorMessage);
     }
   };
@@ -74,7 +76,7 @@ const Auth = () => {
       }
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message || "An error occurred during login.";
+        error.response?.data?.message || t.alerts.loginError;
       alert(errorMessage);
     }
   };
@@ -86,7 +88,7 @@ const Auth = () => {
           Docs4Study
         </h1>
         <p className="text-muted-foreground">
-          Your gateway to unlimited learning.
+          {t.auth.tagline}
         </p>
       </div>
 
@@ -104,7 +106,7 @@ const Auth = () => {
                   setActiveTab("login");
                 }}
               >
-                Login
+                {t.auth.loginTab}
               </button>
               <button
                 className={
@@ -116,15 +118,15 @@ const Auth = () => {
                   setActiveTab("register");
                 }}
               >
-                Register
+                {t.auth.registerTab}
               </button>
             </div>
             {activeTab === "login" ? (
               <div>
                 <div className="p-6">
-                  <p className="font-bold ">Welcome back!</p>
+                  <p className="font-bold ">{t.auth.welcomeBack}</p>
                   <p className="text-muted-foreground text-sm">
-                    Log in to continue your learning journey with Docs4Study.
+                    {t.auth.loginSubtitle}
                   </p>
                 </div>
                 <form
@@ -133,7 +135,7 @@ const Auth = () => {
                 >
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Email
+                      {t.auth.email}
                     </label>
                     <input
                       type="email"
@@ -151,7 +153,7 @@ const Auth = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Password
+                      {t.auth.password}
                     </label>
                     <input
                       type="password"
@@ -171,20 +173,20 @@ const Auth = () => {
                     onClick={() => setLocation("/forgot-password")}
                     className="text-sm text-primary hover:underline self-end cursor-pointer"
                   >
-                    Forgot password?
+                    {t.auth.forgotPassword}
                   </a>
 
                   <button
                     type="submit"
                     className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
                   >
-                    Login
+                    {t.auth.loginButton}
                   </button>
 
                   <div className="flex items-center">
                     <hr className="grow border-t border-border" />
                     <span className="px-3 text-sm text-muted-foreground">
-                      Or continue with
+                      {t.auth.orContinueWith}
                     </span>
                     <hr className="grow border-t border-border" />
                   </div>
@@ -194,14 +196,14 @@ const Auth = () => {
                       type="button"
                       className="px-4 py-2 border border-var(--input) rounded-md hover:bg-accent transition-colors "
                     >
-                      Google
+                      {t.auth.google}
                     </button>
                     <button
                       type="button"
                       className="px-4 py-2 border border-var(--input) rounded-md hover:bg-accent transition-colors"
                       disabled={isLoginSubmitting}
                     >
-                      Facebook
+                      {t.auth.facebook}
                     </button>
                   </div>
                 </form>
@@ -209,9 +211,9 @@ const Auth = () => {
             ) : (
               <div>
                 <div className="p-6">
-                  <p className="font-bold ">Create an account</p>
+                  <p className="font-bold ">{t.auth.createAccount}</p>
                   <p className="text-muted-foreground text-sm">
-                    Start your journey with Docs4Study.
+                    {t.auth.registerSubtitle}
                   </p>
                 </div>
                 <form
@@ -221,7 +223,7 @@ const Auth = () => {
                   <div className=" gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">
-                        Full Name
+                        {t.auth.fullName}
                       </label>
                       <input
                         type="text"
@@ -238,7 +240,7 @@ const Auth = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Email
+                      {t.auth.email}
                     </label>
                     <input
                       type="email"
@@ -256,7 +258,7 @@ const Auth = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Password
+                      {t.auth.password}
                     </label>
                     <input
                       type="password"
@@ -273,7 +275,7 @@ const Auth = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Confirm Password
+                      {t.auth.confirmPassword}
                     </label>
                     <input
                       type="password"
@@ -294,7 +296,7 @@ const Auth = () => {
                     className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
                     disabled={isSubmitting}
                   >
-                    Register
+                    {t.auth.registerButton}
                   </button>
                 </form>
               </div>
@@ -305,7 +307,7 @@ const Auth = () => {
             href="/"
             className="text-center block mt-6 text-muted-foreground hover:text-foreground transition-colors"
           >
-            Back to Home
+            {t.auth.backToHome}
           </a>
         </div>
       </div>

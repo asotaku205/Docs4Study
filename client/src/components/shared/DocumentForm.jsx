@@ -3,6 +3,7 @@ import { uploadService } from "../../services/uploadService";
 import TipTapEditor from "../ui/TipTapEditor";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileArrowUp, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function DocumentForm({ 
   initialData = null,
@@ -12,6 +13,7 @@ export default function DocumentForm({
   submitLabel = "Submit",
   isAdmin = false
 }) {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     description: initialData?.description || "",
@@ -56,7 +58,7 @@ export default function DocumentForm({
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a valid document file (PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR)");
+      alert(t("alerts.uploadFileInvalid"));
       return;
     }
 
@@ -76,7 +78,7 @@ export default function DocumentForm({
       handleChange('fileSize', result.fileSize);
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Failed to upload file");
+      alert(t("alerts.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -96,7 +98,7 @@ export default function DocumentForm({
     e.preventDefault();
     
     if (!formData.title || !formData.content || !formData.fileUrl) {
-      alert("Title, content and file are required");
+      alert(t("alerts.formRequired"));
       return;
     }
 
@@ -114,10 +116,10 @@ export default function DocumentForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Title */}
       <div>
-        <label className="text-sm font-semibold block mb-2">Document Title *</label>
+        <label className="text-sm font-semibold block mb-2">{t("docForm.title")}</label>
         <input 
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-base" 
-          placeholder="Enter document title..." 
+          placeholder={t("docForm.titlePlaceholder")} 
           value={formData.title}
           onChange={(e) => handleChange('title', e.target.value)}
           required
@@ -126,10 +128,10 @@ export default function DocumentForm({
       
       {/* Description */}
       <div>
-        <label className="text-sm font-semibold block mb-2">Description</label>
+        <label className="text-sm font-semibold block mb-2">{t("docForm.description")}</label>
         <input 
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-base" 
-          placeholder="Short description..." 
+          placeholder={t("docForm.descPlaceholder")} 
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
         />
@@ -138,13 +140,13 @@ export default function DocumentForm({
       {/* Category & Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-semibold block mb-2">Category</label>
+          <label className="text-sm font-semibold block mb-2">{t("docForm.category")}</label>
           <select 
             className="w-full border border-input rounded-md px-3 py-2 text-base bg-background"
             value={formData.category}
             onChange={(e) => handleChange('category', e.target.value)}
           >
-            <option value="">Select category...</option>
+            <option value="">{t("docForm.selectCategory")}</option>
             {categories.map((cat) => (
               <option key={cat._id} value={cat._id}>{cat.name}</option>
             ))}
@@ -153,14 +155,14 @@ export default function DocumentForm({
         
         {isAdmin && (
           <div>
-            <label className="text-sm font-semibold block mb-2">Status</label>
+            <label className="text-sm font-semibold block mb-2">{t("docForm.status")}</label>
             <select 
               className="w-full border border-input rounded-md px-3 py-2 text-base bg-background"
               value={formData.status}
               onChange={(e) => handleChange('status', e.target.value)}
             >
-              <option value="pending">Pending</option>
-              <option value="published">Published</option>
+              <option value="pending">{t("docForm.pending")}</option>
+              <option value="published">{t("docForm.published")}</option>
             </select>
           </div>
         )}
@@ -168,7 +170,7 @@ export default function DocumentForm({
 
       {/* File Upload */}
       <div>
-        <label className="text-sm font-semibold block mb-2">Document File *</label>
+        <label className="text-sm font-semibold block mb-2">{t("docForm.file")}</label>
         <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
           <input
             ref={fileInputRef}
@@ -186,10 +188,10 @@ export default function DocumentForm({
                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 <FontAwesomeIcon icon={faFileArrowUp} />
-                {uploading ? "Uploading..." : "Upload Document"}
+                {uploading ? t("docForm.uploading") : t("docForm.uploadDoc")}
               </button>
               <p className="text-sm text-muted-foreground mt-2">
-                Supported formats: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR (Max 50MB)
+                {t("docForm.supportedFormats")}
               </p>
             </>
           ) : (
@@ -221,11 +223,11 @@ export default function DocumentForm({
       
       {/* Content */}
       <div>
-        <label className="text-sm font-semibold block mb-2">Document Description *</label>
+        <label className="text-sm font-semibold block mb-2">{t("docForm.content")}</label>
         <TipTapEditor
           value={formData.content}
           onChange={(html) => handleChange('content', html)}
-          placeholder="Write a detailed description of your document..."
+          placeholder={t("docForm.contentPlaceholder")}
         />
       </div>
       
@@ -236,7 +238,7 @@ export default function DocumentForm({
           disabled={submitting || uploading || !formData.fileUrl}
           className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground border border-primary-border shadow hover:bg-primary/90 h-9 px-4 py-2"
         >
-          {submitting ? "Submitting..." : submitLabel}
+          {submitting ? t("docForm.submitting") : submitLabel}
         </button>
         {onCancel && (
           <button 
@@ -244,7 +246,7 @@ export default function DocumentForm({
             onClick={onCancel}
             className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
           >
-            Cancel
+            {t("docForm.cancel")}
           </button>
         )}
       </div>

@@ -224,7 +224,7 @@ const createCourse = async (req) => {
 const updateCourse = async (req) => {
   const courseData = { ...req.body };
 
-  // Convert level to lowercase if provided
+  // Chuyển level sang chữ thường nếu có
   if (courseData.level) {
     courseData.level = courseData.level.toLowerCase();
   }
@@ -328,7 +328,7 @@ const createDocument = async (req) => {
     });
   }
 
-  // If author is a string (name), try to find user by name or email
+  // Nếu tác giả là chuỗi (tên), tìm người dùng theo tên hoặc email
   let authorId = req.body.author;
   if (
     typeof req.body.author === "string" &&
@@ -365,7 +365,7 @@ const createDocument = async (req) => {
 const updateDocument = async (req) => {
   const documentData = { ...req.body };
 
-  // If author is a string (name), try to find user by name or email
+  // Nếu tác giả là chuỗi (tên), tìm người dùng theo tên hoặc email
   if (
     documentData.author &&
     typeof documentData.author === "string" &&
@@ -385,7 +385,7 @@ const updateDocument = async (req) => {
     }
   }
 
-  // Convert status to lowercase if provided
+  // Chuyển trạng thái sang chữ thường nếu có
   if (documentData.status) {
     documentData.status = documentData.status.toLowerCase();
   }
@@ -585,13 +585,13 @@ const createBlogPost = async (req) => {
     });
   }
 
-  // If author is a string (name), try to find user by name or email
+  // Nếu tác giả là chuỗi (tên), tìm người dùng theo tên hoặc email
   let authorId = req.body.author;
   if (
     typeof req.body.author === "string" &&
     !req.body.author.match(/^[0-9a-fA-F]{24}$/)
   ) {
-    // Not an ObjectId, try to find user by fullName or email
+    // Không phải ObjectId, tìm người dùng theo tên hoặc email
     const user = await User.findOne({
       $or: [{ fullName: req.body.author }, { email: req.body.author }],
     }).limit(1);
@@ -599,7 +599,7 @@ const createBlogPost = async (req) => {
     if (user) {
       authorId = user._id;
     } else {
-      // If no user found, create a new user or use first user
+      // Không tìm thấy người dùng, dùng người dùng đầu tiên
       const firstUser = await User.findOne().limit(1);
       if (firstUser) {
         authorId = firstUser._id;
@@ -624,7 +624,7 @@ const createBlogPost = async (req) => {
 const updateBlogPost = async (req) => {
   const postData = { ...req.body };
 
-  // If author is a string (name), try to find user by name or email
+  // Nếu tác giả là chuỗi (tên), tìm người dùng theo tên hoặc email
   if (
     postData.author &&
     typeof postData.author === "string" &&
@@ -644,7 +644,7 @@ const updateBlogPost = async (req) => {
     }
   }
 
-  // Convert status to lowercase if provided
+  // Chuyển trạng thái sang chữ thường nếu có
   if (postData.status) {
     postData.status = postData.status.toLowerCase();
   }

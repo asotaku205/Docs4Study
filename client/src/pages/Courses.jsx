@@ -5,6 +5,7 @@ import TabButton from "../components/ui/TabButton";
 import Pagination from "../components/shared/Pagination";
 import { useTabs } from "../hooks/useTabs";
 import apiUser from "../services/apiUser";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -15,6 +16,7 @@ const Courses = () => {
   
   const tabs = ["All", ...categories.map(c => c.name)];
   const { activeTab, handleTabChange } = useTabs("All");
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchCategories();
@@ -74,10 +76,9 @@ const Courses = () => {
       {/* Hero Section */}
       <section className="py-16 bg-primary text-primary-foreground text-center">
         <div className="container mx-auto px-4 space-y-4">
-          <h1 className="text-4xl font-bold font-heading">Online Courses</h1>
+          <h1 className="text-4xl font-bold font-heading">{t.courses.title}</h1>
           <p>
-            Explore our wide range of courses designed to help you enhance your
-            skills and knowledge across various subjects.
+            {t.courses.subtitle}
           </p>
 
           {/* Tabs */}
@@ -89,7 +90,7 @@ const Courses = () => {
                 onClick={() => handleTabChangeWithReset(tab)}
                 variant="pill"
               >
-                {tab}
+                {tab === "All" ? t.courses.all : tab}
               </TabButton>
             ))}
           </div>
@@ -101,14 +102,14 @@ const Courses = () => {
         <div className="container mx-auto px-4">
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading courses...</p>
+              <p className="text-muted-foreground">{t.courses.loading}</p>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {paginatedCourses.length === 0 ? (
                   <p className="text-center text-muted-foreground col-span-full">
-                    No courses found.
+                    {t.courses.noCourses}
                   </p>
                 ) : (
                   paginatedCourses.map((course) => (

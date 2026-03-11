@@ -8,15 +8,17 @@ import Pagination from "../components/shared/Pagination";
 import { useTabs } from "../hooks/useTabs";
 import { documentService } from "../services/documentService";
 import { categoryService } from "../services/categoryService";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Documents = () => {
   const [documents, setDocuments] = useState([]);
-  const [categories, setCategories] = useState([{ _id: 'all', name: 'All Documents' }]);
+  const [categories, setCategories] = useState([{ _id: 'all', name: 'All' }]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
   
   const { activeTab: activeCategory, handleTabChange: handleCategoryClick } = useTabs("all");
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchCategories();
@@ -30,7 +32,7 @@ const Documents = () => {
     try {
       const response = await categoryService.getAllCategories({ isActive: true });
       const allCategories = [
-        { _id: 'all', name: 'All Documents' },
+        { _id: 'all', name: t.documents.allDocuments },
         ...(response.data || [])
       ];
       setCategories(allCategories);
@@ -76,17 +78,13 @@ const Documents = () => {
 
   return (
     <Layout>
-      <Searching
-        title="Study Documents"
-        description="Access thousands of study notes, cheat sheets, and research papers shared by the community."
-      />
 
-      <section className="py-12">
+      <section className="pb-12">
         <div className="container mx-auto px-4 py-12">
           <PageHeader
-            title="Browse Documents"
-            description="Find and share educational materials"
-            actionLabel="Upload Document"
+            title={t.documents.browseTitle}
+            description={t.documents.browseDescription}
+            actionLabel={t.documents.uploadDocument}
             actionLink="/create-document"
           />
           
@@ -95,25 +93,25 @@ const Documents = () => {
               categories={categories}
               activeCategory={activeCategory}
               onCategoryChange={handleCategoryClick}
-              title="Category"
+              title={t.documents.categoryTitle}
             />
 
           {/* Documents List */}
           <div className="lg:col-span-3">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-muted-foreground">
-                {loading ? 'Loading...' : `${documents.length} results found`}
+                {loading ? t.blog.loading : `${documents.length} ${t.documents.resultsFound}`}
               </h3>
             </div>
 
             <div className="space-y-4">
               {loading ? (
                 <p className="text-center text-muted-foreground py-8">
-                  Loading documents...
+                  {t.documents.loading}
                 </p>
               ) : paginatedDocuments.length === 0 ? (
                 <p className="text-center text-muted-foreground col-span-full py-8">
-                  No documents found.
+                  {t.documents.noDocuments}
                 </p>
               ) : (
                 paginatedDocuments.map((doc) => (
@@ -125,7 +123,7 @@ const Documents = () => {
                     downloads={doc.downloads || 0}
                     views={doc.views || 0}
                     type={doc.fileType?.toUpperCase() || 'PDF'}
-                    category={doc.category?.name || 'General'}
+                    category={doc.category?.name || t.common.general}
                     fileSize={doc.fileSize || 'N/A'}
                   />
                 ))

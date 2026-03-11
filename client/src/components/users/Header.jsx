@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
@@ -10,7 +10,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from "../../hooks/useAuth";
 import { useToggle } from "../../hooks/useToggle";
-
+import { useLanguage } from "../../i18n/LanguageContext";
+import { getAvatarUrl } from "../../utils/url";
 const NavLink = ({ href, currentLocation, children }) => {
   const isActive = currentLocation === href;
   return (
@@ -22,9 +23,11 @@ const NavLink = ({ href, currentLocation, children }) => {
 
 export function Header() {
   const { user, isLoggedIn, isAdmin, logout } = useAuth();
+  const { t } = useLanguage();
   const searchMenu = useToggle(false);
   const userMenu = useToggle(false);
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const [headerSearchQuery, setHeaderSearchQuery] = useState("");
 
   return (
     <header className="flex sticky top-0 backdrop-blur bg-background/30 w-full z-50">
@@ -40,10 +43,10 @@ export function Header() {
         </Link>
 
         <nav className="gap-8 flex items-center text-white">
-          <NavLink href="/" currentLocation={location}>Home</NavLink>
-          <NavLink href="/blog" currentLocation={location}>Blogs</NavLink>
-          <NavLink href="/courses" currentLocation={location}>Courses</NavLink>
-          <NavLink href="/documents" currentLocation={location}>Documents</NavLink>
+          <NavLink href="/" currentLocation={location}>{t.nav.home}</NavLink>
+          <NavLink href="/blog" currentLocation={location}>{t.nav.blogs}</NavLink>
+          <NavLink href="/courses" currentLocation={location}>{t.nav.courses}</NavLink>
+          <NavLink href="/documents" currentLocation={location}>{t.nav.documents}</NavLink>
         </nav>
 
         <div className="gap-4 flex items-center">
@@ -56,15 +59,25 @@ export function Header() {
               <FontAwesomeIcon icon={faMagnifyingGlass} />
             </button>
             {searchMenu.value && (
-              <div className="absolute top-full mt-4 right-0 w-80 bg-card p-4 rounded-lg shadow-lg">
-                <form action="/search" method="GET">
+              <div className="absolute top-full mt-4 right-0 w-80 bg-card p-4 rounded-lg shadow-lg border border-border">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (headerSearchQuery.trim()) {
+                    setLocation(`/search?q=${encodeURIComponent(headerSearchQuery.trim())}`);
+                    searchMenu.toggle();
+                    setHeaderSearchQuery("");
+                  }
+                }}>
                   <input
                     type="text"
-                    placeholder="Search blogs, courses, documents..."
-                    className="p-2 w-full rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={headerSearchQuery}
+                    onChange={(e) => setHeaderSearchQuery(e.target.value)}
+                    placeholder={t.nav.searchPlaceholder}
+                    className="p-2 w-full rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+                    autoFocus
                   />
                   <p className="text-muted-foreground text-center py-4 text-xs">
-                    Start typing to search...
+                    {t.nav.pressEnter}
                   </p>
                 </form>
               </div>
@@ -78,7 +91,11 @@ export function Header() {
                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
                 onClick={userMenu.toggle}
               >
-                <FontAwesomeIcon icon={faUser} className="bg-muted-foreground/20 rounded-full p-2" />
+                <img
+                  src={getAvatarUrl(user?.avatar, user?.fullName)}
+                  alt="Avatar"
+                  className="h-8 w-8 rounded-full object-cover border border-border"
+                />
                 {user?.fullName}
               </button>
               {userMenu.value && (
@@ -86,27 +103,27 @@ export function Header() {
                   <Link href="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer select-none">
                     <button>
                       <FontAwesomeIcon icon={faUser} className="mr-2" />
-                      Profile
+                      {t.nav.profile}
                     </button>
                   </Link>
                   <Link href="/profile?tab=Setting" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer select-none">
                     <button>
                       <FontAwesomeIcon icon={faGear} className="mr-2" />
-                      Settings
+                      {t.nav.settings}
                     </button>
                   </Link>
                   {isAdmin && (
                     <Link href="/admin" className="block px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer select-none">
                       <button>
-                        <FontAwesomeIcon icon={faUserTie} className="mr-2" style={{color: "#FFD43B"}} />
-                        Admin 
+                      <FontAwesomeIcon icon={faUserTie} className="mr-2" style={{color: "#FFD43B"}} />
+                        {t.nav.admin} 
                       </button>
                     </Link>
                   )}
                   <Link className="block px-4 py-2 text-red-600 hover:bg-red-100 cursor-pointer select-none">
                     <button onClick={logout}>
                       <FontAwesomeIcon icon={faArrowRightFromBracket} className="mr-2" style={{color: "#ff0000"}} />
-                      Logout
+                      {t.nav.logout}
                     </button>
                   </Link>
                 </div>
@@ -115,10 +132,10 @@ export function Header() {
           ) : (
             <div className="flex gap-2">
               <Link href="/auth" className="text-foreground py-2 px-4 cursor-pointer select-none">
-                Log in
+                {t.nav.login}
               </Link>
               <Link href="/auth" className="bg-primary text-secondary px-4 py-2 rounded-lg font-semibold hover:bg-primary/80 transition-colors cursor-pointer select-none">
-                Sign up
+                {t.nav.signup}
               </Link>
             </div>
           )}

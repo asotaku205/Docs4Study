@@ -1,12 +1,14 @@
 import { Link } from "wouter";
+import { useLanguage } from "../../../i18n/LanguageContext";
 
 const Completed = ({ courseData }) => {
   const { course, enrolledAt } = courseData || {};
+  const { t, language } = useLanguage();
   
   if (!course) return null;
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -30,10 +32,10 @@ const Completed = ({ courseData }) => {
               {course.title}
             </h4>
             <p className="text-[10px] text-muted-foreground mb-3 flex items-center gap-1">
-              Completed {formatDate(enrolledAt)}
+              {t.completedCourse.completed} {formatDate(enrolledAt)}
             </p>
             <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-8 rounded-md h-7 px-3 text-[10px] bg-primary/5 text-primary hover:bg-primary/10">
-              View Course
+              {t.completedCourse.viewCourse}
             </button>
           </div>
         </div>

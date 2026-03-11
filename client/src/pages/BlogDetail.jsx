@@ -9,6 +9,8 @@ import ContentHeader from "../components/users/shared/ContentHeader";
 import InteractionBar from "../components/users/shared/InteractionBar";
 import SidebarInfo from "../components/users/shared/SidebarInfo";
 import { blogService } from "../services/blogService";
+import { useLanguage } from "../i18n/LanguageContext";
+import { getImageUrl } from "../utils/url";
 
 const BlogDetail = () => {
   const [, params] = useRoute("/blog-detail/:id");
@@ -17,15 +19,7 @@ const BlogDetail = () => {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-  
-  const getImageUrl = (url) => {
-    if (!url) return '/library.png';
-    if (url.startsWith('http')) return url;
-    if (url.startsWith('/uploads')) return `${API_URL}${url}`;
-    return url;
-  };
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (params?.id) {
@@ -40,7 +34,7 @@ const BlogDetail = () => {
       const response = await blogService.getBlogById(params.id);
       setBlog(response.data);
       
-      // Check if current user has liked this blog
+      // Kiểm tra người dùng hiện tại đã thích blog này chưa
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
       if (currentUser._id && response.data.likedBy) {
         const hasLiked = response.data.likedBy.includes(currentUser._id);
@@ -65,7 +59,7 @@ const BlogDetail = () => {
   const handleLike = async () => {
     try {
       const response = await blogService.likeBlog(params.id);
-      // Update blog with server data to ensure sync
+      // Cập nhật blog với dữ liệu từ server để đồng bộ
       setBlog(response.data);
       setLiked(response.liked);
     } catch (error) {
@@ -77,13 +71,13 @@ const BlogDetail = () => {
     try {
       setSubmittingComment(true);
       await blogService.addComment(params.id, content);
-      await fetchBlogDetail(); // Refresh to get new comments
+      await fetchBlogDetail(); // Làm mới để lấy bình luận mới
     } catch (error) {
       console.error("Error adding comment:", error);
-      const errorMessage = error.response?.data?.message || "Failed to add comment. Please login first.";
+      const errorMessage = error.response?.data?.message || t.alerts.commentFailed;
       alert(errorMessage);
       
-      // If 401/403, redirect to login
+      // Nếu 401/403, chuyển hướng đến trang đăng nhập
       if (error.response?.status === 401 || error.response?.status === 403) {
         window.location.href = '/auth';
       }
@@ -97,7 +91,7 @@ const BlogDetail = () => {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-12 text-center">
-          <p>Loading...</p>
+          <p>{t.blogDetail.loading}</p>
         </div>
       </Layout>
     );
@@ -107,7 +101,7 @@ const BlogDetail = () => {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-12 text-center">
-          <p>Blog not found</p>
+          <p>{t.blogDetail.notFound}</p>
         </div>
       </Layout>
     );
@@ -117,9 +111,10 @@ const BlogDetail = () => {
     <Layout>
       <BackgroundPhoto image={getImageUrl(blog.image)} />
       <div className="container mx-auto px-4 max-w-6xl -mt-32 relative z-10">
-        <BackButton  link = "/blog" />
-        <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
-          <div className="lg:col-span-3">
+        <BackButton link="/blog" text={t.nav.blogs} />
+        <div className="grid lg:grid-cols-12 gap-6 lg:gap-10">
+          {/* Main Content */}
+          <div className="lg:col-span-8">
             <ContentHeader
               category={blog.category}
               title={blog.title}
@@ -127,80 +122,88 @@ const BlogDetail = () => {
               author={blog.author}
               views={blog.views}
             />
-            <div className="bg-card rounded-2xl shadow-lg p-8 lg:p-12 mt-8">
-              {/* Images */}
+
+            <article className="bg-card rounded-2xl shadow-lg p-8 lg:p-12 mt-8 overflow-hidden">
+              {/* Description as lead */}
+              {blog.description && (
+                <p className="text-xl leading-relaxed text-muted-foreground border-l-4 border-primary pl-6 mb-8">
+                  {blog.description}
+                </p>
+              )}
+
+              {/* Images gallery */}
               {blog.images && blog.images.length > 0 && (
-                <div className="mt-8 mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {blog.images.map((img, index) => (
                     <img
                       key={index}
-                      src={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${img.url}`}
+                      src={getImageUrl(img.url)}
                       alt={img.caption || `Image ${index + 1}`}
-                      className="w-full h-auto object-cover rounded-lg shadow-md"
+                      className="w-full h-auto object-cover rounded-xl shadow-md"
                       loading="lazy"
                     />
                   ))}
                 </div>
               )}
 
-              {/* Description */}
-              {blog.description && (
-                <p className="text-lg leading-relaxed text-muted-foreground mt-8 mb-6">
-                  {blog.description}
-                </p>
-              )}
-
               {/* Rich Text Content */}
-              <div 
-                className="prose prose-lg max-w-none mt-8 mb-12
-                  prose-headings:font-heading prose-headings:font-bold
-                  prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
-                  prose-p:text-foreground prose-p:leading-relaxed
-                  prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-                  prose-strong:text-foreground prose-strong:font-bold
-                  prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
-                  prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
-                  prose-li:text-foreground prose-li:my-2
-                  prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:italic
-                  prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                  prose-pre:bg-gray-900 prose-pre:text-white prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
-                  prose-img:rounded-lg prose-img:shadow-md"
+              <div
+                className="blog-content"
                 dangerouslySetInnerHTML={{ __html: blog.content }}
               />
+
               <InteractionBar
                 likes={blog.likes}
                 commentsCount={blog.comments?.length}
                 liked={liked}
                 onLike={handleLike}
-                onShare={() => {}}
+                onShare={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert(t.blogDetail.linkCopied);
+                }}
               />
-            </div>
+            </article>
           </div>
-          <div className="hidden lg:block">
+
+          {/* Sidebar */}
+          <div className="lg:col-span-4">
             <SidebarInfo
-              title="Post Info"
+              title={t.blogDetail.postInfo}
               items={[
-                { label: "Category", value: blog.category?.name || "General" },
-                { label: "Published", value: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString() },
-                { label: "Views", value: blog.views },
-                { label: "Likes", value: blog.likes || 0 }
+                { label: t.blogDetail.category, value: blog.category?.name || t.common.general },
+                { label: t.blogDetail.published, value: new Date(blog.publishedAt || blog.createdAt).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
+                { label: t.blogDetail.views, value: `${blog.views || 0} ${t.blogDetail.views}` },
+                { label: t.blogDetail.likes, value: `${blog.likes || 0} ${t.blogDetail.likes}` },
+                { label: t.blogDetail.comments, value: `${blog.comments?.length || 0} ${t.blogDetail.comments}` },
+                { label: t.blogDetail.readingTime, value: `${Math.max(1, Math.ceil((blog.content?.replace(/<[^>]+>/g, '').length || 0) / 1000))} ${t.blogDetail.minRead}` }
               ]}
             />
           </div>
         </div>
-        <div className="mt-16">
+
+        {/* Comments Section */}
+        <div className="mt-12 mb-16">
+          <CommentSection
+            comments={blog.comments || []}
+            onCommentSubmit={handleCommentSubmit}
+            submitting={submittingComment}
+          />
+        </div>
+
+        {/* Related Articles */}
+        <div className="mt-8 mb-20">
           <h3 className="text-3xl font-heading font-bold mb-8">
-            Related Articles
+            {t.blogDetail.relatedArticles}
           </h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {relatedBlogs.slice(0, 3).map((post) => (
+            {relatedBlogs.filter(p => p._id !== blog._id).slice(0, 3).map((post) => (
               <BlogCard
                 key={post._id}
                 id={post._id}
                 image={post.image}
                 images={post.images}
                 category={post.category?.name || "General"}
-                date={new Date(post.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                date={new Date(post.createdAt).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 title={post.title}
                 description={post.description}
                 author={post.author?.fullName || "Unknown"}
@@ -209,11 +212,6 @@ const BlogDetail = () => {
           </div>
         </div>
       </div>
-      <CommentSection 
-        comments={blog.comments || []}
-        onCommentSubmit={handleCommentSubmit}
-        submitting={submittingComment}
-      />
     </Layout>
   );
 };

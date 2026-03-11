@@ -92,6 +92,7 @@ class UserController {
             const skip = (parseInt(page) - 1) * parseInt(limit);
             const total = await BlogPost.countDocuments(query);
             const blogs = await BlogPost.find(query)
+                .select('-content -comments -likedBy')
                 .populate('author', 'fullName email avatar')
                 .populate('category', 'name slug color')
                 .sort({ createdAt: -1 })
@@ -196,12 +197,12 @@ class UserController {
                 });
             }
 
-            // Check if user already liked this blog
+            // Kiểm tra người dùng đã thích blog này chưa
             const hasLiked = blog.likedBy?.includes(userId);
             
             let updatedBlog;
             if (hasLiked) {
-                // Unlike: remove user from likedBy and decrease count
+                // Bỏ thích: xóa người dùng khỏi likedBy và giảm số lượng
                 updatedBlog = await BlogPost.findByIdAndUpdate(
                     id,
                     { 
@@ -212,7 +213,7 @@ class UserController {
                 ).populate('author', 'fullName email avatar')
                  .populate('category', 'name slug color');
             } else {
-                // Like: add user to likedBy and increase count
+                // Thích: thêm người dùng vào likedBy và tăng số lượng
                 updatedBlog = await BlogPost.findByIdAndUpdate(
                     id,
                     { 
@@ -530,6 +531,313 @@ class UserController {
             return res.status(200).json({
                 success: true,
                 data: document
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Server error"
+            });
+        }
+    }
+
+    async getMyProfile(req, res) {
+        try {
+            const userId = req.user._id;
+            const user = await User.findById(userId).select('-password');
+            if (!user) {
+                return res.status(404).json({ success: false, message: "User not found" });
+            }
+
+            const [blogCount, docCount, courseCount, myBlogs, myDocs] = await Promise.all([
+                BlogPost.countDocuments({ author: userId, isDeleted: { $ne: true } }),
+                Document.countDocuments({ author: userId, isDeleted: { $ne: true } }),
+                Course.countDocuments({ instructor: userId, isDeleted: { $ne: true } }),
+                BlogPost.find({ author: userId, isDeleted: { $ne: true } })
+                    .populate('category', 'name slug color')
+                    .sort({ createdAt: -1 })
+                    .limit(20)
+                    .lean(),
+                Document.find({ author: userId, isDeleted: { $ne: true } })
+                    .populate('category', 'name slug color')
+                    .sort({ createdAt: -1 })
+                    .limit(20)
+                    .lean()
+            ]);
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    user,
+                    stats: { blogs: blogCount, documents: docCount, courses: courseCount },
+                    blogs: myBlogs,
+                    documents: myDocs
+                }
+            });
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message || "Server error" });
+        }
+    }
+
+    async getUserProfile(req, res) {
+        try {
+            const { id } = req.params;
+            const user = await User.findById(id).select('fullName email avatar role createdAt');
+            if (!user) {
+                return res.status(404).json({ success: false, message: "User not found" });
+            }
+
+            const [blogCount, docCount, courseCount, blogs, documents] = await Promise.all([
+                BlogPost.countDocuments({ author: id, status: 'published', isDeleted: { $ne: true } }),
+                Document.countDocuments({ author: id, status: 'published', isDeleted: { $ne: true } }),
+                Course.countDocuments({ instructor: id, isDeleted: { $ne: true }, isPublished: true }),
+                BlogPost.find({ author: id, status: 'published', isDeleted: { $ne: true } })
+                    .populate('category', 'name slug color')
+                    .sort({ createdAt: -1 })
+                    .limit(20)
+                    .lean(),
+                Document.find({ author: id, status: 'published', isDeleted: { $ne: true } })
+                    .populate('category', 'name slug color')
+                    .sort({ createdAt: -1 })
+                    .limit(20)
+                    .lean()
+            ]);
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    user,
+                    stats: { blogs: blogCount, documents: docCount, courses: courseCount },
+                    blogs,
+                    documents
+                }
+            });
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message || "Server error" });
+        }
+    }
+
+    async updateProfile(req, res) {
+        try {
+            const userId = req.user._id;
+            const { fullName, avatar } = req.body;
+
+            const updateData = {};
+            if (fullName) updateData.fullName = fullName;
+            if (avatar !== undefined) updateData.avatar = avatar;
+
+            const user = await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true }).select('-password');
+            if (!user) {
+                return res.status(404).json({ success: false, message: "User not found" });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Profile updated successfully",
+                data: { user }
+            });
+        } catch (error) {
+            if (error.code === 11000) {
+                return res.status(400).json({ success: false, message: "Email already in use" });
+            }
+            return res.status(500).json({ success: false, message: error.message || "Server error" });
+        }
+    }
+
+    async search(req, res) {
+        try {
+            const { q = '', type = 'all', page = 1, limit = 12 } = req.query;
+
+            const trimmed = q.trim();
+            if (!trimmed || trimmed.length < 2) {
+                return res.status(200).json({
+                    success: true,
+                    data: { blogs: [], documents: [], courses: [], users: [] },
+                    query: trimmed,
+                    totalResults: 0,
+                    totals: { blogs: 0, documents: 0, courses: 0, users: 0 }
+                });
+            }
+
+            // Thoát ký tự đặc biệt của regex
+            const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // Tách thành các từ và tạo regex theo logic OR (bất kỳ từ nào khớp)
+            const words = trimmed.split(/\s+/).filter(w => w.length >= 2).map(escapeRegex);
+            if (words.length === 0) {
+                return res.status(200).json({
+                    success: true,
+                    data: { blogs: [], documents: [], courses: [], users: [] },
+                    query: trimmed,
+                    totalResults: 0,
+                    totals: { blogs: 0, documents: 0, courses: 0, users: 0 }
+                });
+            }
+
+            // Tạo regex khớp BẤT KỲ từ nào (logic OR)
+            const orWordsRegex = words.join('|');
+            const searchRegex = { $regex: orWordsRegex, $options: 'i' };
+
+            // Regex đơn giản cho khớp từng từ riêng lẻ
+            const singleWordRegex = { $regex: escapeRegex(trimmed), $options: 'i' };
+
+            const skip = (parseInt(page) - 1) * parseInt(limit);
+            const parsedLimit = parseInt(limit);
+            const results = {};
+
+            // Hàm hỗ trợ: tính điểm độ liên quan của tài liệu (cao hơn = liên quan hơn)
+            const scoreItem = (item, titleField = 'title', descField = 'description') => {
+                let score = 0;
+                const titleVal = (item[titleField] || '').toLowerCase();
+                const descVal = (item[descField] || '').toLowerCase();
+                const queryLower = trimmed.toLowerCase();
+                const wordsLower = words.map(w => w.toLowerCase());
+
+                // Khớp chính xác tiêu đề = ưu tiên cao nhất
+                if (titleVal === queryLower) score += 100;
+                // Tiêu đề bắt đầu bằng từ khóa
+                else if (titleVal.startsWith(queryLower)) score += 80;
+                // Tiêu đề chứa cụm từ chính xác
+                else if (titleVal.includes(queryLower)) score += 60;
+                // Tiêu đề chứa tất cả các từ
+                else if (wordsLower.every(w => titleVal.includes(w))) score += 40;
+
+                // Mô tả chứa cụm từ chính xác
+                if (descVal.includes(queryLower)) score += 20;
+                // Mô tả chứa tất cả các từ
+                else if (wordsLower.every(w => descVal.includes(w))) score += 10;
+
+                return score;
+            };
+
+            // Tìm kiếm Blog — chỉ tiêu đề & mô tả, KHÔNG tìm trong nội dung
+            if (type === 'all' || type === 'blogs') {
+                const blogQuery = {
+                    status: 'published',
+                    isDeleted: { $ne: true },
+                    $or: [
+                        { title: searchRegex },
+                        { description: searchRegex }
+                    ]
+                };
+                const blogLimit = type === 'all' ? 6 : parsedLimit;
+                const blogSkip = type === 'all' ? 0 : skip;
+                const [blogs, blogTotal] = await Promise.all([
+                    BlogPost.find(blogQuery)
+                        .populate('author', 'fullName email avatar')
+                        .populate('category', 'name slug color')
+                        .sort({ createdAt: -1 })
+                        .skip(blogSkip)
+                        .limit(blogLimit)
+                        .lean(),
+                    BlogPost.countDocuments(blogQuery)
+                ]);
+                // Sắp xếp theo điểm độ liên quan
+                results.blogs = blogs
+                    .map(b => ({ ...b, _score: scoreItem(b) }))
+                    .sort((a, b) => b._score - a._score)
+                    .map(({ _score, ...rest }) => rest);
+                results.blogTotal = blogTotal;
+            }
+
+            // Tìm kiếm Tài liệu — chỉ tiêu đề & mô tả
+            if (type === 'all' || type === 'documents') {
+                const docQuery = {
+                    status: 'published',
+                    isDeleted: { $ne: true },
+                    $or: [
+                        { title: searchRegex },
+                        { description: searchRegex }
+                    ]
+                };
+                const docLimit = type === 'all' ? 6 : parsedLimit;
+                const docSkip = type === 'all' ? 0 : skip;
+                const [documents, docTotal] = await Promise.all([
+                    Document.find(docQuery)
+                        .populate('author', 'fullName email avatar')
+                        .populate('category', 'name slug color')
+                        .sort({ createdAt: -1 })
+                        .skip(docSkip)
+                        .limit(docLimit)
+                        .lean(),
+                    Document.countDocuments(docQuery)
+                ]);
+                results.documents = documents
+                    .map(d => ({ ...d, _score: scoreItem(d) }))
+                    .sort((a, b) => b._score - a._score)
+                    .map(({ _score, ...rest }) => rest);
+                results.docTotal = docTotal;
+            }
+
+            // Tìm kiếm Khóa học — chỉ tiêu đề & mô tả
+            if (type === 'all' || type === 'courses') {
+                const courseQuery = {
+                    isDeleted: { $ne: true },
+                    isPublished: true,
+                    $or: [
+                        { title: searchRegex },
+                        { description: searchRegex }
+                    ]
+                };
+                const courseLimit = type === 'all' ? 6 : parsedLimit;
+                const courseSkip = type === 'all' ? 0 : skip;
+                const [courses, courseTotal] = await Promise.all([
+                    Course.find(courseQuery)
+                        .populate('category', 'name slug color')
+                        .sort({ createdAt: -1 })
+                        .skip(courseSkip)
+                        .limit(courseLimit)
+                        .lean(),
+                    Course.countDocuments(courseQuery)
+                ]);
+                results.courses = courses
+                    .map(c => ({ ...c, _score: scoreItem(c) }))
+                    .sort((a, b) => b._score - a._score)
+                    .map(({ _score, ...rest }) => rest);
+                results.courseTotal = courseTotal;
+            }
+
+            // Tìm kiếm Người dùng — chỉ theo tên (để giảm nhiễu)
+            if (type === 'all' || type === 'users') {
+                const userQuery = {
+                    isActive: true,
+                    fullName: searchRegex
+                };
+                const userLimit = type === 'all' ? 6 : parsedLimit;
+                const userSkip = type === 'all' ? 0 : skip;
+                const [users, userTotal] = await Promise.all([
+                    User.find(userQuery)
+                        .select('fullName email avatar role createdAt')
+                        .sort({ createdAt: -1 })
+                        .skip(userSkip)
+                        .limit(userLimit),
+                    User.countDocuments(userQuery)
+                ]);
+                results.users = users;
+                results.userTotal = userTotal;
+            }
+
+            const totalResults = (results.blogTotal || 0) + (results.docTotal || 0) + (results.courseTotal || 0) + (results.userTotal || 0);
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    blogs: results.blogs || [],
+                    documents: results.documents || [],
+                    courses: results.courses || [],
+                    users: results.users || []
+                },
+                totals: {
+                    blogs: results.blogTotal || 0,
+                    documents: results.docTotal || 0,
+                    courses: results.courseTotal || 0,
+                    users: results.userTotal || 0
+                },
+                query: q.trim(),
+                totalResults,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parsedLimit
+                }
             });
         } catch (error) {
             return res.status(500).json({

@@ -1,7 +1,7 @@
 import React from "react";
 
 const SidebarInfo = ({ 
-  title = "Info", 
+  title, 
   items = [], 
   children,
   className = ""

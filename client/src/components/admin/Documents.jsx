@@ -3,8 +3,11 @@ import { documentsAPI, categoriesAPI } from "../../services/api";
 import { uploadService } from "../../services/uploadService";
 import DocumentForm from "../shared/DocumentForm";
 import Pagination from "../shared/Pagination";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { resolveFileUrl } from "@/utils/url";
 
 export default function Documents() {
+  const { t } = useLanguage();
   const [documents, setDocuments] = useState([]);
   const [categories, setCategories] = useState([]);
   const [viewMode, setViewMode] = useState("list");
@@ -108,8 +111,8 @@ export default function Documents() {
   if (viewMode === "edit") {
     content = (
       <div>
-        <button onClick={() => setViewMode("detail")} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
-        <h2 className="text-xl font-bold mb-4">Edit Document</h2>
+        <button onClick={() => setViewMode("detail")} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">{t('admin.docsMgmt.back')}</button>
+        <h2 className="text-xl font-bold mb-4">{t('admin.docsMgmt.editDoc')}</h2>
         <DocumentForm
           initialData={activeDoc}
           categories={categories}
@@ -119,7 +122,7 @@ export default function Documents() {
             setViewMode("detail");
           }}
           onCancel={() => setViewMode("detail")}
-          submitLabel="Save Changes"
+          submitLabel={t('admin.docsMgmt.saveChanges')}
           isAdmin={true}
         />
       </div>
@@ -132,13 +135,14 @@ export default function Documents() {
         onEdit={() => setViewMode("edit")}
         onDelete={() => setDocToDelete(activeDoc)}
         onPublish={handlePublish}
+        t={t}
       />
     );
   } else if (viewMode === "add") {
     content = (
       <div>
-        <button onClick={() => setViewMode("list")} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
-        <h2 className="text-xl font-bold mb-4">Add New Document</h2>
+        <button onClick={() => setViewMode("list")} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">{t('admin.docsMgmt.back')}</button>
+        <h2 className="text-xl font-bold mb-4">{t('admin.docsMgmt.addDoc')}</h2>
         <DocumentForm
           categories={categories}
           onSubmit={async (formData) => {
@@ -149,7 +153,7 @@ export default function Documents() {
             });
           }}
           onCancel={() => setViewMode("list")}
-          submitLabel="Add Document"
+          submitLabel={t('admin.docsMgmt.addDocBtn')}
           isAdmin={true}
         />
       </div>
@@ -176,6 +180,7 @@ export default function Documents() {
         onRestore={handleRestore}
         onPublish={handlePublish}
         onAdd={() => setViewMode("add")}
+        t={t}
       />
     );
   }
@@ -188,10 +193,10 @@ export default function Documents() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96">
             <h3 className="text-lg font-bold mb-2">
-              Delete document?
+              {t('admin.docsMgmt.deleteTitle')}
             </h3>
             <p className="text-sm mb-4">
-              Delete <strong>{docToDelete.title}</strong>?
+              <strong>{docToDelete.title}</strong>
             </p>
 
             <div className="flex justify-end gap-3">
@@ -199,13 +204,13 @@ export default function Documents() {
                 className="border px-4 py-2 rounded"
                 onClick={() => setDocToDelete(null)}
               >
-                Cancel
+                {t('admin.docsMgmt.cancel')}
               </button>
               <button
                 className="bg-red-600 text-white px-4 py-2 rounded"
                 onClick={handleDelete}
               >
-                Delete
+                {t('admin.docsMgmt.delete')}
               </button>
             </div>
           </div>
@@ -215,7 +220,7 @@ export default function Documents() {
   );
 }
 
-function DocList({ documents, loading, activeTab, onTabChange, currentPage, docsPerPage, onPageChange, onView, onEdit, onDelete, onRestore, onPublish, onAdd }) {
+function DocList({ documents, loading, activeTab, onTabChange, currentPage, docsPerPage, onPageChange, onView, onEdit, onDelete, onRestore, onPublish, onAdd, t }) {
   const getFilteredDocs = () => {
     switch (activeTab) {
       case 'pending':
@@ -237,21 +242,21 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
   const totalPages = Math.ceil(filteredDocs.length / docsPerPage);
 
   const tabs = [
-    { id: 'all', label: 'All Documents', count: documents.filter(d => !d.isDeleted).length },
-    { id: 'pending', label: 'Pending Approval', count: documents.filter(d => d.status === 'pending' && !d.isDeleted).length },
-    { id: 'published', label: 'Published', count: documents.filter(d => d.status === 'published' && !d.isDeleted).length },
-    { id: 'deleted', label: 'Deleted', count: documents.filter(d => d.isDeleted).length },
+    { id: 'all', label: t('admin.docsMgmt.allDocuments'), count: documents.filter(d => !d.isDeleted).length },
+    { id: 'pending', label: t('admin.docsMgmt.pendingApproval'), count: documents.filter(d => d.status === 'pending' && !d.isDeleted).length },
+    { id: 'published', label: t('admin.docsMgmt.published'), count: documents.filter(d => d.status === 'published' && !d.isDeleted).length },
+    { id: 'deleted', label: t('admin.docsMgmt.deleted'), count: documents.filter(d => d.isDeleted).length },
   ];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Documents ({filteredDocs.length})</h1>
+        <h1 className="text-2xl font-bold">{t('admin.docsMgmt.title')} ({filteredDocs.length})</h1>
         <button
           onClick={onAdd}
           className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
         >
-          + Add Document
+          {t('admin.docsMgmt.addDocument')}
         </button>
       </div>
 
@@ -279,10 +284,10 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
       </div>
 
       {loading ? (
-        <p className="text-center py-8">Loading...</p>
+        <p className="text-center py-8">{t('admin.docsMgmt.loading')}</p>
       ) : filteredDocs.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">No documents found in this category</p>
+          <p className="text-gray-500">{t('admin.docsMgmt.noDocs')}</p>
         </div>
       ) : (
         <>
@@ -293,13 +298,13 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
                 activeTab === 'deleted' ? 'bg-red-50' : 'bg-gray-50'
               }`}>
                 <tr>
-                  <th className="p-4 text-left text-sm font-semibold">Title</th>
-                  <th className="p-4 text-left text-sm font-semibold">Author</th>
-                  <th className="p-4 text-left text-sm font-semibold">Category</th>
-                  <th className="p-4 text-left text-sm font-semibold">Type</th>
-                  <th className="p-4 text-left text-sm font-semibold">Status</th>
-                  <th className="p-4 text-left text-sm font-semibold">Date</th>
-                  <th className="p-4 text-left text-sm font-semibold">Actions</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.docsMgmt.tableTitle')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.docsMgmt.tableAuthor')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.docsMgmt.tableCategory')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.docsMgmt.tableType')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.docsMgmt.tableStatus')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.docsMgmt.tableDate')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.docsMgmt.tableActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -320,7 +325,7 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
                         d.status === 'published' ? 'bg-green-100 text-green-700' :
                         'bg-gray-100 text-gray-700'
                       }`}>
-                        {d.isDeleted ? 'Deleted' : d.status}
+                        {d.isDeleted ? t('admin.docsMgmt.deleted') : d.status}
                       </span>
                     </td>
                     <td className="p-4 border-t text-sm text-gray-600">
@@ -332,7 +337,7 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
                           onClick={() => onView(d)} 
                           className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
                         >
-                          View
+                          {t('admin.docsMgmt.view')}
                         </button>
                         {!d.isDeleted && (
                           <>
@@ -341,20 +346,20 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
                                 onClick={() => onPublish(d)} 
                                 className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
                               >
-                                Approve
+                                {t('admin.docsMgmt.approve')}
                               </button>
                             )}
                             <button 
                               onClick={() => onEdit(d)} 
                               className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                             >
-                              Edit
+                              {t('admin.docsMgmt.edit')}
                             </button>
                             <button 
                               onClick={() => onDelete(d)} 
                               className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
                             >
-                              Delete
+                              {t('admin.docsMgmt.delete')}
                             </button>
                           </>
                         )}
@@ -363,7 +368,7 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
                             onClick={() => onRestore(d)} 
                             className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                           >
-                            Restore
+                            {t('admin.docsMgmt.restore')}
                           </button>
                         )}
                       </div>
@@ -389,18 +394,18 @@ function DocList({ documents, loading, activeTab, onTabChange, currentPage, docs
   );
 }
 
-function DocDetail({ doc, onBack, onEdit, onDelete, onPublish }) {
+function DocDetail({ doc, onBack, onEdit, onDelete, onPublish, t }) {
   const handleDownload = () => {
-    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${doc.fileUrl}`;
+    const url = resolveFileUrl(doc.fileUrl);
     window.open(url, '_blank');
   };
 
   return (
     <div>
-      <button onClick={onBack} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
+      <button onClick={onBack} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">{t('admin.docsMgmt.back')}</button>
       <h2 className="text-xl font-bold mb-2">{doc.title}</h2>
       <p className="text-sm text-gray-500 mb-2">
-        Author: {doc.author?.fullName || doc.author} · Status: {doc.status} · Category: {doc.category?.name || doc.category}
+        {t('admin.docsMgmt.author')}: {doc.author?.fullName || doc.author} · {t('admin.docsMgmt.status')}: {doc.status} · {t('admin.docsMgmt.category')}: {doc.category?.name || doc.category}
       </p>
       {doc.description && (
         <p className="text-sm text-gray-600 mb-4 italic">{doc.description}</p>
@@ -409,19 +414,19 @@ function DocDetail({ doc, onBack, onEdit, onDelete, onPublish }) {
       <div className="mb-4 p-4 bg-gray-50 rounded">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-gray-500">File Type</p>
+            <p className="text-sm text-gray-500">{t('admin.docsMgmt.fileType')}</p>
             <p className="font-semibold uppercase">{doc.fileType}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">File Size</p>
+            <p className="text-sm text-gray-500">{t('admin.docsMgmt.fileSize')}</p>
             <p className="font-semibold">{doc.fileSize || 'N/A'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Views</p>
+            <p className="text-sm text-gray-500">{t('admin.docsMgmt.views')}</p>
             <p className="font-semibold">{doc.views || 0}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Downloads</p>
+            <p className="text-sm text-gray-500">{t('admin.docsMgmt.downloads')}</p>
             <p className="font-semibold">{doc.downloads || 0}</p>
           </div>
         </div>
@@ -433,12 +438,12 @@ function DocDetail({ doc, onBack, onEdit, onDelete, onPublish }) {
       />
 
       <div className="flex gap-3">
-        <button onClick={handleDownload} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Download File</button>
-        <button onClick={onEdit} className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">Edit</button>
+        <button onClick={handleDownload} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">{t('admin.docsMgmt.downloadFile')}</button>
+        <button onClick={onEdit} className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">{t('admin.docsMgmt.edit')}</button>
         {doc.status === 'pending' && (
-          <button onClick={() => onPublish(doc)} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Publish</button>
+          <button onClick={() => onPublish(doc)} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">{t('admin.docsMgmt.publish')}</button>
         )}
-        <button onClick={onDelete} className="border border-red-500 text-red-600 px-4 py-2 rounded hover:bg-red-50">Delete</button>
+        <button onClick={onDelete} className="border border-red-500 text-red-600 px-4 py-2 rounded hover:bg-red-50">{t('admin.docsMgmt.delete')}</button>
       </div>
     </div>
   );

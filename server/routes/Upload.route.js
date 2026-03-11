@@ -5,13 +5,13 @@ import { protectedRoute } from '../middleware/Auth.middleware.js';
 
 const router = express.Router();
 
-// Upload single image
+// Tải lên một ảnh
 router.post('/single', protectedRoute, upload.single('image'), uploadSingle);
 
-// Upload multiple images (max 10)
+// Tải lên nhiều ảnh (tối đa 10)
 router.post('/multiple', protectedRoute, upload.array('images', 10), uploadMultiple);
 
-// Upload document file
+// Tải lên file tài liệu
 router.post('/document', protectedRoute, uploadDocument.single('document'), uploadDocumentFile);
 
 export default router;

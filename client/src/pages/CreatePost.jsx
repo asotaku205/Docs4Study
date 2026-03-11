@@ -7,6 +7,8 @@ import { blogService } from "../services/blogService";
 import { categoryService } from "../services/categoryService";
 import { uploadService } from "../services/uploadService";
 import TipTapEditor from "../components/ui/TipTapEditor";
+import { useLanguage } from "../i18n/LanguageContext";
+import { resolveFileUrl } from "../utils/url";
 
 const CreatePost = () => {
   const [, setLocation] = useLocation();
@@ -22,6 +24,7 @@ const CreatePost = () => {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchCategories();
@@ -67,7 +70,7 @@ const CreatePost = () => {
       
       setImages([...images, ...newImages]);
       
-      // Set first image as featured image if not set
+      // Đặt ảnh đầu tiên làm ảnh nổi bật nếu chưa đặt
       if (!formData.image && newImages.length > 0) {
         setFormData({
           ...formData,
@@ -76,12 +79,12 @@ const CreatePost = () => {
       }
     } catch (error) {
       console.error("Error uploading images:", error);
-      const errorMsg = error.response?.data?.message || error.message || "Failed to upload images";
+      const errorMsg = error.response?.data?.message || error.message || t.createBlogPost.uploadFailed;
       if (error.response?.status === 403 || error.response?.status === 401) {
-        alert("Please login to upload images.");
+        alert(t.createBlogPost.loginToUpload);
         setLocation("/auth");
       } else {
-        alert(`Failed to upload images: ${errorMsg}`);
+        alert(`${t.createBlogPost.uploadFailed}: ${errorMsg}`);
       }
     } finally {
       setUploading(false);
@@ -92,7 +95,7 @@ const CreatePost = () => {
     const newImages = images.filter((_, i) => i !== index);
     setImages(newImages);
     
-    // If removed image was the featured image, set new featured image
+    // Nếu xóa ảnh nổi bật, đặt ảnh nổi bật mới
     if (formData.image === images[index].url) {
       setFormData({
         ...formData,
@@ -112,19 +115,14 @@ const CreatePost = () => {
     e.preventDefault();
     
     if (!formData.title || !formData.content) {
-      alert("Please fill in title and content");
+      alert(t.createBlogPost.fillRequired);
       return;
     }
 
     try {
       setSubmitting(true);
       
-      // Check token before submitting
-      const token = localStorage.getItem("accessToken");
-      console.log("Token exists:", !!token);
-      console.log("Token:", token?.substring(0, 20) + "...");
-      
-      // Prepare post data with images array
+      // Chuẩn bị dữ liệu bài viết với mảng ảnh
       const postData = {
         ...formData,
         images: images.map((img, index) => ({
@@ -134,21 +132,17 @@ const CreatePost = () => {
         }))
       };
       
-      console.log("Submitting post data:", postData);
-      
       const response = await blogService.createBlog(postData);
-      console.log("Response:", response);
-      alert("Post submitted successfully! Waiting for admin approval.");
+      alert(t.createBlogPost.success);
       setLocation("/blog");
     } catch (error) {
       console.error("Error creating post:", error);
-      console.error("Error response:", error.response);
-      const errorMsg = error.response?.data?.message || error.message || "Failed to create post";
+      const errorMsg = error.response?.data?.message || error.message || t.createBlogPost.createFailed;
       if (error.response?.status === 403 || error.response?.status === 401) {
-        alert("Please login to create a post.");
+        alert(t.createBlogPost.loginToCreate);
         setLocation("/auth");
       } else {
-        alert(`Failed to create post: ${errorMsg}`);
+        alert(`${t.createBlogPost.createFailed}: ${errorMsg}`);
       }
     } finally {
       setSubmitting(false);
@@ -160,23 +154,23 @@ const CreatePost = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-heading font-bold mb-2">Share Your Knowledge</h1>
-            <p className="text-muted-foreground">Submit your post for admin review and publication</p>
+            <h1 className="text-3xl font-heading font-bold mb-2">{t.createBlogPost.title}</h1>
+            <p className="text-muted-foreground">{t.createBlogPost.subtitle}</p>
           </div>
           
           <div className="rounded-lg bg-card text-card-foreground shadow-lg border border-border">
             <div className="flex flex-col space-y-1.5 p-6 border-b border-border">
-              <div className="font-semibold tracking-tight text-xl">Create New Post</div>
-              <div className="text-sm text-muted-foreground">Fill in the information below</div>
+              <div className="font-semibold tracking-tight text-xl">{t.createBlogPost.cardTitle}</div>
+              <div className="text-sm text-muted-foreground">{t.createBlogPost.cardSubtitle}</div>
             </div>
             
             <div className="p-6">
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <div>
-                  <label className="text-sm font-semibold block mb-2">Post Title *</label>
+                  <label className="text-sm font-semibold block mb-2">{t.createBlogPost.postTitle} *</label>
                   <input 
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-base" 
-                    placeholder="Enter title..." 
+                    placeholder={t.createBlogPost.postTitlePlaceholder} 
                     name="title"
                     value={formData.title}
                     onChange={handleChange}
@@ -185,10 +179,10 @@ const CreatePost = () => {
                 </div>
                 
                 <div>
-                  <label className="text-sm font-semibold block mb-2">Description</label>
+                  <label className="text-sm font-semibold block mb-2">{t.createBlogPost.description}</label>
                   <input 
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-base" 
-                    placeholder="Short description..." 
+                    placeholder={t.createBlogPost.descriptionPlaceholder} 
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
@@ -197,14 +191,14 @@ const CreatePost = () => {
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-semibold block mb-2">Category</label>
+                    <label className="text-sm font-semibold block mb-2">{t.createBlogPost.category}</label>
                     <select 
                       className="w-full border border-input rounded-md px-3 py-2 text-base bg-background"
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
                     >
-                      <option value="">Select category...</option>
+                      <option value="">{t.createBlogPost.selectCategory}</option>
                       {categories.map((cat) => (
                         <option key={cat._id} value={cat._id}>{cat.name}</option>
                       ))}
@@ -214,7 +208,7 @@ const CreatePost = () => {
 
                 {/* Image Upload Section */}
                 <div>
-                  <label className="text-sm font-semibold block mb-2">Images</label>
+                  <label className="text-sm font-semibold block mb-2">{t.createBlogPost.images}</label>
                   <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
                     <input
                       ref={fileInputRef}
@@ -231,10 +225,10 @@ const CreatePost = () => {
                       className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
                     >
                       <FontAwesomeIcon icon={faImage} />
-                      {uploading ? "Uploading..." : "Upload Images"}
+                      {uploading ? t.createBlogPost.uploadingImages : t.createBlogPost.uploadImages}
                     </button>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Upload multiple images for your post
+                      {t.createBlogPost.uploadMultiple}
                     </p>
                   </div>
 
@@ -244,7 +238,7 @@ const CreatePost = () => {
                       {images.map((img, index) => (
                         <div key={index} className="relative group">
                           <img 
-                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${img.url}`}
+                            src={resolveFileUrl(img.url)}
                             alt={`Upload ${index + 1}`}
                             className={`w-full h-32 object-cover rounded-lg ${
                               formData.image === img.url ? 'ring-2 ring-primary' : ''
@@ -257,7 +251,7 @@ const CreatePost = () => {
                                 onClick={() => setFeaturedImage(img.url)}
                                 className="px-2 py-1 bg-white text-black text-xs rounded"
                               >
-                                Set Featured
+                                {t.createBlogPost.setFeatured}
                               </button>
                             )}
                             <button
@@ -270,7 +264,7 @@ const CreatePost = () => {
                           </div>
                           {formData.image === img.url && (
                             <div className="absolute top-2 left-2 px-2 py-1 bg-primary text-primary-foreground text-xs rounded">
-                              Featured
+                              {t.createBlogPost.featured}
                             </div>
                           )}
                         </div>
@@ -280,19 +274,19 @@ const CreatePost = () => {
                 </div>
                 
                 <div>
-                  <label className="text-sm font-semibold block mb-2">Post Content *</label>
+                  <label className="text-sm font-semibold block mb-2">{t.createBlogPost.postContent} *</label>
                   <TipTapEditor
                     value={formData.content}
                     onChange={handleContentChange}
-                    placeholder="Write your post content here..."
+                    placeholder={t.createBlogPost.contentPlaceholder}
                   />
                 </div>
                 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
                   <FontAwesomeIcon icon={faCircleInfo} className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-900">
-                    <p className="font-semibold mb-1">Your post will be reviewed</p>
-                    <p>Administrators will check the content before publishing. This may take a few hours.</p>
+                    <p className="font-semibold mb-1">{t.createBlogPost.reviewNotice}</p>
+                    <p>{t.createBlogPost.reviewDescription}</p>
                   </div>
                 </div>
                 
@@ -302,14 +296,14 @@ const CreatePost = () => {
                     type="submit"
                     disabled={submitting}
                   >
-                    {submitting ? "Submitting..." : "Submit Post"}
+                    {submitting ? t.createBlogPost.submitting : t.createBlogPost.submitPost}
                   </button>
                   <Link href="/blog">
                     <button 
                       className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover-elevate active-elevate-2 border border-input shadow-xs active:shadow-none min-h-10 rounded-md px-8" 
                       type="button"
                     >
-                      Back
+                      {t.createBlogPost.back}
                     </button>
                   </Link>
                 </div>

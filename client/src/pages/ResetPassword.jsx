@@ -4,18 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
 import authService from "../services/authService";
-
-const resetPasswordSchema = z
-  .object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z
-      .string()
-      .min(6, "Confirm Password must be at least 6 characters"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+import { useLanguage } from "../i18n/LanguageContext";
 
 const ResetPassword = () => {
   const [, setLocation] = useLocation();
@@ -23,6 +12,19 @@ const ResetPassword = () => {
   const [isTokenValid, setIsTokenValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { t } = useLanguage();
+
+  const resetPasswordSchema = z
+    .object({
+      password: z.string().min(6, t.validation.passwordMin),
+      confirmPassword: z
+        .string()
+        .min(6, t.validation.confirmPasswordMin),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t.validation.passwordsDontMatch,
+      path: ["confirmPassword"],
+    });
 
   
   const urlParams = new URLSearchParams(window.location.search);
@@ -41,7 +43,7 @@ const ResetPassword = () => {
     const validateToken = async () => {
       if (!token) {
         setIsValidating(false);
-        setErrorMessage("Reset token is missing");
+        setErrorMessage(t.validation.resetTokenMissing);
         return;
       }
 
@@ -53,7 +55,7 @@ const ResetPassword = () => {
       } catch (error) {
         const message =
           error.response?.data?.message ||
-          "Invalid or expired reset token";
+          t.validation.invalidOrExpiredToken;
         setErrorMessage(message);
       } finally {
         setIsValidating(false);
@@ -87,7 +89,7 @@ const ResetPassword = () => {
             Docs4Study
           </h1>
           <p className="text-muted-foreground">
-            Your gateway to unlimited learning.
+            {t.resetPassword.tagline}
           </p>
         </div>
 
@@ -95,7 +97,7 @@ const ResetPassword = () => {
           <div className="w-full max-w-md">
             <div className="shadow-lg rounded-lg bg-card border border-border p-6 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Validating reset link...</p>
+              <p className="text-muted-foreground">{t.resetPassword.validating}</p>
             </div>
           </div>
         </div>
@@ -103,7 +105,7 @@ const ResetPassword = () => {
     );
   }
 
-  // Success state
+  // Trạng thái thành công
   if (isSuccess) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -112,7 +114,7 @@ const ResetPassword = () => {
             Docs4Study
           </h1>
           <p className="text-muted-foreground">
-            Your gateway to unlimited learning.
+            {t.resetPassword.tagline}
           </p>
         </div>
 
@@ -135,10 +137,9 @@ const ResetPassword = () => {
                     />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold mb-2">Password Reset!</h2>
+                <h2 className="text-2xl font-bold mb-2">{t.resetPassword.successTitle}</h2>
                 <p className="text-muted-foreground">
-                  Your password has been successfully reset. You can now log in
-                  with your new password.
+                  {t.resetPassword.successMessage}
                 </p>
               </div>
 
@@ -146,7 +147,7 @@ const ResetPassword = () => {
                 onClick={() => setLocation("/auth")}
                 className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
               >
-                Go to Login
+                {t.resetPassword.goToLogin}
               </button>
             </div>
           </div>
@@ -155,7 +156,7 @@ const ResetPassword = () => {
     );
   }
 
-  // Invalid token state
+  // Trạng thái token không hợp lệ
   if (!isTokenValid) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -164,7 +165,7 @@ const ResetPassword = () => {
             Docs4Study
           </h1>
           <p className="text-muted-foreground">
-            Your gateway to unlimited learning.
+            {t.resetPassword.tagline}
           </p>
         </div>
 
@@ -187,14 +188,13 @@ const ResetPassword = () => {
                     />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold mb-2">Invalid Link</h2>
+                <h2 className="text-2xl font-bold mb-2">{t.resetPassword.invalidTitle}</h2>
                 <p className="text-muted-foreground mb-4">
                   {errorMessage ||
-                    "This password reset link is invalid or has expired."}
+                    t.resetPassword.invalidMessage}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Password reset links expire after 10 minutes for security
-                  reasons.
+                  {t.resetPassword.invalidExpiry}
                 </p>
               </div>
 
@@ -202,14 +202,14 @@ const ResetPassword = () => {
                 onClick={() => setLocation("/forgot-password")}
                 className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium mb-3"
               >
-                Request New Link
+                {t.resetPassword.requestNew}
               </button>
 
               <button
                 onClick={() => setLocation("/auth")}
                 className="w-full px-4 py-2 border border-input rounded-lg hover:bg-accent transition-colors"
               >
-                Back to Login
+                {t.resetPassword.backToLogin}
               </button>
             </div>
           </div>
@@ -218,7 +218,7 @@ const ResetPassword = () => {
     );
   }
 
-  // Reset password form
+  // Form đặt lại mật khẩu
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex flex-col justify-center text-center bg-muted/30 pt-5">
@@ -226,7 +226,7 @@ const ResetPassword = () => {
           Docs4Study
         </h1>
         <p className="text-muted-foreground">
-          Your gateway to unlimited learning.
+          {t.resetPassword.tagline}
         </p>
       </div>
 
@@ -234,9 +234,9 @@ const ResetPassword = () => {
         <div className="w-full max-w-md">
           <div className="shadow-lg rounded-lg bg-card border border-border">
             <div className="bg-muted rounded-t-lg p-6">
-              <h2 className="text-2xl font-bold">Reset Password</h2>
+              <h2 className="text-2xl font-bold">{t.resetPassword.title}</h2>
               <p className="text-muted-foreground text-sm mt-2">
-                Enter your new password below.
+                {t.resetPassword.subtitle}
               </p>
             </div>
 
@@ -252,11 +252,11 @@ const ResetPassword = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  New Password
+                  {t.resetPassword.newPassword}
                 </label>
                 <input
                   type="password"
-                  placeholder="Enter new password"
+                  placeholder={t.resetPassword.newPasswordPlaceholder}
                   autoComplete="new-password"
                   className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   {...register("password")}
@@ -270,11 +270,11 @@ const ResetPassword = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Confirm New Password
+                  {t.resetPassword.confirmPassword}
                 </label>
                 <input
                   type="password"
-                  placeholder="Confirm new password"
+                  placeholder={t.resetPassword.confirmPasswordPlaceholder}
                   autoComplete="new-password"
                   className="w-full p-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   {...register("confirmPassword")}
@@ -291,7 +291,7 @@ const ResetPassword = () => {
                 className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Resetting..." : "Reset Password"}
+                {isSubmitting ? t.resetPassword.resetting : t.resetPassword.resetButton}
               </button>
 
               <button
@@ -299,7 +299,7 @@ const ResetPassword = () => {
                 onClick={() => setLocation("/auth")}
                 className="w-full px-4 py-2 border border-input rounded-lg hover:bg-accent transition-colors"
               >
-                Back to Login
+                {t.resetPassword.backToLogin}
               </button>
             </form>
           </div>
@@ -308,7 +308,7 @@ const ResetPassword = () => {
             href="/"
             className="text-center block mt-6 text-muted-foreground hover:text-foreground transition-colors"
           >
-            Back to Home
+            {t.resetPassword.backToHome}
           </a>
         </div>
       </div>

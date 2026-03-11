@@ -2,37 +2,18 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import { Link } from "wouter";
+import { useLanguage } from "../../../i18n/LanguageContext";
+import { getFeaturedImage } from "../../../utils/url";
 
 const BlogCard = React.memo(({ id, image, images, category, date, title, description, author }) => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-  
-  // Featured image logic: prioritize 'image' field, fallback to first image in 'images' array
-  const getFeaturedImage = () => {
-    // Priority 1: Use 'image' field (main/featured image)
-    if (image) {
-      if (image.startsWith('http')) return image;
-      if (image.startsWith('/uploads')) return `${API_URL}${image}`;
-      return image;
-    }
-    
-    // Priority 2: Use first image from 'images' array
-    if (images && images.length > 0 && images[0]?.url) {
-      const firstImageUrl = images[0].url;
-      if (firstImageUrl.startsWith('http')) return firstImageUrl;
-      if (firstImageUrl.startsWith('/uploads')) return `${API_URL}${firstImageUrl}`;
-      return firstImageUrl;
-    }
-    
-    // Priority 3: Fallback to default placeholder
-    return '/library.png';
-  };
+  const { t } = useLanguage();
 
   return (
     <Link href={`/blog-detail/${id}`}>
       <div className="rounded-xl border bg-card text-card-foreground shadow overflow-hidden border-border hover:shadow-lg transition-all duration-300 group cursor-pointer">
         <div className="overflow-hidden">
           <img
-            src={getFeaturedImage()}
+            src={getFeaturedImage(image, images)}
             alt={title}
             className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -47,7 +28,7 @@ const BlogCard = React.memo(({ id, image, images, category, date, title, descrip
             <span className="text-sm text-muted-foreground">{date}</span>
           </div>
           <h3 className="text-lg text-primary font-bold mb-2 line-clamp-2">{title}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-3">{description || 'No description available'}</p>
+          <p className="text-sm text-muted-foreground line-clamp-3">{description || t.blogCard.noDescription}</p>
         </div>
 
         <div className="flex items-center p-6 border-t border-border pt-4">

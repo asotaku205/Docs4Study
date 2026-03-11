@@ -9,21 +9,49 @@ import { faFileLines } from "@fortawesome/free-regular-svg-icons";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import SavedDocs from "../components/users/Profile/SavedDoc";
 import MyPost from "../components/users/Profile/MyPost";
+import { useRoute } from "wouter";
+import apiUser from "../services/apiUser";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const OtherProfile = () => {
+  const [, params] = useRoute("/other-profile/:id");
   const [activeTab, setActiveTab] = useState("Published Posts");
+  const [profileData, setProfileData] = useState(null);
+  const [contentLoading, setContentLoading] = useState(true);
+  const { t } = useLanguage();
 
-  const userData = {
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-    role: "Content Creator",
-    badge: "Expert",
-    joined: "Oct 2024",
-    publishedPosts: 24,
-    uploadedDocs: 15,
-    coursesCreated: 3
+  useEffect(() => {
+    if (params?.id) {
+      fetchUserProfile();
+    }
+  }, [params?.id]);
+
+  const fetchUserProfile = async () => {
+    try {
+      setContentLoading(true);
+      const response = await apiUser.get(`/user/profile/${params.id}`);
+      setProfileData(response.data.data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    } finally {
+      setContentLoading(false);
+    }
   };
+
+  const userData = profileData?.user || {};
+  const stats = profileData?.stats || {};
+  const blogs = profileData?.blogs || [];
+  const documents = profileData?.documents || [];
+
+  if (!contentLoading && !profileData) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <p>{t.otherProfile.userNotFound}</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -35,9 +63,9 @@ const OtherProfile = () => {
       <div className="container mx-auto px-4 max-w-6xl -mt-24 relative z-10 pb-20">
         <div className="grid lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4 space-y-6">
-            <OtherProfileCard userData={userData} />
+            <OtherProfileCard userData={userData} stats={stats} />
 
-            <Statistics />
+            <Statistics stats={stats} />
           </div>
 
           <div className="lg:col-span-8">
@@ -52,7 +80,7 @@ const OtherProfile = () => {
                   onClick={() => setActiveTab("Published Posts")}
                 >
                   <FontAwesomeIcon icon={faPen} />
-                  Published Posts
+                  {t.otherProfile.publishedPosts}
                 </button>
                 <button
                   className={
@@ -63,7 +91,7 @@ const OtherProfile = () => {
                   onClick={() => setActiveTab("Uploaded Docs")}
                 >
                   <FontAwesomeIcon icon={faFileLines} />
-                  Uploaded Docs
+                  {t.otherProfile.uploadedDocs}
                 </button>
                 <button
                   className={
@@ -74,12 +102,20 @@ const OtherProfile = () => {
                   onClick={() => setActiveTab("Courses")}
                 >
                   <FontAwesomeIcon icon={faBookOpen} />
-                  Courses
+                  {t.otherProfile.courses}
                 </button>
               </div>
 
-              {activeTab === "Published Posts" && <MyPost />}
-              {activeTab === "Uploaded Docs" && <SavedDocs />}
+              {activeTab === "Published Posts" && (
+                contentLoading
+                  ? <div className="rounded-xl border bg-card border-border p-8 text-center text-muted-foreground">{t.otherProfile.loadingPosts}</div>
+                  : <MyPost blogs={blogs} />
+              )}
+              {activeTab === "Uploaded Docs" && (
+                contentLoading
+                  ? <div className="rounded-xl border bg-card border-border p-8 text-center text-muted-foreground">{t.otherProfile.loadingDocs}</div>
+                  : <SavedDocs documents={documents} />
+              )}
               {activeTab === "Courses" && <MyCourses />}
             </div>
           </div>

@@ -5,21 +5,23 @@ import { z } from "zod";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import authService from "../../../services/authService";
-
-const changePasswordSchema = z
-  .object({
-    oldPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(6, "New password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+import { useLanguage } from "../../../i18n/LanguageContext";
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const { t } = useLanguage();
+
+  const changePasswordSchema = z
+    .object({
+      oldPassword: z.string().min(1, t.validation.currentPasswordRequired),
+      newPassword: z.string().min(6, t.validation.newPasswordMin),
+      confirmPassword: z.string().min(6, t.validation.confirmPasswordMin6),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t.validation.passwordsDontMatch,
+      path: ["confirmPassword"],
+    });
 
   const {
     register,
@@ -41,7 +43,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       );
       
       if (response.success) {
-        setSuccessMessage("Password changed successfully!");
+        setSuccessMessage(t.changePasswordModal.success);
         reset();
         setTimeout(() => {
           onClose();
@@ -51,7 +53,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
     } catch (error) {
       const message =
         error.response?.data?.message ||
-        "Failed to change password. Please try again.";
+        t.changePasswordModal.failed;
       setErrorMessage(message);
     }
   };
@@ -63,7 +65,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       <div className="bg-card border border-border rounded-xl shadow-lg w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-xl font-semibold">Change Password</h2>
+          <h2 className="text-xl font-semibold">{t.changePasswordModal.title}</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-muted rounded-md transition-colors"
@@ -88,11 +90,11 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">
-              Current Password
+              {t.changePasswordModal.currentPassword}
             </label>
             <input
               type="password"
-              placeholder="Enter current password"
+              placeholder={t.changePasswordModal.currentPasswordPlaceholder}
               className="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-background border-border"
               {...register("oldPassword")}
             />
@@ -104,10 +106,10 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium">New Password</label>
+            <label className="block text-sm font-medium">{t.changePasswordModal.newPassword}</label>
             <input
               type="password"
-              placeholder="Enter new password"
+              placeholder={t.changePasswordModal.newPasswordPlaceholder}
               className="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-background border-border"
               {...register("newPassword")}
             />
@@ -120,11 +122,11 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">
-              Confirm New Password
+              {t.changePasswordModal.confirmNewPassword}
             </label>
             <input
               type="password"
-              placeholder="Confirm new password"
+              placeholder={t.changePasswordModal.confirmNewPasswordPlaceholder}
               className="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-background border-border"
               {...register("confirmPassword")}
             />
@@ -142,14 +144,14 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
             >
-              Cancel
+              {t.common.cancel}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium disabled:opacity-50"
             >
-              {isSubmitting ? "Changing..." : "Change Password"}
+              {isSubmitting ? t.changePasswordModal.changing : t.changePasswordModal.changeButton}
             </button>
           </div>
         </form>

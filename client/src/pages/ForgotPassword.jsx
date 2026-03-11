@@ -4,15 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
 import authService from "../services/authService";
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
-});
+import { useLanguage } from "../i18n/LanguageContext";
 
 const ForgotPassword = () => {
   const [, setLocation] = useLocation();
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { t } = useLanguage();
+
+  const forgotPasswordSchema = z.object({
+    email: z.string().email(t.validation.invalidEmail),
+  });
 
   const {
     register,
@@ -45,7 +47,7 @@ const ForgotPassword = () => {
             Docs4Study
           </h1>
           <p className="text-muted-foreground">
-            Your gateway to unlimited learning.
+            {t.auth.tagline}
           </p>
         </div>
 
@@ -68,17 +70,15 @@ const ForgotPassword = () => {
                     />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold mb-2">Check Your Email</h2>
+                <h2 className="text-2xl font-bold mb-2">{t.forgotPassword.checkEmail}</h2>
                 <p className="text-muted-foreground">
-                  If an account exists with that email, we've sent a password
-                  reset link. Please check your inbox and spam folder.
+                  {t.forgotPassword.checkEmailDescription}
                 </p>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> The reset link will expire in 10
-                  minutes.
+                  <strong>{t.alerts.note}</strong> {t.forgotPassword.resetLinkExpire}
                 </p>
               </div>
 
@@ -86,7 +86,7 @@ const ForgotPassword = () => {
                 onClick={() => setLocation("/auth")}
                 className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
               >
-                Back to Login
+                {t.forgotPassword.backToLogin}
               </button>
             </div>
           </div>
@@ -102,7 +102,7 @@ const ForgotPassword = () => {
           Docs4Study
         </h1>
         <p className="text-muted-foreground">
-          Your gateway to unlimited learning.
+          {t.auth.tagline}
         </p>
       </div>
 
@@ -110,10 +110,9 @@ const ForgotPassword = () => {
         <div className="w-full max-w-md">
           <div className="shadow-lg rounded-lg bg-card border border-border">
             <div className="bg-muted rounded-t-lg p-6">
-              <h2 className="text-2xl font-bold">Forgot Password?</h2>
+              <h2 className="text-2xl font-bold">{t.forgotPassword.title}?</h2>
               <p className="text-muted-foreground text-sm mt-2">
-                No worries! Enter your email and we'll send you reset
-                instructions.
+                {t.forgotPassword.subtitle}
               </p>
             </div>
 
@@ -128,7 +127,7 @@ const ForgotPassword = () => {
               )}
 
               <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
+                <label className="block text-sm font-medium mb-2">{t.forgotPassword.emailLabel}</label>
                 <input
                   type="email"
                   placeholder="m@example.com"
@@ -148,7 +147,7 @@ const ForgotPassword = () => {
                 className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Sending..." : "Send Reset Link"}
+                {isSubmitting ? t.forgotPassword.sending : t.forgotPassword.sendButton}
               </button>
 
               <button
@@ -156,7 +155,7 @@ const ForgotPassword = () => {
                 onClick={() => setLocation("/auth")}
                 className="w-full px-4 py-2 border border-input rounded-lg hover:bg-accent transition-colors"
               >
-                Back to Login
+                {t.forgotPassword.backToLogin}
               </button>
             </form>
           </div>
@@ -165,7 +164,7 @@ const ForgotPassword = () => {
             href="/"
             className="text-center block mt-6 text-muted-foreground hover:text-foreground transition-colors"
           >
-            Back to Home
+            {t.auth.backToHome}
           </a>
         </div>
       </div>

@@ -5,12 +5,15 @@ import TipTapEditor from "../ui/TipTapEditor";
 import Pagination from "../shared/Pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImage, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { resolveFileUrl } from "@/utils/url";
 
 export default function BlogPosts() {
+  const { t } = useLanguage();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [viewMode, setViewMode] = useState("list");
-  const [activeTab, setActiveTab] = useState("all"); // all, pending, published, deleted
+  const [activeTab, setActiveTab] = useState("all"); // tất cả, chờ duyệt, đã xuất bản, đã xóa
   const [activePost, setActivePost] = useState(null);
   const [postToDelete, setPostToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -115,6 +118,7 @@ export default function BlogPosts() {
         onChange={setActivePost}
         onSave={handleSave}
         onCancel={() => setViewMode("detail")}
+        t={t}
       />
     );
   } else if (viewMode === "detail") {
@@ -125,6 +129,16 @@ export default function BlogPosts() {
         onEdit={() => setViewMode("edit")}
         onDelete={() => setPostToDelete(activePost)}
         onPublish={handlePublish}
+        t={t}
+      />
+    );
+  } else if (viewMode === "add") {
+    content = (
+      <AddPostForm
+        categories={categories}
+        onAdd={handleAdd}
+        onCancel={() => setViewMode("list")}
+        t={t}
       />
     );
   } else {
@@ -148,6 +162,8 @@ export default function BlogPosts() {
         onDelete={(p) => setPostToDelete(p)}
         onRestore={handleRestore}
         onPublish={handlePublish}
+        onAdd={() => setViewMode("add")}
+        t={t}
       />
     );
   }
@@ -160,10 +176,10 @@ export default function BlogPosts() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96">
             <h3 className="text-lg font-bold mb-2">
-              Delete blog post?
+              {t("admin.blogMgmt.deleteTitle")}
             </h3>
             <p className="text-sm mb-4">
-              Delete <strong>{postToDelete.title}</strong>?
+              <strong>{postToDelete.title}</strong>
             </p>
 
             <div className="flex justify-end gap-3">
@@ -171,13 +187,13 @@ export default function BlogPosts() {
                 className="border px-4 py-2 rounded"
                 onClick={() => setPostToDelete(null)}
               >
-                Cancel
+                {t("admin.blogMgmt.cancel")}
               </button>
               <button
                 className="bg-red-600 text-white px-4 py-2 rounded"
                 onClick={handleDelete}
               >
-                Delete
+                {t("admin.blogMgmt.delete")}
               </button>
             </div>
           </div>
@@ -187,7 +203,7 @@ export default function BlogPosts() {
   );
 }
 
-function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPerPage, onPageChange, onView, onEdit, onDelete, onRestore, onPublish }) {
+function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPerPage, onPageChange, onView, onEdit, onDelete, onRestore, onPublish, onAdd, t }) {
   // Lọc posts theo tab
   const getFilteredPosts = () => {
     switch (activeTab) {
@@ -211,16 +227,22 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
   const tabs = [
-    { id: 'all', label: 'All Posts', count: posts.filter(p => !p.isDeleted).length },
-    { id: 'pending', label: 'Pending Approval', count: posts.filter(p => p.status === 'pending' && !p.isDeleted).length },
-    { id: 'published', label: 'Published', count: posts.filter(p => p.status === 'published' && !p.isDeleted).length },
-    { id: 'deleted', label: 'Deleted', count: posts.filter(p => p.isDeleted).length },
+    { id: 'all', label: t('admin.blogMgmt.allPosts'), count: posts.filter(p => !p.isDeleted).length },
+    { id: 'pending', label: t('admin.blogMgmt.pendingApproval'), count: posts.filter(p => p.status === 'pending' && !p.isDeleted).length },
+    { id: 'published', label: t('admin.blogMgmt.published'), count: posts.filter(p => p.status === 'published' && !p.isDeleted).length },
+    { id: 'deleted', label: t('admin.blogMgmt.deleted'), count: posts.filter(p => p.isDeleted).length },
   ];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Blog Posts ({filteredPosts.length})</h1>
+        <h1 className="text-2xl font-bold">{t('admin.blogMgmt.title')} ({filteredPosts.length})</h1>
+        <button
+          onClick={onAdd}
+          className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800"
+        >
+          {t('admin.blogMgmt.addPost')}
+        </button>
       </div>
 
       {/* Tabs */}
@@ -248,10 +270,10 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
       </div>
 
       {loading ? (
-        <p className="text-center py-8">Loading...</p>
+        <p className="text-center py-8">{t('admin.blogMgmt.loading')}</p>
       ) : filteredPosts.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">No posts found in this category</p>
+          <p className="text-gray-500">{t('admin.blogMgmt.noPosts')}</p>
         </div>
       ) : (
         <>
@@ -262,12 +284,12 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
                 activeTab === 'deleted' ? 'bg-red-50' : 'bg-gray-50'
               }`}>
                 <tr>
-                  <th className="p-4 text-left text-sm font-semibold">Title</th>
-                  <th className="p-4 text-left text-sm font-semibold">Author</th>
-                  <th className="p-4 text-left text-sm font-semibold">Category</th>
-                  <th className="p-4 text-left text-sm font-semibold">Status</th>
-                  <th className="p-4 text-left text-sm font-semibold">Date</th>
-                  <th className="p-4 text-left text-sm font-semibold">Actions</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.blogMgmt.tableTitle')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.blogMgmt.tableAuthor')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.blogMgmt.tableCategory')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.blogMgmt.tableStatus')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.blogMgmt.tableDate')}</th>
+                  <th className="p-4 text-left text-sm font-semibold">{t('admin.blogMgmt.tableActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -283,7 +305,7 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
                         p.status === 'published' ? 'bg-green-100 text-green-700' :
                         'bg-gray-100 text-gray-700'
                       }`}>
-                        {p.isDeleted ? 'Deleted' : p.status}
+                        {p.isDeleted ? t('admin.blogMgmt.deleted') : p.status}
                       </span>
                     </td>
                     <td className="p-4 border-t text-sm text-gray-600">
@@ -295,7 +317,7 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
                           onClick={() => onView(p)} 
                           className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
                         >
-                          View
+                          {t('admin.blogMgmt.view')}
                         </button>
                         {!p.isDeleted && (
                           <>
@@ -304,20 +326,20 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
                                 onClick={() => onPublish(p)} 
                                 className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
                               >
-                                Approve
+                                {t('admin.blogMgmt.approve')}
                               </button>
                             )}
                             <button 
                               onClick={() => onEdit(p)} 
                               className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                             >
-                              Edit
+                              {t('admin.blogMgmt.edit')}
                             </button>
                             <button 
                               onClick={() => onDelete(p)} 
                               className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
                             >
-                              Delete
+                              {t('admin.blogMgmt.delete')}
                             </button>
                           </>
                         )}
@@ -326,7 +348,7 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
                             onClick={() => onRestore(p)} 
                             className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                           >
-                            Restore
+                            {t('admin.blogMgmt.restore')}
                           </button>
                         )}
                       </div>
@@ -353,13 +375,13 @@ function PostList({ posts, loading, activeTab, onTabChange, currentPage, postsPe
   );
 }
 
-function PostDetail({ post, onBack, onEdit, onDelete, onPublish }) {
+function PostDetail({ post, onBack, onEdit, onDelete, onPublish, t }) {
   return (
     <div>
-      <button onClick={onBack} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
+      <button onClick={onBack} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">{t('admin.blogMgmt.back')}</button>
       <h2 className="text-xl font-bold mb-2">{post.title}</h2>
       <p className="text-sm text-gray-500 mb-2">
-        Author: {post.author?.fullName || post.author} · Status: {post.status} · Category: {post.category?.name || post.category}
+        {t('admin.blogMgmt.author')}: {post.author?.fullName || post.author} · {t('admin.blogMgmt.status')}: {post.status} · {t('admin.blogMgmt.tableCategory')}: {post.category?.name || post.category}
       </p>
       {post.description && (
         <p className="text-sm text-gray-600 mb-4 italic">{post.description}</p>
@@ -371,7 +393,7 @@ function PostDetail({ post, onBack, onEdit, onDelete, onPublish }) {
           {post.images.map((img, index) => (
             <img 
               key={index}
-              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${img.url}`}
+              src={resolveFileUrl(img.url)}
               alt={img.caption || `Image ${index + 1}`}
               className="w-full h-32 object-cover rounded"
             />
@@ -384,21 +406,21 @@ function PostDetail({ post, onBack, onEdit, onDelete, onPublish }) {
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
       <div className="text-sm text-gray-500 mb-4">
-        Views: {post.views} | Likes: {post.likes || 0} | Comments: {post.comments?.length || 0}
+        {t('admin.blogMgmt.views')}: {post.views} | {t('admin.blogMgmt.likes')}: {post.likes || 0} | {t('admin.blogMgmt.comments')}: {post.comments?.length || 0}
       </div>
 
       <div className="flex gap-3">
-        <button onClick={onEdit} className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">Edit</button>
-        {post.status === 'draft' && (
-          <button onClick={() => onPublish(post)} className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">Publish</button>
+        <button onClick={onEdit} className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">{t('admin.blogMgmt.edit')}</button>
+        {(post.status === 'draft' || post.status === 'pending') && (
+          <button onClick={() => onPublish(post)} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">{t('admin.blogMgmt.approve')}</button>
         )}
-        <button onClick={onDelete} className="border border-red-500 text-red-600 px-4 py-2 rounded hover:bg-red-50">Delete</button>
+        <button onClick={onDelete} className="border border-red-500 text-red-600 px-4 py-2 rounded hover:bg-red-50">{t('admin.blogMgmt.delete')}</button>
       </div>
     </div>
   );
 }
 
-function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
+function EditPostForm({ post, categories, onChange, onSave, onCancel, t }) {
   const [images, setImages] = useState(post.images || []);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -445,20 +467,20 @@ function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
 
   return (
     <div>
-      <button onClick={onCancel} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">← Back</button>
-      <h2 className="text-xl font-bold mb-4">Edit Post</h2>
+      <button onClick={onCancel} className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">{t('admin.blogMgmt.back')}</button>
+      <h2 className="text-xl font-bold mb-4">{t('admin.blogMgmt.editPost')}</h2>
 
-      <Input label="Title" value={post.title} onChange={(v) => onChange({ ...post, title: v })} />
-      <Input label="Description" value={post.description || ''} onChange={(v) => onChange({ ...post, description: v })} />
+      <Input label={t('admin.blogMgmt.tableTitle')} value={post.title} onChange={(v) => onChange({ ...post, title: v })} />
+      <Input label={t('admin.blogMgmt.description')} value={post.description || ''} onChange={(v) => onChange({ ...post, description: v })} />
       
       <div className="mb-3">
-        <label className="text-sm text-gray-500">Category</label>
+        <label className="text-sm text-gray-500">{t('admin.blogMgmt.tableCategory')}</label>
         <select
           value={post.category?._id || post.category}
           onChange={(e) => onChange({ ...post, category: e.target.value })}
           className="w-full border rounded px-3 py-2 mt-1"
         >
-          <option value="">Select category...</option>
+          <option value="">{t('admin.blogMgmt.selectCategory')}</option>
           {categories.map((cat) => (
             <option key={cat._id} value={cat._id}>{cat.name}</option>
           ))}
@@ -466,19 +488,20 @@ function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
       </div>
 
       <div className="mb-3">
-        <label className="text-sm text-gray-500">Status</label>
+        <label className="text-sm text-gray-500">{t('admin.blogMgmt.status')}</label>
         <select
           value={post.status}
           onChange={(e) => onChange({ ...post, status: e.target.value })}
           className="w-full border rounded px-3 py-2 mt-1"
         >
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
+          <option value="draft">{t('admin.blogMgmt.draft')}</option>
+          <option value="pending">{t('admin.blogMgmt.pendingApproval')}</option>
+          <option value="published">{t('admin.blogMgmt.published')}</option>
         </select>
       </div>
 
       <div className="mb-3">
-        <label className="text-sm text-gray-500 block mb-2">Images</label>
+        <label className="text-sm text-gray-500 block mb-2">{t('admin.blogMgmt.images')}</label>
         <div className="border-2 border-dashed rounded p-4">
           <input
             ref={fileInputRef}
@@ -495,7 +518,7 @@ function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
             className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 disabled:opacity-50"
           >
             <FontAwesomeIcon icon={faImage} className="mr-2" />
-            {uploading ? "Uploading..." : "Upload Images"}
+            {uploading ? t('admin.blogMgmt.uploading') : t('admin.blogMgmt.uploadImages')}
           </button>
         </div>
 
@@ -504,7 +527,7 @@ function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
             {images.map((img, index) => (
               <div key={index} className="relative group">
                 <img 
-                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${img.url}`}
+                  src={resolveFileUrl(img.url)}
                   alt={`Image ${index + 1}`}
                   className={`w-full h-24 object-cover rounded ${
                     post.image === img.url ? 'ring-2 ring-blue-500' : ''
@@ -519,7 +542,7 @@ function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
                 </button>
                 {post.image === img.url && (
                   <div className="absolute bottom-1 left-1 px-2 py-1 bg-blue-500 text-white text-xs rounded">
-                    Featured
+                    {t('admin.blogMgmt.featured')}
                   </div>
                 )}
               </div>
@@ -529,7 +552,7 @@ function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
       </div>
 
       <div className="mb-3">
-        <label className="text-sm text-gray-500 block mb-2">Content</label>
+        <label className="text-sm text-gray-500 block mb-2">{t('admin.blogMgmt.content')}</label>
         <TipTapEditor
           value={post.content}
           onChange={(html) => onChange({ ...post, content: html })}
@@ -537,14 +560,16 @@ function EditPostForm({ post, categories, onChange, onSave, onCancel }) {
       </div>
 
       <div className="mt-4 flex gap-3">
-        <button onClick={onSave} className="bg-black text-white px-4 py-2 rounded">Save</button>
-        <button onClick={onCancel} className="border px-4 py-2 rounded">Cancel</button>
+        <button onClick={onSave} className="bg-black text-white px-4 py-2 rounded">{t('admin.blogMgmt.save')}</button>
+        <button onClick={onCancel} className="border px-4 py-2 rounded">{t('admin.blogMgmt.cancel')}</button>
       </div>
     </div>
   );
 }
 
-function AddPostForm({ categories, onAdd, onCancel }) {
+function AddPostForm({ categories, onAdd, onCancel, t: tProp }) {
+  const { t: tHook } = useLanguage();
+  const t = tProp || tHook;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -600,20 +625,20 @@ function AddPostForm({ categories, onAdd, onCancel }) {
 
   return (
     <div>
-      <button onClick={onCancel} className="mb-4 text-blue-600">← Back</button>
-      <h2 className="text-xl font-bold mb-4">Add New Post</h2>
+      <button onClick={onCancel} className="mb-4 text-blue-600">{t('admin.blogMgmt.back')}</button>
+      <h2 className="text-xl font-bold mb-4">{t('admin.blogMgmt.addPost')}</h2>
 
-      <Input label="Title" value={title} onChange={setTitle} />
-      <Input label="Description" value={description} onChange={setDescription} />
+      <Input label={t('admin.blogMgmt.tableTitle')} value={title} onChange={setTitle} />
+      <Input label={t('admin.blogMgmt.description')} value={description} onChange={setDescription} />
       
       <div className="mb-3">
-        <label className="text-sm text-gray-500">Category</label>
+        <label className="text-sm text-gray-500">{t('admin.blogMgmt.tableCategory')}</label>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className="w-full border rounded px-3 py-2 mt-1"
         >
-          <option value="">Select category...</option>
+          <option value="">{t('admin.blogMgmt.selectCategory')}</option>
           {categories.map((cat) => (
             <option key={cat._id} value={cat._id}>{cat.name}</option>
           ))}
@@ -621,19 +646,19 @@ function AddPostForm({ categories, onAdd, onCancel }) {
       </div>
 
       <div className="mb-3">
-        <label className="text-sm text-gray-500">Status</label>
+        <label className="text-sm text-gray-500">{t('admin.blogMgmt.status')}</label>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className="w-full border rounded px-3 py-2 mt-1"
         >
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
+          <option value="draft">{t('admin.blogMgmt.draft')}</option>
+          <option value="published">{t('admin.blogMgmt.published')}</option>
         </select>
       </div>
 
       <div className="mb-3">
-        <label className="text-sm text-gray-500 block mb-2">Images</label>
+        <label className="text-sm text-gray-500 block mb-2">{t('admin.blogMgmt.images')}</label>
         <div className="border-2 border-dashed rounded p-4">
           <input
             ref={fileInputRef}
@@ -650,7 +675,7 @@ function AddPostForm({ categories, onAdd, onCancel }) {
             className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 disabled:opacity-50"
           >
             <FontAwesomeIcon icon={faImage} className="mr-2" />
-            {uploading ? "Uploading..." : "Upload Images"}
+            {uploading ? t('admin.blogMgmt.uploading') : t('admin.blogMgmt.uploadImages')}
           </button>
         </div>
 
@@ -659,7 +684,7 @@ function AddPostForm({ categories, onAdd, onCancel }) {
             {images.map((img, index) => (
               <div key={index} className="relative group">
                 <img 
-                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${img.url}`}
+                  src={resolveFileUrl(img.url)}
                   alt={`Image ${index + 1}`}
                   className="w-full h-24 object-cover rounded"
                 />
@@ -672,7 +697,7 @@ function AddPostForm({ categories, onAdd, onCancel }) {
                 </button>
                 {index === 0 && (
                   <div className="absolute bottom-1 left-1 px-2 py-1 bg-blue-500 text-white text-xs rounded">
-                    Featured
+                    {t('admin.blogMgmt.featured')}
                   </div>
                 )}
               </div>
@@ -682,7 +707,7 @@ function AddPostForm({ categories, onAdd, onCancel }) {
       </div>
 
       <div className="mb-3">
-        <label className="text-sm text-gray-500 block mb-2">Content</label>
+        <label className="text-sm text-gray-500 block mb-2">{t('admin.blogMgmt.content')}</label>
         <TipTapEditor
           value={content}
           onChange={setContent}
@@ -694,9 +719,9 @@ function AddPostForm({ categories, onAdd, onCancel }) {
           className="bg-black text-white px-4 py-2 rounded"
           onClick={handleSubmit}
         >
-          Add
+          {t('admin.blogMgmt.add')}
         </button>
-        <button onClick={onCancel} className="border px-4 py-2 rounded">Cancel</button>
+        <button onClick={onCancel} className="border px-4 py-2 rounded">{t('admin.blogMgmt.cancel')}</button>
       </div>
     </div>
   );

@@ -6,10 +6,12 @@ import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import { categoryService } from "../services/categoryService";
 import { documentService } from "../services/documentService";
 import DocumentForm from "../components/shared/DocumentForm";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const CreateDocument = () => {
   const [, setLocation] = useLocation();
   const [categories, setCategories] = useState([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchCategories();
@@ -28,22 +30,22 @@ const CreateDocument = () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        alert("Please login to submit a document.");
+        alert(t.alerts.loginToSubmit);
         setLocation("/auth");
         return;
       }
       
       await documentService.createDocument(formData);
-      alert("Document submitted successfully! Waiting for admin approval.");
+      alert(t.alerts.documentSuccess);
       setLocation("/documents");
     } catch (error) {
       console.error("Error creating document:", error);
       const errorMsg = error.response?.data?.message || error.message || "Failed to create document";
       if (error.response?.status === 403 || error.response?.status === 401) {
-        alert("Please login to create a document.");
+        alert(t.alerts.loginToCreate);
         setLocation("/auth");
       } else {
-        alert(`Failed to create document: ${errorMsg}`);
+        alert(`${t.alerts.documentCreateFailed}: ${errorMsg}`);
       }
       throw error;
     }
@@ -54,22 +56,22 @@ const CreateDocument = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-heading font-bold mb-2">Share Your Document</h1>
-            <p className="text-muted-foreground">Submit your document for admin review and publication</p>
+            <h1 className="text-3xl font-heading font-bold mb-2">{t.createPost.title}</h1>
+            <p className="text-muted-foreground">{t.createPost.subtitle}</p>
           </div>
           
           <div className="rounded-lg bg-card text-card-foreground shadow-lg border border-border">
             <div className="flex flex-col space-y-1.5 p-6 border-b border-border">
-              <div className="font-semibold tracking-tight text-xl">Upload New Document</div>
-              <div className="text-sm text-muted-foreground">Fill in the information below</div>
+              <div className="font-semibold tracking-tight text-xl">{t.createPost.uploadTitle}</div>
+              <div className="text-sm text-muted-foreground">{t.createPost.uploadSubtitle}</div>
             </div>
             
             <div className="p-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3 mb-6">
                 <FontAwesomeIcon icon={faCircleInfo} className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-900">
-                  <p className="font-semibold mb-1">Your document will be reviewed</p>
-                  <p>Administrators will check the content before publishing. This may take a few hours.</p>
+                  <p className="font-semibold mb-1">{t.createPost.reviewNotice}</p>
+                  <p>{t.createPost.reviewDescription}</p>
                 </div>
               </div>
 
@@ -77,7 +79,7 @@ const CreateDocument = () => {
                 categories={categories}
                 onSubmit={handleSubmit}
                 onCancel={() => setLocation("/documents")}
-                submitLabel="Submit Document"
+                submitLabel={t.createPost.submitDocument}
                 isAdmin={false}
               />
             </div>

@@ -1,17 +1,20 @@
 import { faCalendar } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook, faUsers } from "@fortawesome/free-solid-svg-icons";
+import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "wouter";
+import { useLanguage } from "../../i18n/LanguageContext";
+import { getAvatarUrl } from "../../utils/url";
 
-const UserCard = ({ name, email, avatar, role, badge, joined, courses, blogs }) => {
+const UserCard = ({ id, name, email, avatar, role, badge, joined, blogs }) => {
+    const { t } = useLanguage();
     return(
-        <Link href="/other-profile" className="block">
+        <Link href={`/other-profile/${id}`} className="block">
          <div className="rounded-xl border bg-card text-card-foreground border-border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
               <div className="p-8 text-center border-b border-border">
                 <span className="relative flex shrink-0 overflow-hidden rounded-full h-32 w-32 border-4 border-card shadow-xl mx-auto mb-6">
                   <img
-                    className="aspect-square h-full w-full"
-                    src={avatar}
+                    className="aspect-square h-full w-full object-cover"
+                    src={getAvatarUrl(avatar, name)}
                     alt={name}
                   />
                 </span>
@@ -35,24 +38,16 @@ const UserCard = ({ name, email, avatar, role, badge, joined, courses, blogs }) 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground flex items-center gap-2">
                     <FontAwesomeIcon icon={faCalendar} />
-                    Joined
+                    {t.userCard.joined}
                   </span>
                   <span className="font-medium text-foreground">{joined}</span>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground flex items-center gap-2">
-                    <FontAwesomeIcon icon={faBook} />
-                    Enrolled Courses
-                  </span>
-                  <span className="font-medium text-foreground">{courses}</span>
                 </div>
         
                 {blogs !== "0" && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-2">
                       <FontAwesomeIcon icon={faUsers} />
-                        Published Blogs
+                        {t.userCard.publishedBlogs}
                     </span>
                     <span className="font-medium text-green-600">{blogs}</span>
                   </div>

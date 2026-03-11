@@ -1,7 +1,9 @@
 import { Link } from "wouter";
+import { useLanguage } from "../../../i18n/LanguageContext";
 
 const InProgess = ({ courseData }) => {
     const { course, progress = 0, enrolledAt } = courseData || {};
+    const { t } = useLanguage();
     
     if (!course) return null;
 
@@ -18,7 +20,7 @@ const InProgess = ({ courseData }) => {
                   
                   <div className="absolute top-3 left-3">
                     <div className="whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 font-semibold border-transparent shadow-xs bg-white/90 text-primary border-none text-[10px]">
-                      IN PROGRESS
+                      {t.inProgressCourse.inProgress}
                     </div>
                   </div>
                 </div>
@@ -28,7 +30,7 @@ const InProgess = ({ courseData }) => {
                   </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Progress</span>
+                      <span>{t.inProgressCourse.progress}</span>
                       <span className="font-bold text-primary">{progress}%</span>
                     </div>
                     <div className="relative w-full overflow-hidden rounded-full bg-primary/20 h-1.5">
@@ -39,7 +41,7 @@ const InProgess = ({ courseData }) => {
                     </div>
                   </div>
                   <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-input shadow-xs active:shadow-none min-h-8 rounded-md px-3 w-full mt-4 h-9 text-xs">
-                    Continue Learning
+                    {t.inProgressCourse.continueLearning}
                   </button>
                 </div>
               </div>

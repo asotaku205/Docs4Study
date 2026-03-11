@@ -3,8 +3,10 @@ import { categoriesAPI } from "../../services/api";
 import { AdminHeader, AdminFormInput, AdminFormCheckbox, AdminDeleteModal, AdminStatusBadge } from "./shared/AdminLayout";
 import { AdminTable, AdminTableHeader, AdminTableBody, AdminTableRow, AdminTableCell } from "./shared/AdminTable";
 import { PrimaryButton, SecondaryButton, SmallButton, DeleteButton, BackButton } from "./shared/AdminButtons";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function Categories() {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState([]);
   const [viewMode, setViewMode] = useState("list");
   const [activeCategory, setActiveCategory] = useState(null);
@@ -88,6 +90,7 @@ export default function Categories() {
       <AddCategoryForm
         onAdd={handleAdd}
         onCancel={() => setViewMode("list")}
+        t={t}
       />
     );
   } else if (viewMode === "edit") {
@@ -97,6 +100,7 @@ export default function Categories() {
         onChange={setActiveCategory}
         onSave={handleSave}
         onCancel={() => setViewMode("list")}
+        t={t}
       />
     );
   } else {
@@ -112,6 +116,7 @@ export default function Categories() {
         onDelete={(c) => setCategoryToDelete(c)}
         onRestore={handleRestore}
         onToggleActive={handleToggleActive}
+        t={t}
       />
     );
   }
@@ -122,29 +127,31 @@ export default function Categories() {
 
       <AdminDeleteModal
         isOpen={!!categoryToDelete}
-        title="Delete category?"
+        title={t("admin.catMgmt.deleteTitle")}
         itemName={categoryToDelete?.name}
         onConfirm={handleDelete}
         onCancel={() => setCategoryToDelete(null)}
+        cancelText={t("admin.catMgmt.cancel")}
+        confirmText={t("admin.catMgmt.delete")}
       />
     </>
   );
 }
 
-function CategoryList({ categories, loading, onAdd, onEdit, onDelete, onRestore, onToggleActive }) {
+function CategoryList({ categories, loading, onAdd, onEdit, onDelete, onRestore, onToggleActive, t }) {
   return (
     <div>
       <AdminHeader 
-        title={`Categories (${categories.length})`} 
+        title={`${t('admin.catMgmt.title')} (${categories.length})`} 
         onAdd={onAdd}
-        buttonText="New Category"
+        buttonText={t('admin.catMgmt.newCategory')}
       />
 
       {loading ? (
-        <p className="text-center py-8">Loading...</p>
+        <p className="text-center py-8">{t('admin.catMgmt.loading')}</p>
       ) : (
         <AdminTable>
-          <AdminTableHeader columns={['Name', 'Slug', 'Status', 'Actions']} />
+          <AdminTableHeader columns={[t('admin.catMgmt.name'), t('admin.catMgmt.slug'), t('admin.catMgmt.status'), t('admin.catMgmt.actions')]} />
           <AdminTableBody>
             {categories.map((c) => (
               <AdminTableRow key={c._id} isDeleted={c.isDeleted}>
@@ -152,22 +159,22 @@ function CategoryList({ categories, loading, onAdd, onEdit, onDelete, onRestore,
                 <AdminTableCell isGray>{c.slug}</AdminTableCell>
                 <AdminTableCell>
                   <AdminStatusBadge 
-                    status={c.isDeleted ? 'Deleted' : c.isActive ? 'Active' : 'Inactive'}
+                    status={c.isDeleted ? t('admin.blogMgmt.deleted') : c.isActive ? t('admin.catMgmt.active') : t('admin.catMgmt.inactive')}
                     isActive={c.isActive && !c.isDeleted}
                   />
                 </AdminTableCell>
                 <AdminTableCell>
                   {c.isDeleted ? (
-                    <SmallButton onClick={() => onRestore(c)}>Restore</SmallButton>
+                    <SmallButton onClick={() => onRestore(c)}>{t('admin.catMgmt.restore')}</SmallButton>
                   ) : (
                     <>
-                      <SmallButton onClick={() => onEdit(c)}>Edit</SmallButton>
+                      <SmallButton onClick={() => onEdit(c)}>{t('admin.catMgmt.edit')}</SmallButton>
                       {' '}
                       <SmallButton onClick={() => onToggleActive(c)}>
-                        {c.isActive ? 'Deactivate' : 'Activate'}
+                        {c.isActive ? t('admin.catMgmt.deactivate') : t('admin.catMgmt.activate')}
                       </SmallButton>
                       {' '}
-                      <DeleteButton onClick={() => onDelete(c)}>Delete</DeleteButton>
+                      <DeleteButton onClick={() => onDelete(c)}>{t('admin.catMgmt.delete')}</DeleteButton>
                     </>
                   )}
                 </AdminTableCell>
@@ -180,43 +187,43 @@ function CategoryList({ categories, loading, onAdd, onEdit, onDelete, onRestore,
   );
 }
 
-function EditCategoryForm({ category, onChange, onSave, onCancel }) {
+function EditCategoryForm({ category, onChange, onSave, onCancel, t }) {
   return (
     <div>
       <BackButton onClick={onCancel} />
-      <h2 className="text-xl font-bold mb-4">Edit Category</h2>
+      <h2 className="text-xl font-bold mb-4">{t('admin.catMgmt.editCategory')}</h2>
 
       <AdminFormInput 
-        label="Name" 
+        label={t('admin.catMgmt.name')} 
         value={category.name} 
         onChange={(v) => onChange({ ...category, name: v })} 
       />
       <AdminFormInput 
-        label="Slug" 
+        label={t('admin.catMgmt.slug')} 
         value={category.slug} 
         onChange={(v) => onChange({ ...category, slug: v })} 
       />
       <AdminFormInput 
-        label="Description" 
+        label={t('admin.catMgmt.description')} 
         value={category.description || ''} 
         onChange={(v) => onChange({ ...category, description: v })} 
       />
 
       <AdminFormCheckbox
-        label="Active"
+        label={t('admin.catMgmt.active')}
         checked={category.isActive}
         onChange={(checked) => onChange({ ...category, isActive: checked })}
       />
 
       <div className="mt-4 flex gap-3">
-        <PrimaryButton onClick={onSave}>Save</PrimaryButton>
-        <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
+        <PrimaryButton onClick={onSave}>{t('admin.catMgmt.save')}</PrimaryButton>
+        <SecondaryButton onClick={onCancel}>{t('admin.catMgmt.cancel')}</SecondaryButton>
       </div>
     </div>
   );
 }
 
-function AddCategoryForm({ onAdd, onCancel }) {
+function AddCategoryForm({ onAdd, onCancel, t }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -231,7 +238,7 @@ function AddCategoryForm({ onAdd, onCancel }) {
 
   const handleSubmit = () => {
     if (!name) {
-      alert("Name is required");
+      alert(t('admin.catMgmt.nameRequired'));
       return;
     }
     onAdd({ name, slug: slug || name.toLowerCase().replace(/\s+/g, '-'), description, isActive });
@@ -240,21 +247,21 @@ function AddCategoryForm({ onAdd, onCancel }) {
   return (
     <div>
       <BackButton onClick={onCancel} />
-      <h2 className="text-xl font-bold mb-4">Add New Category</h2>
+      <h2 className="text-xl font-bold mb-4">{t('admin.catMgmt.addCategory')}</h2>
 
-      <AdminFormInput label="Name" value={name} onChange={handleNameChange} />
-      <AdminFormInput label="Slug" value={slug} onChange={setSlug} />
-      <AdminFormInput label="Description" value={description} onChange={setDescription} />
+      <AdminFormInput label={t('admin.catMgmt.name')} value={name} onChange={handleNameChange} />
+      <AdminFormInput label={t('admin.catMgmt.slug')} value={slug} onChange={setSlug} />
+      <AdminFormInput label={t('admin.catMgmt.description')} value={description} onChange={setDescription} />
 
       <AdminFormCheckbox
-        label="Active"
+        label={t('admin.catMgmt.active')}
         checked={isActive}
         onChange={setIsActive}
       />
 
       <div className="mt-4 flex gap-3">
-        <PrimaryButton onClick={handleSubmit}>Add</PrimaryButton>
-        <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
+        <PrimaryButton onClick={handleSubmit}>{t('admin.catMgmt.add')}</PrimaryButton>
+        <SecondaryButton onClick={onCancel}>{t('admin.catMgmt.cancel')}</SecondaryButton>
       </div>
     </div>
   );

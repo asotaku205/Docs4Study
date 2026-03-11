@@ -12,8 +12,10 @@ import {
   faCog,
   faBars,
   faXmark,
-  faRightFromBracket
+  faRightFromBracket,
+  faGlobe
 } from "@fortawesome/free-solid-svg-icons";
+import { useLanguage } from "@/i18n/LanguageContext";
 import Overview from "@/components/admin/Overview";
 import Documents from "@/components/admin/Documents";
 import Courses from "@/components/admin/Courses";
@@ -23,17 +25,18 @@ import Users from "@/components/admin/Users";
 import Settings from "@/components/admin/Settings";
 
 export default function AdminDashboard() {
+  const { t, language, changeLanguage } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
   const navItems = [
-    { icon: faChartLine, label: "Dashboard", id: "overview" },
-    { icon: faFileAlt, label: "Documents", id: "documents" },
-    { icon: faBook, label: "Courses", id: "courses" },
-    { icon: faBlog, label: "Blog Posts", id: "blog" },
-    { icon: faTags, label: "Categories", id: "categories" },
-    { icon: faUsers, label: "Users", id: "users" },
-    { icon: faCog, label: "Settings", id: "settings" },
+    { icon: faChartLine, label: t("admin.dashboard"), id: "overview" },
+    { icon: faFileAlt, label: t("admin.documents"), id: "documents" },
+    { icon: faBook, label: t("admin.courses"), id: "courses" },
+    { icon: faBlog, label: t("admin.blogPosts"), id: "blog" },
+    { icon: faTags, label: t("admin.categories"), id: "categories" },
+    { icon: faUsers, label: t("admin.users"), id: "users" },
+    { icon: faCog, label: t("admin.settings"), id: "settings" },
   ];
 
   return (
@@ -51,7 +54,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between mb-8 md:mb-12">
           <div className="flex items-center gap-2 font-heading font-bold text-base md:text-lg">
             <FontAwesomeIcon icon={faChartLine} className="h-5 md:h-6 w-5 md:w-6" />
-            <span className="hidden sm:inline">Admin Panel</span>
+            <span className="hidden sm:inline">{t("admin.panelTitle")}</span>
           </div>
           <button 
             onClick={() => setSidebarOpen(false)}
@@ -83,7 +86,7 @@ export default function AdminDashboard() {
           <Link href="/">
             <Button variant="ghost" className="w-full text-primary-foreground hover:bg-white/10 justify-start gap-2 text-sm md:text-base">
               <FontAwesomeIcon icon={faRightFromBracket} className="h-4 w-5 shrink-0" /> 
-              <span className="hidden sm:inline">Exit Admin</span>
+              <span className="hidden sm:inline">{t("admin.exitAdmin")}</span>
             </Button>
           </Link>
         </div>
@@ -100,10 +103,18 @@ export default function AdminDashboard() {
                 <FontAwesomeIcon icon={faBars} className="h-6 w-6" />
               </button>
               <div>
-                <h1 className="text-2xl md:text-3xl font-heading font-bold">Admin Control</h1>
-                <p className="text-xs md:text-sm text-muted-foreground">Manage platform content & users</p>
+                <h1 className="text-2xl md:text-3xl font-heading font-bold">{t("admin.controlTitle")}</h1>
+                <p className="text-xs md:text-sm text-muted-foreground">{t("admin.controlSubtitle")}</p>
               </div>
             </div>
+            <button
+              onClick={() => changeLanguage(language === 'en' ? 'vi' : 'en')}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:bg-muted transition-colors text-sm font-medium"
+              title={t("admin.switchLang")}
+            >
+              <FontAwesomeIcon icon={faGlobe} className="h-4 w-4" />
+              <span>{language === 'en' ? 'EN' : 'VI'}</span>
+            </button>
           </div>
         </header>
 

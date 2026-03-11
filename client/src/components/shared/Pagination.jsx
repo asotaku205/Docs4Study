@@ -1,6 +1,7 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 const Pagination = ({ 
   currentPage, 
@@ -9,6 +10,7 @@ const Pagination = ({
   totalItems = 0,
   itemsPerPage = 10
 }) => {
+  const { t } = useLanguage();
   if (totalPages <= 1) return null;
 
   const pages = [];
@@ -31,7 +33,7 @@ const Pagination = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-border">
       <div className="text-sm text-muted-foreground">
-        Showing {startItem} to {endItem} of {totalItems} results
+        {t.pagination.showing} {startItem} {t.pagination.to} {endItem} {t.pagination.of} {totalItems} {t.pagination.results}
       </div>
       
       <div className="flex items-center gap-2">

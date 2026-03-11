@@ -20,16 +20,18 @@ import {
   faParagraph
 } from '@fortawesome/free-solid-svg-icons';
 import { useRef } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const MenuBar = ({ editor }) => {
   const fileInputRef = useRef(null);
+  const { t } = useLanguage();
 
   if (!editor) {
     return null;
   }
 
   const addLink = () => {
-    const url = window.prompt('Enter URL:');
+    const url = window.prompt(t.tipTap.enterUrl);
     if (url) {
       editor.chain().focus().setLink({ href: url }).run();
     }
@@ -47,7 +49,7 @@ const MenuBar = ({ editor }) => {
       };
       reader.readAsDataURL(file);
     }
-    // Reset input
+    // Đặt lại input
     event.target.value = '';
   };
 
@@ -76,7 +78,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faParagraph} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Paragraph
+          {t.tipTap.paragraph}
         </span>
       </button>
 
@@ -89,7 +91,7 @@ const MenuBar = ({ editor }) => {
       >
         <span className="text-sm font-bold">H1</span>
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Heading 1
+          {t.tipTap.heading1}
         </span>
       </button>
 
@@ -102,7 +104,7 @@ const MenuBar = ({ editor }) => {
       >
         <span className="text-sm font-bold">H2</span>
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Heading 2
+          {t.tipTap.heading2}
         </span>
       </button>
 
@@ -115,7 +117,7 @@ const MenuBar = ({ editor }) => {
       >
         <span className="text-sm font-bold">H3</span>
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Heading 3
+          {t.tipTap.heading3}
         </span>
       </button>
 
@@ -131,7 +133,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faBold} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Bold (Ctrl+B)
+          {t.tipTap.bold}
         </span>
       </button>
 
@@ -144,7 +146,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faItalic} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Italic (Ctrl+I)
+          {t.tipTap.italic}
         </span>
       </button>
 
@@ -157,7 +159,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faStrikethrough} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Strikethrough
+          {t.tipTap.strikethrough}
         </span>
       </button>
 
@@ -170,7 +172,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faCode} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Inline Code
+          {t.tipTap.inlineCode}
         </span>
       </button>
 
@@ -186,7 +188,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faListUl} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Bullet List
+          {t.tipTap.bulletList}
         </span>
       </button>
 
@@ -199,7 +201,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faListOl} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Numbered List
+          {t.tipTap.orderedList}
         </span>
       </button>
 
@@ -215,7 +217,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faQuoteLeft} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Blockquote
+          {t.tipTap.blockquote}
         </span>
       </button>
 
@@ -228,7 +230,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faCode} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Code Block
+          {t.tipTap.codeBlock}
         </span>
       </button>
 
@@ -244,7 +246,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faLink} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Insert Link
+          {t.tipTap.link}
         </span>
       </button>
 
@@ -255,7 +257,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faImage} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Upload Image
+          {t.tipTap.image}
         </span>
       </button>
 
@@ -270,7 +272,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faUndo} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Undo (Ctrl+Z)
+          {t.tipTap.undo}
         </span>
       </button>
 
@@ -282,7 +284,7 @@ const MenuBar = ({ editor }) => {
       >
         <FontAwesomeIcon icon={faRedo} className="w-4 h-4" />
         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Redo (Ctrl+Y)
+          {t.tipTap.redo}
         </span>
       </button>
     </div>
@@ -293,7 +295,7 @@ const TipTapEditor = ({ value, onChange, placeholder = 'Write your content here.
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        history: false, // Disable history from StarterKit to avoid duplicate
+        history: false, // Tắt lịch sử từ StarterKit để tránh trùng lặp
       }),
       Link.configure({
         openOnClick: false,

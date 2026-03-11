@@ -5,7 +5,12 @@ import adminDashboardController from "../controller/CRUDadmindashboard.controlle
 const routerUser = Router();
 
 routerUser.get('/me', protectedRoute, UserController.me);
+routerUser.get('/profile', protectedRoute, UserController.getMyProfile);
+routerUser.put('/profile', protectedRoute, UserController.updateProfile);
+routerUser.get('/profile/:id', UserController.getUserProfile);
 routerUser.post('/change-password', protectedRoute, UserController.changePassword);
+
+routerUser.get('/search', UserController.search);
 
 routerUser.get('/blogs', UserController.getAllBlogs);
 routerUser.get('/blogs/:id', UserController.getBlogById);

@@ -2,9 +2,11 @@ import React from "react";
 import { Link } from "wouter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileLines, faDownload } from "@fortawesome/free-solid-svg-icons";
+import { useLanguage } from "../../../i18n/LanguageContext";
 
 
 const CardDocs = ({ id, title, description, downloads, views, type, category, fileSize }) => {
+  const { t } = useLanguage();
   return (
     <Link href={`/documents/${id}`} className="block">
       <div className="group bg-card border border-border rounded-xl p-6 hover:shadow-md transition-all duration-300 flex flex-col md:flex-row gap-6 items-start">
@@ -35,7 +37,7 @@ const CardDocs = ({ id, title, description, downloads, views, type, category, fi
                 <FontAwesomeIcon icon={faDownload} /> {downloads}
               </span>
               <span className="flex items-center gap-1">
-                Views: {views}
+                {t.cardDocs.views} {views}
               </span>
             </div>
             <div className="text-sm text-muted-foreground">

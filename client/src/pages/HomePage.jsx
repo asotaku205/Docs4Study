@@ -9,17 +9,23 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../hooks/useAuth";
 import { blogService } from "../services/blogService";
+import { documentService } from "../services/documentService";
+import apiUser from "../services/apiUser";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const HomePage = () => {
   const { isLoggedIn } = useAuth();
+  const { t, language } = useLanguage();
   const [blogs, setBlogs] = useState([]);
   const [featuredBlog, setFeaturedBlog] = useState(null);
   const [courses, setCourses] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchBlogs();
     fetchCourses();
+    fetchDocuments();
   }, []);
 
   const fetchBlogs = async () => {
@@ -30,10 +36,10 @@ const HomePage = () => {
         post => post.status === 'published' && !post.isDeleted
       );
       
-      // Set first blog as featured (hero post)
+      // Đặt blog đầu tiên làm bài nổi bật
       if (publishedBlogs.length > 0) {
         setFeaturedBlog(publishedBlogs[0]);
-        // Set remaining blogs for Latest Update section
+        // Đặt các blog còn lại cho phần Cập nhật mới nhất
         setBlogs(publishedBlogs.slice(1, 4));
       }
     } catch (error) {
@@ -45,19 +51,29 @@ const HomePage = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/user/courses?isPublished=true&limit=3');
-      const data = await response.json();
-      if (data.data) {
-        setCourses(data.data);
-      }
+      const response = await apiUser.get('/user/courses', { params: { isPublished: true, limit: 3 } });
+      setCourses(response.data.data || []);
     } catch (error) {
       console.error('Error fetching courses:', error);
     }
   };
 
+  const fetchDocuments = async () => {
+    try {
+      const response = await documentService.getAllDocuments({ limit: 20 });
+      const docs = (response.data || [])
+        .filter(doc => doc.status === 'published' && !doc.isDeleted)
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
+        .slice(0, 4);
+      setDocuments(docs);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
   const formatDate = (date) => {
-    if (!date) return 'No date';
-    return new Date(date).toLocaleDateString('en-US', {
+    if (!date) return t.common.noDate;
+    return new Date(date).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -71,28 +87,27 @@ const HomePage = () => {
         <div className="container relative z-10 mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6 text-center lg:text-left">
             <div className="whitespace-nowrap inline-flex items-center rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-secondary text-secondary-foreground px-4 py-1 text-sm font-medium tracking-wide  ">
-              Welcome to Docs4Study
+              {t.home.welcomeBadge}
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-heading font-bold text-white leading-tight">
-              Unlock Your Potential with {" "}
+              {t.home.heroTitle}{" "}
               <span className="font-semibold text-blue-200">
-                Quality Knowledge {" "}
+                {t.home.heroHighlight}{" "}
               </span>
             </h1>
             <p className="text-lg text-blue-100 max-w-2xl mx-auto lg:mx-0">
-              Access thousands of study documents, expert-led courses, and
-              insightful articles to accelerate your learning journey.
+              {t.home.heroDescription}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4 ">
               <Link href="/blog">
               <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap hover-elevate active-elevate-2 border border-primary-border min-h-10 rounded-md bg-white text-primary hover:bg-blue-50 text-base font-semibold px-8">
-                Start Reading
+                {t.home.startReading}
               </button>
               </Link>
               <Link href="/courses">
               <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-10 rounded-md px-8 border-white/30 text-white hover:bg-white/10 hover:text-white text-base">
-                Explore Courses
+                {t.home.exploreCourses}
               </button>
               </Link>
             </div>
@@ -106,7 +121,7 @@ const HomePage = () => {
                 className="w-full h-auto object-cover"
               />
               <div className="absolute bottom-0 left-0 right-0 text-white bg-gradient-to-t from-black/80 to-transparent p-8">
-                "The best investment you can make is in yourself."
+                {t.home.heroQuote}
               </div>
             </div>
           </div>
@@ -117,16 +132,16 @@ const HomePage = () => {
           <div className="flex items-center justify-between mb-8">
             <div className=" ">
               <h2 className="font-bold font-leading text-foreground text-3xl">
-                Featured Insights
+                {t.home.featuredInsights}
               </h2>
               <p className="text-muted-foreground mt-2 ">
-                Our topic for this week.
+                {t.home.featuredSubtitle}
               </p>
             </div>
             <div className="flex items-center gap-2 text-primary font-medium cursor-pointer">
               <Link href="/blog">
                 <button className="inline-flex items-center gap-2 hover:cursor-pointer">
-                  View all blog
+                  {t.home.viewAllBlog}
                 </button>
                 <FontAwesomeIcon icon={faAngleRight} />
               </Link>
@@ -141,15 +156,15 @@ const HomePage = () => {
               id={featuredBlog._id}
               image={featuredBlog.image}
               images={featuredBlog.images}
-              category={featuredBlog.category?.name || 'Uncategorized'}
+              category={featuredBlog.category?.name || t.common.uncategorized}
               date={formatDate(featuredBlog.publishedAt || featuredBlog.createdAt)}
               title={featuredBlog.title}
               description={featuredBlog.description}
-            author={featuredBlog.author?.fullName || 'Unknown'}
+            author={featuredBlog.author?.fullName || t.common.unknown}
             />
           ) : (
             <div className="text-center py-20 bg-card rounded-xl border border-border">
-              <p className="text-muted-foreground">No featured blog available yet.</p>
+              <p className="text-muted-foreground">{t.home.noFeaturedBlog}</p>
             </div>
           )}
         </div>
@@ -157,15 +172,15 @@ const HomePage = () => {
       <section className="bg-muted/30 py-16">
         <div className="container mx-auto px-4">
           <h2 className="font-bold text-3xl mb-8 text-foreground text-center">
-            Latest Update
+            {t.home.latestUpdate}
           </h2>
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading blogs...</p>
+              <p className="text-muted-foreground">{t.home.loadingBlogs}</p>
             </div>
           ) : blogs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No blogs available yet.</p>
+              <p className="text-muted-foreground">{t.home.noBlogsYet}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -175,11 +190,11 @@ const HomePage = () => {
                   id={blog._id}
                   image={blog.image}
                   images={blog.images}
-                  category={blog.category?.name || 'Uncategorized'}
+                  category={blog.category?.name || t.common.uncategorized}
                   date={formatDate(blog.publishedAt || blog.createdAt)}
                   title={blog.title}
                   description={blog.description}
-                  author={blog.author?.fullName || 'Unknown'}
+                  author={blog.author?.fullName || t.common.unknown}
                 />
               ))}
             </div>
@@ -193,62 +208,49 @@ const HomePage = () => {
               <div className="flex justify-between items-end">
                 <div>
                   <h2 className="text-3xl font-heading font-bold text-foreground">
-                    Popular Documents
+                    {t.home.popularDocuments}
                   </h2>
                   <p className="text-muted-foreground mt-2">
-                    Most viewed study materials
+                    {t.home.mostViewed}
                   </p>
                 </div>
                 <div>
                   <Link href="/documents">
-                    <button className="text-sm font-medium hover:cursor-pointer">View all</button>
+                    <button className="text-sm font-medium hover:cursor-pointer">{t.home.viewAll}</button>
                     <FontAwesomeIcon icon={faAngleRight} />
                   </Link>
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
-                <TopDocs
-                  category="Intermediate"
-                  title="Calculus I - Final Exam Cheatsheet"
-                  description="Comprehensive formula sheet for derivatives and integrals."
-                  dowloaded="340"
-                  view="1.2k"
-                />
-                <TopDocs
-                  category="Intermediate"
-                  title="Calculus I - Final Exam Cheatsheet"
-                  description="Comprehensive formula sheet for derivatives and integrals."
-                  dowloaded="340"
-                  view="1.2k"
-                />
-                <TopDocs
-                  category="Intermediate"
-                  title="Calculus I - Final Exam Cheatsheet"
-                  description="Comprehensive formula sheet for derivatives and integrals."
-                  dowloaded="340"
-                  view="1.2k"
-                />
-                <TopDocs
-                  category="Intermediate"
-                  title="Calculus I - Final Exam Cheatsheet"
-                  description="Comprehensive formula sheet for derivatives and integrals."
-                  dowloaded="340"
-                  view="1.2k"
-                />
+                {documents.length > 0 ? (
+                  documents.map((doc) => (
+                    <TopDocs
+                      key={doc._id}
+                      id={doc._id}
+                      category={doc.category?.name || t.common.general}
+                      title={doc.title}
+                      description={doc.description || t.blogCard.noDescription}
+                      downloaded={doc.downloads || 0}
+                      views={doc.views || 0}
+                    />
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-center py-8 col-span-2">{t.home.noDocuments}</p>
+                )}
               </div>
             </div>
             <div className="lg:col-span-5">
               <div className="flex  justify-between items-end mb-8">
                 <div className="">
                   <h2 className="text-3xl font-heading font-bold text-foreground mb-4">
-                    Recommended Courses
+                    {t.home.recommendedCourses}
                   </h2>
                   <p className="text-muted-foreground mt-2">
-                    Top-rated learning paths{" "}
+                    {t.home.topRated}{" "}
                   </p>
                 </div>
                 <Link href="/courses">
-                  <button className="text-sm font-medium hover:cursor-pointer">View all</button>
+                  <button className="text-sm font-medium hover:cursor-pointer">{t.home.viewAll}</button>
                   <FontAwesomeIcon icon={faAngleRight} />
                 </Link>
               </div>
@@ -266,7 +268,7 @@ const HomePage = () => {
                     />
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-center py-8">No courses available</p>
+                  <p className="text-muted-foreground text-center py-8">{t.home.noCourses}</p>
                 )}
               </div>
             </div>
@@ -277,16 +279,14 @@ const HomePage = () => {
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center space-y-6">
             <h2 className="text-3xl lg:text-4xl font-heading font-bold">
-              Ready to Elevate Your Learning Journey?
+              {t.home.ctaTitle}
             </h2>
             <p className="max-w-2xl mx-auto text-lg text-blue-100">
-              Join Docs4Study today and unlock a world of knowledge at your
-              fingertips. Whether you're a student, professional, or lifelong
-              learner, we have the resources to help you succeed.
+              {t.home.ctaDescription}
             </p>
             <Link href="/auth">
               <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap hover-elevate active-elevate-2 border border-primary-border min-h-10 rounded-md bg-white text-primary hover:bg-blue-50 text-base font-semibold px-8">
-                Create Your Free Account
+                {t.home.ctaButton}
               </button>
             </Link>
           </div>

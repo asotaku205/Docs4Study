@@ -15,12 +15,12 @@ const blogPostSchema = new mongoose.Schema({
     ref: 'Category',
     required: true
   },
-  image: String, // Main/featured image (kept for backward compatibility)
+  image: String, // Ảnh chính/nổi bật (giữ lại để tương thích ngược)
   images: [{
     url: String,
     caption: String,
     order: Number
-  }], // Support multiple images
+  }], // Hỗ trợ nhiều ảnh
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

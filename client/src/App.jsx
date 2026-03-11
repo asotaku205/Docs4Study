@@ -53,7 +53,7 @@ function Routes() {
           </ProtectedRoute>
         )}
       </Route>
-      <Route path="/other-profile" component={OtherProfile} />
+      <Route path="/other-profile/:id" component={OtherProfile} />
       <Route path="/admin">
         {() => (
           <ProtectedRoute requireAdmin={true}>

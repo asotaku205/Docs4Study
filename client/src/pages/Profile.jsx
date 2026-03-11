@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation, useSearch } from "wouter";
 import Layout from "../components/Layout";
 import MyCourses from "../components/users/Profile/MyCourses";
 import ProfileCard from "../components/users/Profile/ProfileCard";
@@ -7,18 +8,56 @@ import { faBookOpen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileLines } from "@fortawesome/free-regular-svg-icons";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-import { useState } from "react";
 import SavedDocs from "../components/users/Profile/SavedDoc";
-
 import MyPost from "../components/users/Profile/MyPost"; 
 import Setting from "../components/users/Profile/Setting";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
+import apiUser from "../services/apiUser";
+import { useAuth } from "../hooks/useAuth";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Profile = () => {
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  const tabFromUrl = urlParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl || "My Courses");
+  const [, setLocation] = useLocation();
+  const search = useSearch();
+  const [activeTab, setActiveTab] = useState("My Courses");
+  const [profileData, setProfileData] = useState(null);
+  const [contentLoading, setContentLoading] = useState(true);
+  const { user: authUser } = useAuth();
+  const { t } = useLanguage();
+
+  // Phản ứng khi tham số ?tab= thay đổi (ví dụ: từ link Cài đặt ở header)
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const tab = params.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [search]);
+
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    // Xóa query params khi click tab thủ công
+    setLocation('/profile', { replace: true });
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setContentLoading(true);
+      const response = await apiUser.get('/user/profile');
+      setProfileData(response.data.data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setContentLoading(false);
+    }
+  };
+
+  const userData = profileData?.user || authUser || {};
+  const stats = profileData?.stats || {};
+  const blogs = profileData?.blogs || [];
+  const documents = profileData?.documents || [];
 
   return (
     <Layout>
@@ -31,10 +70,11 @@ const Profile = () => {
         <div className="grid lg:grid-cols-12 gap-8">
          <div className="lg:col-span-4 space-y-6">
             <ProfileCard 
-            setActiveTab={setActiveTab}
+              setActiveTab={setActiveTab}
+              userData={userData}
             />
 
-            <Statistics />
+            <Statistics stats={stats} />
           </div>
 
           <div className="lg:col-span-8">
@@ -46,10 +86,10 @@ const Profile = () => {
                       ? "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow rounded-lg gap-2 bg-primary text-primary-foreground"
                       : "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2"
                   }
-                  onClick={() => setActiveTab("My Courses")}
+                  onClick={() => handleTabClick("My Courses")}
                 >
                   <FontAwesomeIcon icon={faBookOpen} />
-                  My Courses
+                  {t.profile.myCourses}
                 </button>
                 <button
                   className={
@@ -57,10 +97,10 @@ const Profile = () => {
                       ? "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2 bg-primary text-primary-foreground"
                       : "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2"
                   }
-                  onClick={() => setActiveTab("Saved Docs")}
+                  onClick={() => handleTabClick("Saved Docs")}
                 >
                   <FontAwesomeIcon icon={faFileLines} />
-                  Saved Docs
+                  {t.profile.savedDocs}
                 </button>
                 <button
                   className={
@@ -68,10 +108,10 @@ const Profile = () => {
                       ? "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2 bg-primary text-primary-foreground"
                       : "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2"
                   }
-                  onClick={() => setActiveTab("My Posts")}
+                  onClick={() => handleTabClick("My Posts")}
                 >
                   <FontAwesomeIcon icon={faPen} />
-                  My Posts
+                  {t.profile.myPosts}
                 </button>
                 <button
                   className={
@@ -79,16 +119,24 @@ const Profile = () => {
                       ? "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2 ml-auto bg-primary text-primary-foreground"
                       : "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg gap-2 ml-auto"
                   }
-                  onClick={() => setActiveTab("Setting")}
+                  onClick={() => handleTabClick("Setting")}
                 >
                   <FontAwesomeIcon icon={faGear} />
                 </button>
               </div>
 
               {activeTab === "My Courses" && <MyCourses />}
-              {activeTab === "Saved Docs" && <SavedDocs />}
-              {activeTab === "My Posts" && <MyPost />}
-              {activeTab === "Setting" && <Setting />}
+              {activeTab === "Saved Docs" && (
+                contentLoading 
+                  ? <div className="rounded-xl border bg-card border-border p-8 text-center text-muted-foreground">{t.profile.loadingDocs}</div>
+                  : <SavedDocs documents={documents} />
+              )}
+              {activeTab === "My Posts" && (
+                contentLoading
+                  ? <div className="rounded-xl border bg-card border-border p-8 text-center text-muted-foreground">{t.profile.loadingPosts}</div>
+                  : <MyPost blogs={blogs} />
+              )}
+              {activeTab === "Setting" && <Setting user={userData} onProfileUpdate={fetchProfile} />}
             </div>
           </div>
         </div>

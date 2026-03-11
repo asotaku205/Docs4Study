@@ -8,8 +8,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Pagination from "../shared/Pagination";
 import { coursesAPI } from "@/services/api";
 import apiUser from "@/services/apiUser";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function Courses() {
+  const { t } = useLanguage();
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [editCourse, setEditCourse] = useState(null);
@@ -88,7 +90,7 @@ export default function Courses() {
 
   const handleAdd = async (data) => {
     if (!data.title?.trim() || !data.instructor?.trim() || !data.courseUrl?.trim()) {
-      alert("Please fill in all required fields (Title, Instructor, Course URL)");
+      alert(t("admin.coursesMgmt.fillRequired"));
       return;
     }
     try {
@@ -110,43 +112,43 @@ export default function Courses() {
       return (
         <div className="space-y-4">
           <Button variant="outline" onClick={() => { setSelectedCourse(null); setEditCourse(null); }} className="gap-2" size="sm">
-            <ChevronRight className="h-4 w-4 rotate-180" /> Back
+            <ChevronRight className="h-4 w-4 rotate-180" /> {t("admin.coursesMgmt.back")}
           </Button>
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Edit Course</CardTitle>
+              <CardTitle className="text-lg">{t("admin.coursesMgmt.editCourse")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Title *</label>
+                <label className="text-sm font-medium">{t("admin.coursesMgmt.courseTitle")} *</label>
                 <Input value={editCourse.title || ""} onChange={(e) => setEditCourse({...editCourse, title: e.target.value})} className="mt-1" />
               </div>
               <div>
-                <label className="text-sm font-medium">Course URL * (YouTube, Udemy, etc.)</label>
+                <label className="text-sm font-medium">{t("admin.coursesMgmt.courseUrlHint")}</label>
                 <Input value={editCourse.courseUrl || ""} onChange={(e) => setEditCourse({...editCourse, courseUrl: e.target.value})} placeholder="https://..." className="mt-1" />
               </div>
               <div>
-                <label className="text-sm font-medium">Description</label>
+                <label className="text-sm font-medium">{t("admin.coursesMgmt.descriptionLabel")}</label>
                 <textarea value={editCourse.description || ""} onChange={(e) => setEditCourse({...editCourse, description: e.target.value})} className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1 min-h-[80px]" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Instructor *</label>
+                  <label className="text-sm font-medium">{t("admin.coursesMgmt.instructor")} *</label>
                   <Input 
                     value={editCourse.instructor || ""} 
                     onChange={(e) => setEditCourse({...editCourse, instructor: e.target.value})} 
-                    placeholder="Instructor name"
+                    placeholder={t("admin.coursesMgmt.instructorPlaceholder")}
                     className="mt-1" 
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Category</label>
+                  <label className="text-sm font-medium">{t("admin.coursesMgmt.category")}</label>
                   <select 
                     value={editCourse.category?._id || editCourse.category || ""} 
                     onChange={(e) => setEditCourse({...editCourse, category: e.target.value})} 
                     className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1"
                   >
-                    <option value="">No Category</option>
+                    <option value="">{t("admin.coursesMgmt.noCategory")}</option>
                     {categories.map(cat => (
                       <option key={cat._id} value={cat._id}>
                         {cat.name}
@@ -157,16 +159,16 @@ export default function Courses() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Level *</label>
+                  <label className="text-sm font-medium">{t("admin.coursesMgmt.level")} *</label>
                   <select value={editCourse.level || "beginner"} onChange={(e) => setEditCourse({...editCourse, level: e.target.value})} className="w-full border border-input rounded-md px-3 py-2 text-sm mt-1">
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
+                    <option value="beginner">{t("admin.coursesMgmt.beginner")}</option>
+                    <option value="intermediate">{t("admin.coursesMgmt.intermediate")}</option>
+                    <option value="advanced">{t("admin.coursesMgmt.advanced")}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Duration</label>
-                  <Input value={editCourse.duration || ""} onChange={(e) => setEditCourse({...editCourse, duration: e.target.value})} placeholder="e.g., 8 hours" className="mt-1" />
+                  <label className="text-sm font-medium">{t("admin.coursesMgmt.duration")}</label>
+                  <Input value={editCourse.duration || ""} onChange={(e) => setEditCourse({...editCourse, duration: e.target.value})} placeholder={t("admin.coursesMgmt.durationPlaceholder")} className="mt-1" />
                 </div>
               </div>
               <div className="flex items-center gap-2 pt-2">
@@ -177,11 +179,11 @@ export default function Courses() {
                   onChange={(e) => setEditCourse({...editCourse, isPublished: e.target.checked})}
                   className="h-4 w-4"
                 />
-                <label htmlFor="edit-published" className="text-sm font-medium">Published (visible to users)</label>
+                <label htmlFor="edit-published" className="text-sm font-medium">{t("admin.coursesMgmt.publishedLabel")}</label>
               </div>
               <div className="flex gap-3 pt-4">
-                <Button onClick={() => handleSave(editCourse)} size="sm">Save Changes</Button>
-                <Button variant="outline" onClick={() => { setSelectedCourse(null); setEditCourse(null); }} size="sm">Cancel</Button>
+                <Button onClick={() => handleSave(editCourse)} size="sm">{t("admin.coursesMgmt.saveChanges")}</Button>
+                <Button variant="outline" onClick={() => { setSelectedCourse(null); setEditCourse(null); }} size="sm">{t("admin.coursesMgmt.cancel")}</Button>
               </div>
             </CardContent>
           </Card>
@@ -192,7 +194,7 @@ export default function Courses() {
     return (
       <div className="space-y-4">
         <Button variant="outline" onClick={() => setSelectedCourse(null)} className="gap-2" size="sm">
-          <ChevronRight className="h-4 w-4 rotate-180" /> Back
+          <ChevronRight className="h-4 w-4 rotate-180" /> {t("admin.coursesMgmt.back")}
         </Button>
         <Card>
           <CardHeader>
@@ -201,47 +203,47 @@ export default function Courses() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Course URL</p>
+              <p className="text-sm text-muted-foreground mb-2">{t("admin.coursesMgmt.courseUrl")}</p>
               <a href={selectedCourse.courseUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
                 {selectedCourse.courseUrl}
               </a>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Instructor</p>
+                <p className="text-sm text-muted-foreground">{t("admin.coursesMgmt.instructor")}</p>
                 <p className="font-semibold">{selectedCourse.instructor || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Category</p>
-                <Badge>{selectedCourse.category?.name || "Uncategorized"}</Badge>
+                <p className="text-sm text-muted-foreground">{t("admin.coursesMgmt.category")}</p>
+                <Badge>{selectedCourse.category?.name || t("admin.coursesMgmt.uncategorized")}</Badge>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Level</p>
+                <p className="text-sm text-muted-foreground">{t("admin.coursesMgmt.level")}</p>
                 <Badge className="capitalize">{selectedCourse.level || "beginner"}</Badge>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Duration</p>
+                <p className="text-sm text-muted-foreground">{t("admin.coursesMgmt.duration")}</p>
                 <p className="font-semibold">{selectedCourse.duration || "N/A"}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Status</p>
+                <p className="text-sm text-muted-foreground">{t("admin.coursesMgmt.status")}</p>
                 <Badge variant={selectedCourse.isPublished ? "default" : "secondary"}>
-                  {selectedCourse.isPublished ? "Published" : "Draft"}
+                  {selectedCourse.isPublished ? t("admin.blogMgmt.published") : t("admin.coursesMgmt.draft")}
                 </Badge>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 pt-4">
-              <Button onClick={() => setEditCourse(selectedCourse)} size="sm" className="sm:w-auto">Edit</Button>
+              <Button onClick={() => setEditCourse(selectedCourse)} size="sm" className="sm:w-auto">{t("admin.coursesMgmt.edit")}</Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="sm:w-auto">Delete</Button>
+                  <Button variant="destructive" size="sm" className="sm:w-auto">{t("admin.coursesMgmt.delete")}</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
-                  <AlertDialogTitle>Delete Course?</AlertDialogTitle>
-                  <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
+                  <AlertDialogTitle>{t("admin.coursesMgmt.deleteTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("admin.coursesMgmt.deleteDesc")}</AlertDialogDescription>
                   <div className="flex gap-3 justify-end">
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(selectedCourse._id)} className="bg-destructive">Delete</AlertDialogAction>
+                    <AlertDialogCancel>{t("admin.coursesMgmt.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDelete(selectedCourse._id)} className="bg-destructive">{t("admin.coursesMgmt.delete")}</AlertDialogAction>
                   </div>
                 </AlertDialogContent>
               </AlertDialog>
@@ -255,16 +257,16 @@ export default function Courses() {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
-        <h2 className="text-xl md:text-2xl font-bold">Courses ({filteredCourses.length})</h2>
+        <h2 className="text-xl md:text-2xl font-bold">{t("admin.coursesMgmt.title")} ({filteredCourses.length})</h2>
         <Button className="gap-2 w-full sm:w-auto" size="sm" onClick={() => setShowAddForm(true)}>
-          <Plus className="h-4 w-4" /> New Course
+          <Plus className="h-4 w-4" /> {t("admin.coursesMgmt.newCourse")}
         </Button>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input 
-          placeholder="Search courses..." 
+          placeholder={t("admin.coursesMgmt.searchPlaceholder")} 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -275,13 +277,13 @@ export default function Courses() {
         <Card className="bg-muted/30">
           <CardContent className="pt-4 md:pt-6">
             <div className="grid grid-cols-1 gap-3 md:gap-4 mb-4">
-              <Input placeholder="Course title *" id="course-title" />
-              <Input placeholder="Course URL * (e.g., https://youtube.com/...)" id="course-url" />
-              <textarea placeholder="Description" id="course-description" className="border border-input rounded-md px-3 py-2 text-sm min-h-[80px]" />
+              <Input placeholder={t("admin.coursesMgmt.titlePlaceholder")} id="course-title" />
+              <Input placeholder={t("admin.coursesMgmt.urlPlaceholder")} id="course-url" />
+              <textarea placeholder={t("admin.coursesMgmt.descPlaceholder")} id="course-description" className="border border-input rounded-md px-3 py-2 text-sm min-h-[80px]" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input placeholder="Instructor name *" id="course-instructor" />
+                <Input placeholder={t("admin.coursesMgmt.instrPlaceholder")} id="course-instructor" />
                 <select id="course-category" className="border border-input rounded-md px-3 py-2 text-sm">
-                  <option value="">No Category</option>
+                  <option value="">{t("admin.coursesMgmt.noCategory")}</option>
                   {categories.map(cat => (
                     <option key={cat._id} value={cat._id}>
                       {cat.name}
@@ -291,13 +293,13 @@ export default function Courses() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <select id="course-level" className="border border-input rounded-md px-3 py-2 text-sm">
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
+                  <option value="beginner">{t("admin.coursesMgmt.beginner")}</option>
+                  <option value="intermediate">{t("admin.coursesMgmt.intermediate")}</option>
+                  <option value="advanced">{t("admin.coursesMgmt.advanced")}</option>
                 </select>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input placeholder="Duration (e.g., 8 hours)" id="course-duration" />
+                <Input placeholder={t("admin.coursesMgmt.durationPlaceholder")} id="course-duration" />
               </div>
               <div className="flex items-center gap-2">
                 <input 
@@ -306,7 +308,7 @@ export default function Courses() {
                   defaultChecked={false}
                   className="h-4 w-4"
                 />
-                <label htmlFor="add-published" className="text-sm font-medium">Published (visible to users)</label>
+                <label htmlFor="add-published" className="text-sm font-medium">{t("admin.coursesMgmt.publishedLabel")}</label>
               </div>
             </div>
             <div className="flex gap-2">
@@ -330,8 +332,8 @@ export default function Courses() {
                   document.getElementById("course-category").value = "";
                   document.getElementById("course-duration").value = "";
                 }
-              }}>Add Course</Button>
-              <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
+              }}>{ t("admin.coursesMgmt.addCourse")}</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>{t("admin.coursesMgmt.cancel")}</Button>
             </div>
           </CardContent>
         </Card>
@@ -339,9 +341,9 @@ export default function Courses() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
-          <div className="col-span-full text-center py-8 text-gray-500">Loading courses...</div>
+          <div className="col-span-full text-center py-8 text-gray-500">{t("admin.coursesMgmt.loading")}</div>
         ) : filteredCourses.length === 0 ? (
-          <div className="col-span-full text-center py-8 text-gray-500">No courses found</div>
+          <div className="col-span-full text-center py-8 text-gray-500">{t("admin.coursesMgmt.noCourses")}</div>
         ) : (
           currentCourses.map((course) => (
             <Card key={course._id} className="hover:shadow-lg transition-all flex flex-col">
@@ -353,12 +355,12 @@ export default function Courses() {
               </CardHeader>
               <CardContent className="space-y-3 flex-1 flex flex-col">
                 <div>
-                  <p className="text-xs text-muted-foreground">Level</p>
+                  <p className="text-xs text-muted-foreground">{t("admin.coursesMgmt.level")}</p>
                   <Badge className="w-fit capitalize">{course.level || "beginner"}</Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Duration</p>
-                  <p className="text-sm font-medium">{course.duration || "Self-paced"}</p>
+                  <p className="text-xs text-muted-foreground">{t("admin.coursesMgmt.duration")}</p>
+                  <p className="text-sm font-medium">{course.duration || t("admin.coursesMgmt.selfPaced")}</p>
                 </div>
                 <div className="flex gap-2 pt-3 mt-auto">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedCourse(course)}>
@@ -372,11 +374,11 @@ export default function Courses() {
                       <Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="h-3 w-3" /></Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
-                      <AlertDialogTitle>Delete Course?</AlertDialogTitle>
-                      <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>
+                      <AlertDialogTitle>{t("admin.coursesMgmt.deleteTitle")}</AlertDialogTitle>
+                      <AlertDialogDescription>{t("admin.coursesMgmt.deleteDesc")}</AlertDialogDescription>
                       <div className="flex gap-3 justify-end">
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(course._id)} className="bg-destructive">Delete</AlertDialogAction>
+                        <AlertDialogCancel>{t("admin.coursesMgmt.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(course._id)} className="bg-destructive">{t("admin.coursesMgmt.delete")}</AlertDialogAction>
                       </div>
                     </AlertDialogContent>
                   </AlertDialog>

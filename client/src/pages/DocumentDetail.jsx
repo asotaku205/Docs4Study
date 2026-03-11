@@ -7,6 +7,8 @@ import ContentHeader from "../components/users/shared/ContentHeader";
 import InteractionBar from "../components/users/shared/InteractionBar";
 import SidebarInfo from "../components/users/shared/SidebarInfo";
 import { documentService } from "../services/documentService";
+import { useLanguage } from "../i18n/LanguageContext";
+import { resolveFileUrl } from "../utils/url";
 
 const DocumentDetail = () => {
   const [, params] = useRoute("/documents/:id");
@@ -14,8 +16,7 @@ const DocumentDetail = () => {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (params?.id) {
@@ -48,7 +49,7 @@ const DocumentDetail = () => {
       setLiked(response.liked);
     } catch (error) {
       console.error("Error toggling like:", error);
-      alert("Please login to like this document");
+      alert(t.alerts.loginToLike);
     }
   };
 
@@ -59,7 +60,7 @@ const DocumentDetail = () => {
       await fetchDocumentDetail();
     } catch (error) {
       console.error("Error adding comment:", error);
-      const errorMessage = error.response?.data?.message || "Failed to add comment. Please login first.";
+      const errorMessage = error.response?.data?.message || t.alerts.commentFailed;
       alert(errorMessage);
       
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -73,7 +74,7 @@ const DocumentDetail = () => {
 
   const handleDownload = () => {
     if (document?.fileUrl) {
-      const url = `${API_URL}${document.fileUrl}`;
+      const url = resolveFileUrl(document.fileUrl);
       window.open(url, '_blank');
     }
   };
@@ -82,7 +83,7 @@ const DocumentDetail = () => {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-12">
-          <p className="text-center py-8">Loading document...</p>
+          <p className="text-center py-8">{t.documentDetail.loading}</p>
         </div>
       </Layout>
     );
@@ -92,7 +93,7 @@ const DocumentDetail = () => {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-12">
-          <p className="text-center py-8">Document not found</p>
+          <p className="text-center py-8">{t.documentDetail.notFound}</p>
         </div>
       </Layout>
     );
@@ -101,30 +102,30 @@ const DocumentDetail = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-12 max-w-6xl">
-        <BackButton link="/documents" text="Documents" />
+        <BackButton link="/documents" text={t.nav.documents} />
         <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
           <div className="lg:col-span-3 space-y-8">
             <ContentHeader
               category={document.category}
               title={document.title}
-              description={document.description || 'No description available'}
+              description={document.description || t.documentDetail.noDescription}
               createdAt={document.updatedAt}
               author={document.author}
               showAuthor={true}
-              badgeText={document.fileType?.toUpperCase() || 'FILE'}
+              badgeText={document.fileType?.toUpperCase() || t.common.file}
             >
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{document.views || 0}</span>
-                  <span className="text-muted-foreground">Views</span>
+                  <span className="text-muted-foreground">{t.documentDetail.views}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{document.downloads || 0}</span>
-                  <span className="text-muted-foreground">Downloads</span>
+                  <span className="text-muted-foreground">{t.documentDetail.downloads}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{document.likes || 0}</span>
-                  <span className="text-muted-foreground">Likes</span>
+                  <span className="text-muted-foreground">{t.documentDetail.likes}</span>
                 </div>
               </div>
             </ContentHeader>
@@ -133,7 +134,7 @@ const DocumentDetail = () => {
               <div className="text-center">
                 <div className="text-6xl mb-4">📄</div>
                 <p className="text-xl font-semibold text-muted-foreground mb-4">
-                  Document Preview
+                  {t.documentDetail.documentPreview}
                 </p>
                 <p className="text-muted-foreground mb-6">
                   {document.fileType?.toUpperCase()} Document - {document.fileSize || 'N/A'}
@@ -142,38 +143,38 @@ const DocumentDetail = () => {
                   onClick={handleDownload}
                   className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 transition active:scale-95"
                 >
-                  Open Full Document
+                  {t.documentDetail.openFull}
                 </button>
               </div>
             </div>
 
             <div className="bg-card rounded-2xl p-8 border border-border">
               <h2 className="text-2xl font-bold font-heading mb-6">
-                Document Information
+                {t.documentDetail.documentInfo}
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Type</p>
+                  <p className="text-sm text-muted-foreground mb-2">{t.documentDetail.type}</p>
                   <p className="font-semibold text-lg">{document.fileType?.toUpperCase() || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">File Size</p>
+                  <p className="text-sm text-muted-foreground mb-2">{t.documentDetail.fileSize}</p>
                   <p className="font-semibold text-lg">{document.fileSize || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Category</p>
-                  <p className="font-semibold">{document.category?.name || 'General'}</p>
+                  <p className="text-sm text-muted-foreground mb-2">{t.documentDetail.category}</p>
+                  <p className="font-semibold">{document.category?.name || t.common.general}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Author</p>
-                  <p className="font-semibold">{document.author?.fullName || 'Unknown'}</p>
+                  <p className="text-sm text-muted-foreground mb-2">{t.documentDetail.author}</p>
+                  <p className="font-semibold">{document.author?.fullName || t.common.unknown}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-card rounded-2xl p-8 lg:p-12 border border-border">
               <h2 className="text-2xl font-bold font-heading mb-4">
-                Description
+                {t.documentDetail.descriptionHeading}
               </h2>
               <div 
                 className="prose prose-lg max-w-none
@@ -203,32 +204,32 @@ const DocumentDetail = () => {
           </div>
 
           <div className="lg:col-span-1">
-            <SidebarInfo title="Free to Download">
+            <SidebarInfo title={t.documentDetail.freeToDownload}>
               <div className="space-y-4">
                 <button 
                   onClick={handleDownload}
                   className="w-full h-12 px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 transition active:scale-95 font-semibold"
                 >
-                  Download Now
+                  {t.documentDetail.downloadNow}
                 </button>
                 <button className="w-full h-12 px-4 py-2 border rounded hover:bg-gray-50 transition">
-                  Share Document
+                  {t.documentDetail.shareDocument}
                 </button>
                 <div className="mt-6 pt-6 border-t border-border space-y-3 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Uploaded</p>
+                    <p className="text-muted-foreground">{t.documentDetail.uploaded}</p>
                     <p className="font-semibold">{new Date(document.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Last Updated</p>
+                    <p className="text-muted-foreground">{t.documentDetail.lastUpdated}</p>
                     <p className="font-semibold">{new Date(document.updatedAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Category</p>
-                    <p className="font-semibold">{document.category?.name || 'General'}</p>
+                    <p className="text-muted-foreground">{t.documentDetail.category}</p>
+                    <p className="font-semibold">{document.category?.name || t.common.general}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Views</p>
+                    <p className="text-muted-foreground">{t.documentDetail.views}</p>
                     <p className="font-semibold">{document.views || 0}</p>
                   </div>
                 </div>
@@ -239,7 +240,7 @@ const DocumentDetail = () => {
         <div className="mt-16">
           <CommentSection 
             comments={document.comments || []}
-            onSubmit={handleCommentSubmit}
+            onCommentSubmit={handleCommentSubmit}
             submitting={submittingComment}
           />
         </div>

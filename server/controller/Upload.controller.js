@@ -1,6 +1,6 @@
 import { upload, uploadDocument } from '../config/multer.js';
 
-// Upload single image
+// Tải lên một ảnh
 export const uploadSingle = async (req, res) => {
   try {
     if (!req.file) {
@@ -19,7 +19,7 @@ export const uploadSingle = async (req, res) => {
   }
 };
 
-// Upload multiple images
+// Tải lên nhiều ảnh
 export const uploadMultiple = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -41,14 +41,14 @@ export const uploadMultiple = async (req, res) => {
   }
 };
 
-// Upload document file
+// Tải lên file tài liệu
 export const uploadDocumentFile = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Get file type from extension
+    // Lấy loại file từ phần mở rộng
     const ext = req.file.originalname.split('.').pop().toLowerCase();
     let fileType = 'other';
     if (ext === 'pdf') fileType = 'pdf';
@@ -58,7 +58,7 @@ export const uploadDocumentFile = async (req, res) => {
     else if (ext === 'pptx') fileType = 'pptx';
     else if (ext === 'txt') fileType = 'txt';
 
-    // Format file size
+    // Định dạng kích thước file
     const fileSizeInBytes = req.file.size;
     let fileSize = '';
     if (fileSizeInBytes < 1024) {

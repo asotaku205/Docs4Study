@@ -42,13 +42,13 @@ export function DeleteButton({ onClick, children }) {
   );
 }
 
-export function BackButton({ onClick }) {
+export function BackButton({ onClick, children }) {
   return (
     <button
       onClick={onClick}
       className="mb-4 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300"
     >
-      ← Back
+      {children || "← Back"}
     </button>
   );
 }

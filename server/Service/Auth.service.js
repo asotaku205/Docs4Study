@@ -127,7 +127,7 @@ class AuthService {
       
       <div style="text-align:center; margin:30px 0;">
         <a href="${resetLink}" style="background:#2563eb; color:#ffffff; padding:12px 30px; text-decoration:none; border-radius:25px; font-weight:bold; display:inline-block;">
-          🔐 Reset Password
+           Reset Password
         </a>
       </div>
 

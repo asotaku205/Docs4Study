@@ -5,284 +5,328 @@ import BlogCard from "../components/users/Blogs/blogCard";
 import CardCourses from "../components/users/Courses/cardCourses";
 import CardDocs from "../components/users/Documents/cardDocs";
 import UserCard from "../components/users/UserCard";
-import { blogService } from "../services/blogService";
+import { searchService } from "../services/searchService";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const Search = () => {
-  const tabs = ["All", "Blogs", "Courses", "Documents", "Users"];
+  const { t, language } = useLanguage();
+  const tabKeys = ["All", "Blogs", "Courses", "Documents", "Users"];
+  const tabLabels = { All: t.search.all, Blogs: t.search.blogs, Courses: t.search.courses, Documents: t.search.documents, Users: t.search.users };
   const [activeTab, setActiveTab] = useState("All");
-  const [blogs, setBlogs] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState({ blogs: [], documents: [], courses: [], users: [] });
+  const [totals, setTotals] = useState({ blogs: 0, documents: 0, courses: 0, users: 0 });
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
-    fetchBlogs();
-    fetchCourses();
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q") || "";
+    if (q) setSearchQuery(q);
+    const tab = params.get("tab");
+    if (tab && tabKeys.includes(tab)) setActiveTab(tab);
   }, []);
 
-  const fetchBlogs = async () => {
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setResults({ blogs: [], documents: [], courses: [], users: [] });
+      setTotals({ blogs: 0, documents: 0, courses: 0, users: 0 });
+      setHasSearched(false);
+      return;
+    }
+    const debounceTimer = setTimeout(() => {
+      performSearch(searchQuery, activeTab);
+    }, 400);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, activeTab]);
+
+  const performSearch = async (query, tab) => {
+    if (!query.trim() || query.trim().length < 2) return;
     try {
       setLoading(true);
-      const response = await blogService.getAllPosts({ limit: 6 });
-      const publishedBlogs = response.data.filter(
-        post => post.status === 'published' && !post.isDeleted
-      );
-      setBlogs(publishedBlogs);
+      setHasSearched(true);
+      const typeMap = { All: "all", Blogs: "blogs", Courses: "courses", Documents: "documents", Users: "users" };
+      const response = await searchService.search({
+        q: query.trim(),
+        type: typeMap[tab] || "all",
+        limit: tab === "All" ? 6 : 12,
+      });
+      if (response.success) {
+        setResults(response.data);
+        setTotals(response.totals || { blogs: 0, documents: 0, courses: 0, users: 0 });
+      }
     } catch (error) {
-      console.error('Error fetching blogs:', error);
+      console.error("Search error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCourses = async () => {
-    try {
-      const response = await fetch('http://localhost:5001/api/user/courses');
-      const data = await response.json();
-      if (data.success) {
-        setCourses(data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching courses:', error);
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    const params = new URLSearchParams(window.location.search);
+    if (value.trim()) {
+      params.set("q", value.trim());
+    } else {
+      params.delete("q");
     }
+    window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+  };
+
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", tab);
+    window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
   };
 
   const formatDate = (date) => {
-    if (!date) return 'No date';
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    if (!date) return t.searchPage.noDate;
+    return new Date(date).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const mockDocuments = [
-    {
-      title: "JavaScript Cheat Sheet 2026",
-      description: "Quick reference guide for JavaScript syntax, methods, and best practices.",
-      downloads: "2,341",
-      views: "15,432",
-      level: "Beginner",
-      type: "PDF"
-    },
-    {
-      title: "CSS Grid Complete Guide",
-      description: "Everything you need to know about CSS Grid layout system with examples.",
-      downloads: "1,892",
-      views: "12,156",
-      level: "Intermediate",
-      type: "PDF"
-    },
-    {
-      title: "React Hooks Reference",
-      description: "Comprehensive documentation of all React hooks with practical examples.",
-      downloads: "3,145",
-      views: "18,923",
-      level: "Advanced",
-      type: "PDF"
-    }
-  ];
+  const totalResults = totals.blogs + totals.documents + totals.courses + totals.users;
 
-  const mockUsers = [
-    {
-      name: "Bình xăng con",
-      email: "binhxangcon@example.com",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-      role: "Instructor",
-      badge: "Pro Member",
-      joined: "Nov 2024",
-      courses: 12,
-        blogs: "10"
-    },
-    {
-      name: "Thiện 99",
-      email: "thien99@example.com",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-      role: "Content Creator",
-      badge: "Expert",
-      joined: "Oct 2024",
-      courses: 8,
-        blogs: "5"
-    },
-    {
-      name: "Tuấn Anh Bắc Ninh",
-      email: "tuananhbn@example.com",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-      role: "Student",
-      badge: "Active Learner",
-      joined: "Dec 2024",
-      courses: 15,
-      blogs: "0"
+  const getTabCount = (tab) => {
+    switch (tab) {
+      case "All": return totalResults;
+      case "Blogs": return totals.blogs;
+      case "Courses": return totals.courses;
+      case "Documents": return totals.documents;
+      case "Users": return totals.users;
+      default: return 0;
     }
-  ];
-  useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash) {
-      setActiveTab(hash);
-    }
-  }, []);
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-    window.location.hash = tab;
   };
+
+  const renderEmptyState = (type) => (
+    <div className="text-center py-16">
+      <FontAwesomeIcon icon={faMagnifyingGlass} className="text-5xl text-muted-foreground/30 mb-4" />
+      <p className="text-muted-foreground text-lg">
+        {!hasSearched
+          ? t.search.minChars
+          : `${t.search.noResults.replace('{type}', type).replace('{query}', searchQuery)}`}
+      </p>
+      {hasSearched && (
+        <p className="text-muted-foreground/60 text-sm mt-2">
+          {t.search.tryDifferent}
+        </p>
+      )}
+    </div>
+  );
+
+  const renderBlogResults = (blogs, showMax) => {
+    const items = showMax ? blogs.slice(0, showMax) : blogs;
+    if (items.length === 0) return renderEmptyState("blogs");
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((blog) => (
+          <BlogCard
+            key={blog._id}
+            id={blog._id}
+            image={blog.image}
+            images={blog.images}
+            category={blog.category?.name || t.common.uncategorized}
+            date={formatDate(blog.publishedAt || blog.createdAt)}
+            title={blog.title}
+            description={blog.description}
+            author={blog.author?.fullName || t.common.unknown}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderCourseResults = (courses, showMax) => {
+    const items = showMax ? courses.slice(0, showMax) : courses;
+    if (items.length === 0) return renderEmptyState("courses");
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((course) => (
+          <CardCourses
+            key={course._id}
+            id={course._id}
+            image={course.thumbnail}
+            title={course.title}
+            description={course.description}
+            duration={course.duration}
+            level={course.level}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderDocumentResults = (documents, showMax) => {
+    const items = showMax ? documents.slice(0, showMax) : documents;
+    if (items.length === 0) return renderEmptyState("documents");
+    return (
+      <div className="space-y-4">
+        {items.map((doc) => (
+          <CardDocs
+            key={doc._id}
+            id={doc._id}
+            title={doc.title}
+            description={doc.description}
+            downloads={doc.downloads || 0}
+            views={doc.views || 0}
+            type={doc.fileType?.toUpperCase() || "PDF"}
+            category={doc.category?.name || t.common.uncategorized}
+            fileSize={doc.fileSize || "N/A"}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderUserResults = (users, showMax) => {
+    const items = showMax ? users.slice(0, showMax) : users;
+    if (items.length === 0) return renderEmptyState("users");
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((user) => (
+          <UserCard
+            key={user._id}
+            id={user._id}
+            name={user.fullName}
+            email={user.email}
+            avatar={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.fullName}`}
+            role={user.role === "admin" ? t.searchPage.admin : t.searchPage.student}
+            badge={user.role === "admin" ? t.searchPage.admin : t.searchPage.member}
+            joined={formatDate(user.createdAt)}
+            courses={0}
+            blogs="0"
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderSectionHeader = (title, count, tabName) => (
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-2xl font-semibold">
+        {title}
+        {hasSearched && (
+          <span className="text-sm font-normal text-muted-foreground ml-2">
+            ({count} {t.search.results})
+          </span>
+        )}
+      </h3>
+      {activeTab === "All" && count > 3 && (
+        <button
+          onClick={() => handleTabClick(tabName)}
+          className="text-primary text-sm hover:underline font-medium"
+        >
+          {t.searchPage.viewAll}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <Layout>
       <Searching
-        title="Study Materials"
-        description="Find study materials, notes, and resources across various categories."
+        title={t.search.title}
+        description={t.search.description}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
       />
       <section className="flex-1 flex flex-col py-6">
         <div className="container mx-auto px-4">
+          {hasSearched && !loading && (
+            <div className="mb-4">
+              <p className="text-muted-foreground">
+                Found <span className="font-semibold text-foreground">{totalResults}</span> {t.search.results}
+                <span className="font-semibold text-primary">"{searchQuery}"</span>
+              </p>
+            </div>
+          )}
+
           <div className="flex overflow-x-auto gap-2 pb-4 mb-8 border-b border-border">
-            {tabs.map((tab) => (
+            {tabKeys.map((tab) => (
               <button
                 key={tab}
-                className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap ${
+                className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap transition-colors ${
                   activeTab === tab
                     ? "bg-primary text-white"
-                    : "bg-card text-muted-foreground hover:bg-accent/80 transition"
+                    : "bg-card text-muted-foreground hover:bg-accent/80"
                 }`}
                 onClick={() => handleTabClick(tab)}
               >
-                {tab}
+                {tabLabels[tab]}
+                {hasSearched && (
+                  <span className={`ml-1.5 text-xs ${activeTab === tab ? "text-white/80" : "text-muted-foreground/60"}`}>
+                    {getTabCount(tab)}
+                  </span>
+                )}
               </button>
             ))}
-          
           </div>
-          {activeTab === "All" && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-2xl font-semibold mb-4">Blogs</h3>
-                {loading ? (
-                  <p className="text-muted-foreground">Loading blogs...</p>
-                ) : blogs.length === 0 ? (
-                  <p className="text-muted-foreground">No blogs found.</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {blogs.slice(0, 3).map((blog) => (
-                      <BlogCard
-                        key={blog._id}
-                        id={blog._id}
-                        image={blog.image}
-                        images={blog.images}
-                        category={blog.category?.name || 'Uncategorized'}
-                        date={formatDate(blog.publishedAt || blog.createdAt)}
-                        title={blog.title}
-                        description={blog.description}
-                        author={blog.author?.fullName || 'Unknown'}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              <div>
-                <h3 className="text-2xl font-semibold mb-4">Courses</h3>
-                {courses.length === 0 ? (
-                  <p className="text-muted-foreground">No courses found.</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {courses.slice(0, 3).map((course) => (
-                      <CardCourses 
-                        key={course._id}
-                        id={course._id}
-                        image={course.thumbnail}
-                        title={course.title}
-                        description={course.description}
-                        duration={course.duration}
-                        level={course.level}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-2xl font-semibold mb-4">Documents</h3>
-                <div className="space-y-4">
-                  {mockDocuments.map((doc, index) => (
-                    <CardDocs key={index} {...doc} />
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-2xl font-semibold mb-4">Users</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {mockUsers.map((user, index) => (
-                    <UserCard key={index} {...user} />
-                  ))}
-                </div>
-              </div>
+          {loading && (
+            <div className="text-center py-20">
+              <FontAwesomeIcon icon={faSpinner} className="text-4xl text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground">{t.common.loading}</p>
             </div>
           )}
-            {activeTab === "Blogs" && (
-            <div>
-              {loading ? (
-                <p className="text-muted-foreground">Loading blogs...</p>
-              ) : blogs.length === 0 ? (
-                <p className="text-muted-foreground">No blogs found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {blogs.map((blog) => (
-                    <BlogCard
-                      key={blog._id}
-                      id={blog._id}
-                      image={blog.image}
-                      images={blog.images}
-                      category={blog.category?.name || 'Uncategorized'}
-                      date={formatDate(blog.publishedAt || blog.createdAt)}
-                      title={blog.title}
-                      description={blog.description}
-                      author={blog.author?.fullName || 'Unknown'}
-                    />
-                  ))}
+
+          {!loading && (
+            <>
+              {activeTab === "All" && (
+                <div className="space-y-10">
+                  {hasSearched ? (
+                    <>
+                      <div>
+                        {renderSectionHeader(t.search.blogs, totals.blogs, "Blogs")}
+                        {renderBlogResults(results.blogs, 3)}
+                      </div>
+                      <div>
+                        {renderSectionHeader(t.search.courses, totals.courses, "Courses")}
+                        {renderCourseResults(results.courses, 3)}
+                      </div>
+                      <div>
+                        {renderSectionHeader(t.search.documents, totals.documents, "Documents")}
+                        {renderDocumentResults(results.documents, 3)}
+                      </div>
+                      <div>
+                        {renderSectionHeader(t.search.users, totals.users, "Users")}
+                        {renderUserResults(results.users, 3)}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-20">
+                      <FontAwesomeIcon icon={faMagnifyingGlass} className="text-6xl text-muted-foreground/20 mb-6" />
+                      <h3 className="text-xl font-semibold text-muted-foreground mb-2">{t.searchPage.startTitle}</h3>
+                      <p className="text-muted-foreground/60">
+                        {t.searchPage.startDescription}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-            )}
-            {activeTab === "Courses" && (
-            <div>
-              {courses.length === 0 ? (
-                <p className="text-muted-foreground">No courses found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {courses.map((course) => (
-                    <CardCourses 
-                      key={course._id}
-                      id={course._id}
-                      image={course.thumbnail}
-                      title={course.title}
-                      description={course.description}
-                      duration={course.duration}
-                      level={course.level}
-                    />
-                  ))}
-                </div>
+
+              {activeTab === "Blogs" && (
+                <div>{renderBlogResults(results.blogs)}</div>
               )}
-            </div>
-            )}
-            {activeTab === "Documents" && (
-            <div>
-              <div className="space-y-4">
-                {mockDocuments.map((doc, index) => (
-                  <CardDocs key={index} {...doc} />
-                ))}
-              </div>
-            </div>
-            )}
-            {activeTab === "Users" && (
-            <div>
-                
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mockUsers.map((user, index) => (
-                  <UserCard key={index} {...user} />
-                ))}
-              </div>
-            </div>
-            )}
+
+              {activeTab === "Courses" && (
+                <div>{renderCourseResults(results.courses)}</div>
+              )}
+
+              {activeTab === "Documents" && (
+                <div>{renderDocumentResults(results.documents)}</div>
+              )}
+
+              {activeTab === "Users" && (
+                <div>{renderUserResults(results.users)}</div>
+              )}
+            </>
+          )}
         </div>
       </section>
     </Layout>
   );
 };
+
 export default Search;
