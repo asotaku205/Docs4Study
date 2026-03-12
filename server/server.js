@@ -1,6 +1,5 @@
 import express from 'express';
 import { connectDB } from './config/db.js';
-import dotenv from 'dotenv';
 import routerAuth from './routes/Auth.route.js';
 import cookieParser from 'cookie-parser';
 import routerUser from './routes/User.route.js';
@@ -13,8 +12,6 @@ import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -62,6 +59,12 @@ app.use("/api/auth", routerAuth);
 app.use("/api/user", routerUser);
 app.use("/api/admin", adminDashboardRoutes);
 app.use("/api/upload", uploadRoutes);
+
+// Global error handler - trả về JSON thay vì HTML
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
+});
 
 const runServer = async () => {
     try {

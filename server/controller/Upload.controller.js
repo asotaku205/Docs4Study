@@ -1,4 +1,4 @@
-import { upload, uploadDocument } from '../config/multer.js';
+import { uploadToCloudinary } from '../config/multer.js';
 
 // Tải lên một ảnh
 export const uploadSingle = async (req, res) => {
@@ -7,12 +7,15 @@ export const uploadSingle = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Cloudinary trả về URL qua req.file.path
-    const fileUrl = req.file.path;
-    res.status(200).json({ 
+    const result = await uploadToCloudinary(req.file.buffer, {
+      folder: 'docs4study/images',
+      transformation: [{ quality: 'auto' }],
+    });
+
+    res.status(200).json({
       message: 'File uploaded successfully',
-      url: fileUrl,
-      filename: req.file.filename
+      url: result.secure_url,
+      filename: result.public_id,
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -27,14 +30,18 @@ export const uploadMultiple = async (req, res) => {
       return res.status(400).json({ message: 'No files uploaded' });
     }
 
-    const fileUrls = req.files.map(file => ({
-      url: file.path,
-      filename: file.filename
-    }));
+    const results = await Promise.all(
+      req.files.map((file) =>
+        uploadToCloudinary(file.buffer, {
+          folder: 'docs4study/images',
+          transformation: [{ quality: 'auto' }],
+        })
+      )
+    );
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: 'Files uploaded successfully',
-      files: fileUrls
+      files: results.map((r) => ({ url: r.secure_url, filename: r.public_id })),
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -49,39 +56,33 @@ export const uploadDocumentFile = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Lấy loại file từ phần mở rộng
     const ext = req.file.originalname.split('.').pop().toLowerCase();
-    let fileType = 'other';
-    if (ext === 'pdf') fileType = 'pdf';
-    else if (ext === 'doc') fileType = 'doc';
-    else if (ext === 'docx') fileType = 'docx';
-    else if (ext === 'ppt') fileType = 'ppt';
-    else if (ext === 'pptx') fileType = 'pptx';
-    else if (ext === 'txt') fileType = 'txt';
+    const fileType = ['pdf','doc','docx','ppt','pptx','txt'].includes(ext) ? ext : 'other';
 
-    // Định dạng kích thước file
     const fileSizeInBytes = req.file.size;
-    let fileSize = '';
-    if (fileSizeInBytes < 1024) {
-      fileSize = fileSizeInBytes + ' B';
-    } else if (fileSizeInBytes < 1024 * 1024) {
-      fileSize = (fileSizeInBytes / 1024).toFixed(2) + ' KB';
-    } else {
-      fileSize = (fileSizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
-    }
+    let fileSize;
+    if (fileSizeInBytes < 1024) fileSize = fileSizeInBytes + ' B';
+    else if (fileSizeInBytes < 1024 * 1024) fileSize = (fileSizeInBytes / 1024).toFixed(2) + ' KB';
+    else fileSize = (fileSizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
 
-    // Cloudinary trả về URL qua req.file.path
-    const fileUrl = req.file.path;
-    res.status(200).json({ 
+    const result = await uploadToCloudinary(req.file.buffer, {
+      folder: 'docs4study/documents',
+      resource_type: 'raw',
+      public_id: `${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`,
+      format: ext,
+    });
+
+    res.status(200).json({
       message: 'Document uploaded successfully',
-      url: fileUrl,
-      filename: req.file.filename,
+      url: result.secure_url,
+      filename: result.public_id,
       originalName: req.file.originalname,
-      fileType: fileType,
-      fileSize: fileSize
+      fileType,
+      fileSize,
     });
   } catch (error) {
     console.error('Upload error:', error);
     res.status(500).json({ message: 'Error uploading document', error: error.message });
   }
 };
+

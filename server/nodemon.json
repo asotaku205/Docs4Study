@@ -3,5 +3,6 @@
   "ext": "js,json",
   "ignore": ["node_modules"],
   "legacyWatch": true,
-  "polling": true
+  "polling": true,
+  "nodeArgs": ["--import", "dotenv/config"]
 }

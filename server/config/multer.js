@@ -1,6 +1,5 @@
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 // Cấu hình Cloudinary
 cloudinary.config({
@@ -9,30 +8,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage cho ảnh
-const imageStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'docs4study/images',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    transformation: [{ quality: 'auto' }],
-  },
-});
-
-// Storage cho tài liệu
-const documentStorage = new CloudinaryStorage({
-  cloudinary,
-  params: (req, file) => {
-    const ext = file.originalname.split('.').pop().toLowerCase();
-    return {
-      folder: 'docs4study/documents',
-      resource_type: 'raw',
-      allowed_formats: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'zip', 'rar'],
-      public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`,
-      format: ext,
-    };
-  },
-});
+// Lưu file vào bộ nhớ tạm, sau đó controller tự upload lên Cloudinary
+const memStorage = multer.memoryStorage();
 
 // Bộ lọc file cho ảnh
 const imageFilter = (req, file, cb) => {
@@ -53,7 +30,8 @@ const documentFilter = (req, file, cb) => {
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'text/plain',
     'application/zip',
-    'application/x-rar-compressed'
+    'application/x-rar-compressed',
+    'application/x-zip-compressed',
   ];
 
   if (allowedTypes.includes(file.mimetype)) {
@@ -64,17 +42,25 @@ const documentFilter = (req, file, cb) => {
 };
 
 export const upload = multer({
-  storage: imageStorage,
+  storage: memStorage,
   fileFilter: imageFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
-  }
+  limits: { fileSize: 5 * 1024 * 1024 },  // 5MB
 });
 
 export const uploadDocument = multer({
-  storage: documentStorage,
+  storage: memStorage,
   fileFilter: documentFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024 // Giới hạn 50MB cho tài liệu
-  }
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
 });
+
+// Helper: upload buffer lên Cloudinary, trả về Promise
+export function uploadToCloudinary(buffer, options) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+    stream.end(buffer);
+  });
+}
+
