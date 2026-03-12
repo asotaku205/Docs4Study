@@ -7,7 +7,8 @@ export const uploadSingle = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // Cloudinary trả về URL qua req.file.path
+    const fileUrl = req.file.path;
     res.status(200).json({ 
       message: 'File uploaded successfully',
       url: fileUrl,
@@ -27,7 +28,7 @@ export const uploadMultiple = async (req, res) => {
     }
 
     const fileUrls = req.files.map(file => ({
-      url: `/uploads/${file.filename}`,
+      url: file.path,
       filename: file.filename
     }));
 
@@ -69,7 +70,8 @@ export const uploadDocumentFile = async (req, res) => {
       fileSize = (fileSizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // Cloudinary trả về URL qua req.file.path
+    const fileUrl = req.file.path;
     res.status(200).json({ 
       message: 'Document uploaded successfully',
       url: fileUrl,

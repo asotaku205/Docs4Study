@@ -1,19 +1,37 @@
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Cấu hình Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Cấu hình nơi lưu trữ file
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads'));
+// Storage cho ảnh
+const imageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'docs4study/images',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ quality: 'auto' }],
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+});
+
+// Storage cho tài liệu
+const documentStorage = new CloudinaryStorage({
+  cloudinary,
+  params: (req, file) => {
+    const ext = file.originalname.split('.').pop().toLowerCase();
+    return {
+      folder: 'docs4study/documents',
+      resource_type: 'raw',
+      allowed_formats: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'zip', 'rar'],
+      public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`,
+      format: ext,
+    };
+  },
 });
 
 // Bộ lọc file cho ảnh
@@ -37,7 +55,7 @@ const documentFilter = (req, file, cb) => {
     'application/zip',
     'application/x-rar-compressed'
   ];
-  
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -45,16 +63,16 @@ const documentFilter = (req, file, cb) => {
   }
 };
 
-export const upload = multer({ 
-  storage: storage,
+export const upload = multer({
+  storage: imageStorage,
   fileFilter: imageFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
   }
 });
 
-export const uploadDocument = multer({ 
-  storage: storage,
+export const uploadDocument = multer({
+  storage: documentStorage,
   fileFilter: documentFilter,
   limits: {
     fileSize: 50 * 1024 * 1024 // Giới hạn 50MB cho tài liệu

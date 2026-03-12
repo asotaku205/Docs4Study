@@ -25,8 +25,9 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost',
     'http://localhost:80',
-    'http://localhost:5173'
-  ];
+    'http://localhost:5173',
+    process.env.CLIENT_URL,
+  ].filter(Boolean);
   
   if (origin && (allowedOrigins.includes(origin) || origin.includes('.app.github.dev'))) {
     res.header("Access-Control-Allow-Origin", origin);
